@@ -1,112 +1,105 @@
-import User from "../models/User.model";
 import { Request, Response } from "express";
-import createToken from "../utils/createToken";
-import bcrypt from "bcryptjs";
-
-// 👤 Register New User
-const createUser = async (req: Request, res: Response): Promise<void> => {
-  const { firstname, lastname, email, password, phone } = req.body;
-    console.log("connect successfully")
-  if (!firstname || !lastname || !email || !password || !phone) {
-    res.status(400).json({ error: "Please fill all fields" });
-    return;
-  }
+import User from "../models/User.model";
+import * as XLSX from "xlsx";
+import { Op } from "sequelize";
+import sendError from "../utils/SendResponse";
+const createOneUser = async (req: Request, res: Response): Promise<void> => {
+  const { firstname, lastname, email, phone, address } = req.body;
 
   try {
-    const existingUser = await User.findOne({ where: { email } });
+    // Check if a user with the same email OR phone exists
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ email }, { phone }],
+      },
+    });
+
     if (existingUser) {
-      res.status(409).json({ error: "User already exists" });
+      res
+        .status(400)
+        .json({ message: "User already exists with this email or phone." });
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
+    // Create the user
+    await User.create({
       firstname,
       lastname,
       email,
-      password: hashedPassword,
       phone,
+      address,
+      password: "", // You can hash/set a default password here if needed
     });
 
-    createToken(res, user.id);
-
-    res.status(201).json({
-      message: "User registered successfully",
-      data: {
-        id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        phone: user.phone,
-      },
-    });
+    res.status(201).json({ message: "User created successfully." });
   } catch (error) {
     console.error("Error creating user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res
+      .status(500)
+      .json({ message: "Something went wrong while creating the user." });
   }
 };
 
-// 🔐 Login User
-const Sign = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    res.status(400).json({ error: "Email and password are required" });
-    return;
-  }
-
+const createMultipleUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const user = await User.findOne({ where: { email } });
+    if (!req.file) sendError(res, 404, "please upload file");
 
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
+    const workBook = XLSX.read(req.file?.buffer, { type: "buffer" });
+    const sheetName = workBook.SheetNames[0];
+    const SheetData = XLSX.utils.sheet_to_json<any>(workBook.Sheets[sheetName]);
+
+    const usersToCreate = [];
+
+    for (const row of SheetData) {
+      const firstname = row["First Name"];
+      const lastname = row["Last Name"];
+      const email = row["Email"];
+      const phone = row["Phone"];
+      const mailingStreet = row["Mailing Street"]?.trim() || "";
+      const mailingCity = row["Mailing City"]?.trim() || "";
+      const mailingState = row["Mailing State"]?.trim() || "";
+      const mailingZip = row["Mailing Zip"]?.toString().trim() || "";
+      const mailingCountry = row["Mailing Country"]?.trim() || "";
+
+      const address = [
+        mailingStreet,
+        mailingCity,
+        mailingState,
+        mailingZip,
+        mailingCountry,
+      ]
+        .filter(Boolean)
+        .join(", ");
+      if (!firstname || !lastname || !email || !phone || !address) continue; // Required
+
+      const existing = await User.findOne({
+        where: {
+          [Op.or]: [{ email }, { phone }],
+        },
+      });
+      if (!existing) {
+        usersToCreate.push({
+          firstname,
+          lastname,
+          email,
+          phone,
+          address,
+        });
+      }
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      res.status(401).json({ error: "Invalid credentials" });
-      return;
+    if (usersToCreate.length > 0) {
+      await User.bulkCreate(usersToCreate);
     }
-
-    createToken(res, user.id);
-
     res.status(200).json({
-      message: "Logged in successfully",
-      data: {
-        id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        phone: user.phone,
-      },
+      message: `Upload complete. ${usersToCreate.length} users created.`,
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Bulk upload error:", error);
+    res.status(500).json({ message: "Failed to upload users." });
   }
 };
 
-const getMe = async (req: any, res: Response): Promise<void> => {
-  try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ["password"] },
-    });
-
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
-
-    res.status(200).json({
-      message: "Authenticated user",
-      data: user,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Something went wrong" });
-  }
-};
-
-export { createUser, Sign , getMe };
+export { createOneUser, createMultipleUser };

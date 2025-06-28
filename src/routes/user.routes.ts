@@ -1,7 +1,8 @@
 import express from "express";
-import {createUser, Sign , getMe } from "../controllers/user.controler";
-const router = express.Router();
+import { createOneUser , createMultipleUser } from "../controllers/user.controler";
+import { upload } from "../middlewares/Upload";
+const router = express.Router()
 
-router.route("/").get(getMe).post(createUser);
-router.route("/sign-in").post(Sign);
-export default router;
+router.route("/").post(createOneUser)
+router.route("/upload-excel").post(upload.single("file"),createMultipleUser)
+export default router

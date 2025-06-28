@@ -1,17 +1,23 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/database";
 import { UserAttributes } from "../utils/interface";
-// Define a TypeScript interface for type safety (optional)
+
+// Optional fields for creation
 
 
-// Define the model
-class User extends Model<UserAttributes> implements UserAttributes {
+// Define the model class
+class User extends Model<any> implements UserAttributes {
   public id!: number;
   public firstname!: string;
   public lastname!: string;
   public email!: string;
   public phone!: string;
   public password!: string;
+  public address!: string;
+
+  // timestamps
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 // Initialize the model
@@ -26,7 +32,7 @@ User.init(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-      lastname: {
+    lastname: {
       type: DataTypes.STRING(100),
       allowNull: false,
     },
@@ -35,20 +41,29 @@ User.init(
       allowNull: false,
       unique: true,
     },
-     phone: {
+    phone: {
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
     },
-    password: {
+    // password: {
+    //   type: DataTypes.STRING(100),
+    //   allowNull: false,
+    // },
+    address: {
       type: DataTypes.STRING(100),
-      allowNull: false,
+      allowNull: true,
     },
+    role : {
+       type: DataTypes.INTEGER,
+      defaultValue : 0
+    }
   },
   {
     sequelize,
     tableName: "users",
     modelName: "User",
+    timestamps: true, // Set to false if not using createdAt, updatedAt
   }
 );
 
