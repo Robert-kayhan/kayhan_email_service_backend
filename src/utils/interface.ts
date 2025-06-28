@@ -5,4 +5,5 @@ export interface UserAttributes {
   phone: string;
   email: string;
   password: string;
+  address : string;
 }
