@@ -1,24 +1,28 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/database";
 import { UserAttributes } from "../utils/interface";
 
-class User extends Model<any>  {
+// Optional fields for creation
+
+// Define the model class
+class Admin extends Model<any> {
   public id!: number;
   public firstname!: string;
   public lastname!: string;
   public email!: string;
   public phone!: string;
-  public address!: string;
-  public role!: number;
+  public password!: string;
 
+  // timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
 
-User.init(
+// Initialize the model
+Admin.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -33,26 +37,20 @@ User.init(
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      unique: true,
     },
-    phone: {
-      type: DataTypes.STRING(20),
+
+    password: {
+      type: DataTypes.STRING(100),
       allowNull: false,
-    },
-    address: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    role: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
     },
   },
   {
     sequelize,
-    tableName: "users",
-    modelName: "User",
-    timestamps: true,
+    tableName: "admins",
+    modelName: "Admin",
+    timestamps: true, // Set to false if not using createdAt, updatedAt
   }
 );
 
-export default User;
+export default Admin;
