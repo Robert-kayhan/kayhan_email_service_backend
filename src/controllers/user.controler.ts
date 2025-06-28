@@ -102,4 +102,99 @@ const createMultipleUser = async (
   }
 };
 
-export { createOneUser, createMultipleUser };
+
+
+ const getALLUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Default values if query params are not passed
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: users } = await User.findAndCountAll({
+      attributes: ["id", "firstname", "lastname", "email", "phone", "address", "role", "createdAt"],
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset,
+    });
+
+    const formattedUsers = users.map((user) => ({
+      name: `${user.firstname} ${user.lastname}`,
+      email: user.email,
+      phone: user.phone,
+      role: user.role === 1 ? "Admin" : "User",
+      status: "Active", 
+      address:user.address 
+    }));
+
+    res.status(200).json({
+      data: formattedUsers,
+      pagination: {
+        totalItems: count,
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        pageSize: limit,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id; // Ensure ID is an integer
+    // if (isNaN(userId)) {
+    //   res.status(400).json({ message: "Invalid user ID" });
+    //   return;
+    // }
+
+    const deletedCount = await User.destroy({
+      where: { email: userId },
+    });
+
+    if (deletedCount === 0) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+ const updateUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id; // You may use `email` instead of `id` if that's how you identify users
+    const { firstname, lastname, phone, address, role,email } = req.body;
+
+    const user = await User.findOne({ where: { email: userId } }); // You can use `id` here if needed
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    user.firstname = firstname ?? user.firstname;
+    user.lastname = lastname ?? user.lastname;
+    user.phone = phone ?? user.phone;
+    user.address = address ?? user.address;
+    user.role = role ?? user.role;
+    user.email = email ?? user.email;
+
+    await user.save();
+
+    res.status(200).json({ message: "User updated successfully", user });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export { createOneUser, createMultipleUser , getALLUser , deleteUser , updateUser };

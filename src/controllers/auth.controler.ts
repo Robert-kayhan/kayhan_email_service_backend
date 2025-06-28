@@ -1,19 +1,19 @@
-import User from "../models/User.model";
+import Admin from "../models/Admin";
 import { Request, Response } from "express";
 import createToken from "../utils/createToken";
 import bcrypt from "bcryptjs";
 
 // 👤 Register New User
 const createUser = async (req: Request, res: Response): Promise<void> => {
-  const { firstname, lastname, email, password, phone } = req.body;
+  const { firstname, lastname, email, password} = req.body;
     console.log("connect successfully")
-  if (!firstname || !lastname || !email || !password || !phone) {
+  if (!firstname || !lastname || !email || !password ) {
     res.status(400).json({ error: "Please fill all fields" });
     return;
   }
 
   try {
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await Admin.findOne({ where: { email } });
     if (existingUser) {
       res.status(409).json({ error: "User already exists" });
       return;
@@ -21,12 +21,11 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+    const user = await Admin.create({
       firstname,
       lastname,
       email,
       password: hashedPassword,
-      phone,
     });
 
     createToken(res, user.id);
@@ -38,7 +37,6 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
         firstname: user.firstname,
         lastname: user.lastname,
         email: user.email,
-        phone: user.phone,
       },
     });
   } catch (error) {
@@ -57,7 +55,7 @@ const Sign = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const user = await User.findOne({ where: { email } });
+    const user = await Admin.findOne({ where: { email } });
 
     if (!user) {
       res.status(404).json({ error: "User not found" });
@@ -91,7 +89,7 @@ const Sign = async (req: Request, res: Response): Promise<void> => {
 
 const getMe = async (req: any, res: Response): Promise<void> => {
   try {
-    const user = await User.findByPk(req.user.id, {
+    const user = await Admin.findByPk(req.user.id, {
       attributes: { exclude: ["password"] },
     });
 
