@@ -5,7 +5,7 @@ import {
   getALLUser,
   deleteUser,
   updateUser,
-} from "../controllers/user.controler";
+} from "../controllers/user.controller";
 import { upload } from "../middlewares/Upload";
 const router = express.Router();
 
