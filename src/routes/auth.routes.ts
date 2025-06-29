@@ -1,5 +1,5 @@
 import express from "express";
-import {createUser, Sign , getMe } from "../controllers/auth.controler";
+import {createUser, Sign , getMe } from "../controllers/auth.controller";
 const router = express.Router();
 
 router.route("/").get(getMe).post(createUser);
