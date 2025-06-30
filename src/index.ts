@@ -19,8 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 dotenv.config();
 app.use(
   cors({
-    origin: "http://localhost:3000", // your Next.js frontend
-    credentials: true, // allow cookies to be sent
+    origin: ["http://localhost:3000", "http://89.116.134.75:3000"],
+    credentials: true,
   })
 );
 
