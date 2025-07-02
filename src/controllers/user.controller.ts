@@ -119,6 +119,7 @@ const createMultipleUser = async (
     });
 
     const formattedUsers = users.map((user) => ({
+      id :  user.id,
       name: `${user.firstname} ${user.lastname}`,
       email: user.email,
       phone: user.phone,

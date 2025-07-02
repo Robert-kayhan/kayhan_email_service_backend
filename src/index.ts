@@ -8,6 +8,8 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import templateRoutes from "./routes/template.route";
+import LeadGroupRoutes from "./routes/leadGroup.route"
+
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -28,6 +30,8 @@ app.use(
 app.use("/api/auth/", authRoutes);
 app.use("/api/users/", userRoutes);
 app.use("/api/templates/", templateRoutes);
+app.use("/api/lead-group/", LeadGroupRoutes);
+
 
 connectDb();
 
