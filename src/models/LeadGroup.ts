@@ -12,7 +12,7 @@ class LeadGroup extends Model {
 LeadGroup.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },

@@ -1,5 +1,7 @@
+import Campaign from "./Campaign";
 import LeadGroup from "./LeadGroup";
 import LeadGroupAssignment from "./LeadGroupAssignment";
+import Template from "./Template";
 import User from "./User.model";
 
 // Define associations here:
@@ -19,3 +21,5 @@ export const setupAssociations = () => {
     as: "User",
   });
 };
+Campaign.belongsTo(Template, { foreignKey: "templateId" });
+Campaign.belongsTo(LeadGroup, { foreignKey: "leadGroupId" });
