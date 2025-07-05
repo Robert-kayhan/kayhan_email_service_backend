@@ -14,12 +14,10 @@ interface CampaignAttributes {
 
 type CampaignCreationAttributes = Optional<CampaignAttributes, "id">;
 
-class Campaign
-  extends Model<CampaignAttributes, CampaignCreationAttributes>
-  implements CampaignAttributes
-{
+class Campaign extends Model implements CampaignAttributes {
   public id!: number;
   public campaignName!: string;
+  public campaignSubject!: string;
   public fromEmail!: string;
   public senderName!: string;
   public templateId!: number;
@@ -37,6 +35,10 @@ Campaign.init(
       primaryKey: true,
     },
     campaignName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    campaignSubject: {
       type: DataTypes.STRING,
       allowNull: false,
     },

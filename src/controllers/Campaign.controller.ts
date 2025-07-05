@@ -6,7 +6,7 @@ import LeadGroup from "../models/LeadGroup";
 // CREATE Campaign
 const createCampaign = async (req: Request, res: Response) => {
   try {
-    const { campaignName, fromEmail, senderName, templateId, leadGroupId } =
+    const { campaignName,campaignSubject, fromEmail, senderName, templateId, leadGroupId } =
       req.body;
 
     if (
@@ -14,7 +14,8 @@ const createCampaign = async (req: Request, res: Response) => {
       !fromEmail ||
       !senderName ||
       !templateId ||
-      !leadGroupId
+      !leadGroupId||
+      !campaignSubject
     ) {
       res.status(400).json({ message: "All fields are required." });
     }
@@ -31,6 +32,7 @@ const createCampaign = async (req: Request, res: Response) => {
 
     const campaign = await Campaign.create({
       campaignName,
+      campaignSubject,
       fromEmail,
       senderName,
       templateId,
@@ -51,22 +53,43 @@ const createCampaign = async (req: Request, res: Response) => {
 // GET all campaigns
 const getAllCampaigns = async (req: Request, res: Response) => {
   try {
-    const campaigns = await Campaign.findAll({
-      include: [Template, LeadGroup],
+    // Parse query params
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 25;
+    const offset = (page - 1) * limit;
+
+    // Fetch campaigns with pagination and associated models
+    const { rows: campaigns, count: total } = await Campaign.findAndCountAll({
+      // include: [
+      //   { model: Template, as: "Template" },
+      //   { model: LeadGroup, as: "LeadGroup" },
+      // ],
       order: [["createdAt", "DESC"]],
+      limit,
+      offset,
     });
-    res.json({ data: campaigns });
+
+    res.json({
+      campaigns: campaigns,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("Error fetching campaigns:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };
 
+
 // GET single campaign by ID
 const getCampaignById = async (req: Request, res: Response) => {
   try {
     const campaign = await Campaign.findByPk(req.params.id, {
-      include: [Template, LeadGroup],
+      include: [
+        { model: Template, as: "Template" },    // ✅ Use alias
+        { model: LeadGroup, as: "LeadGroup" },  // ✅ Use alias
+      ],
     });
 
     if (!campaign) {
