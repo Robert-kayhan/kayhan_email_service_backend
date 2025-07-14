@@ -3,6 +3,7 @@ import User from "../models/User.model";
 import * as XLSX from "xlsx";
 import { Op } from "sequelize";
 import sendError from "../utils/SendResponse";
+import axios from "axios";
 const createOneUser = async (req: Request, res: Response): Promise<void> => {
   const { firstname, lastname, email, phone, address } = req.body;
 
@@ -197,5 +198,72 @@ const deleteUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const getUsersWithLeadStatus = async (req: Request, res: Response) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const search = String(req.query.search || "").toLowerCase();
+    const hasLeadOnly = req.query.hasLeadOnly === "true";
 
-export { createOneUser, createMultipleUser , getALLUser , deleteUser , updateUser };
+    // 1. Get external users
+    const externalResponse = await axios.get("http://localhost:5003/v1/users/all");
+    const externalUsers = externalResponse.data;
+
+    if (!Array.isArray(externalUsers)) {
+       res.status(400).json({ message: "Invalid external users format" });
+       return
+    }
+
+    // 2. Filter by search term (optional)
+    let filteredUsers = externalUsers;
+    if (search) {
+      filteredUsers = filteredUsers.filter((user: any) => {
+        return (
+          (user.name && user.name.toLowerCase().includes(search)) ||
+          (user.last_name && user.last_name.toLowerCase().includes(search)) ||
+          (user.email && user.email.toLowerCase().includes(search))
+        );
+      });
+    }
+
+    // 3. Get matching lead emails only for filtered users
+    const emails = filteredUsers.map((u: any) => u.email).filter(Boolean);
+    const leads = await User.findAll({
+      where: { email: { [Op.in]: emails } },
+      attributes: ["email"],
+    });
+    const leadEmailSet = new Set(leads.map((l) => l.email));
+
+    // 4. Attach hasLead
+    const combinedUsers = filteredUsers.map((user: any) => ({
+      ...user,
+      hasLead: leadEmailSet.has(user.email),
+    }));
+
+    // 5. Apply hasLeadOnly filter if requested
+    let finalUsers = combinedUsers;
+    if (hasLeadOnly) {
+      finalUsers = combinedUsers.filter((u: any) => u.hasLead);
+    }
+
+    // 6. Paginate final list
+    const total = finalUsers.length;
+    const paginatedUsers = finalUsers.slice(offset, offset + limit);
+
+    // 7. Send response
+    res.json({
+      success: true,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data: paginatedUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching users with lead status:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export { createOneUser, createMultipleUser , getALLUser , deleteUser , updateUser , getUsersWithLeadStatus };
