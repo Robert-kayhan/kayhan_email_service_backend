@@ -11,7 +11,7 @@ const sendEmails = async (req: Request, res: Response) => {
 
   try {
     // 1. Get Campaign
-    const campaign:any = await Campaign.findByPk(campaignId, {
+    const campaign: any = await Campaign.findByPk(campaignId, {
       include: [
         { model: Template, as: "Template" },
         { model: EmailLog, as: "EmailLogs" },
@@ -19,7 +19,7 @@ const sendEmails = async (req: Request, res: Response) => {
     });
 
     if (!campaign) {
-       res.status(404).json({ message: "Campaign not found" });
+      res.status(404).json({ message: "Campaign not found" });
     }
 
     // 2. Get users from lead group
@@ -29,11 +29,11 @@ const sendEmails = async (req: Request, res: Response) => {
     });
 
     const usersToEmail = leadAssignments
-      .map((assign:any) => assign.User)
+      .map((assign: any) => assign.User)
       .filter((user) => user && user.email);
 
     if (!usersToEmail.length) {
-       res
+      res
         .status(400)
         .json({ message: "No users with emails found in lead group" });
     }
@@ -48,13 +48,13 @@ const sendEmails = async (req: Request, res: Response) => {
         const text: string = "You have a new campaign message.";
 
         await sendEmail({
-        //   to: user.email,
-        to : "success@simulator.amazonses.com",
+            to: user.email,
+          // to: "mailer@kayhanaudio.com.au",
           subject,
           bodyHtml: html,
           bodyText: text,
-        //   from: campaign.fromEmail,
-        from : "kayhanaudio@gmail.com"
+          // from: campaign.fromEmail,
+          from: "noreply@mailer.kayhanaudio.com.au", 
         });
 
         const log = await EmailLog.create({
@@ -76,7 +76,7 @@ const sendEmails = async (req: Request, res: Response) => {
       }
     }
 
-     res.json({
+    res.json({
       message: "Emails processed",
       results: {
         sent: logs.filter((l) => l.status === "sent").length,
@@ -86,7 +86,7 @@ const sendEmails = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Send campaign error:", error);
-     res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
