@@ -26,7 +26,7 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
       lastname,
       email,
       password: hashedPassword,
-    });
+    }); 
 
     createToken(res, user.id);
 
