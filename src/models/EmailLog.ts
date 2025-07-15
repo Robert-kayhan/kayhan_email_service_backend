@@ -19,7 +19,7 @@ EmailLog.init(
       primaryKey: true,
     },
     campaign_id : {
-      type : DataTypes.INTEGER
+      type : DataTypes.INTEGER.UNSIGNED
     },
 
     email: {
