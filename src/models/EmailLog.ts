@@ -18,8 +18,14 @@ EmailLog.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    campaign_id : {
-      type : DataTypes.INTEGER.UNSIGNED
+   campaign_id: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      references: {
+        model: "campaigns", // match actual table name
+        key: "id",
+      },
+      onDelete: "CASCADE", // optional, but useful
     },
 
     email: {
