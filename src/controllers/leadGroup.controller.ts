@@ -5,7 +5,7 @@ import User from "../models/User.model";
 const createLeadGroupWithUsers = async (req: Request, res: Response) => {
   try {
     const { groupName, userIds } = req.body;
-
+    console.log("there are got ")
     if (!groupName || !Array.isArray(userIds)) {
       res.status(400).json({ message: "groupName and userIds are required." });
     }

@@ -18,12 +18,22 @@ LeadGroupAssignment.init(
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
+      references: {
+        model: "users", // ⚠️ reference actual table
+        key: "id",
+      },
+      onDelete: "CASCADE",
     },
     groupId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
+      references: {
+        model: "lead_groups", // ⚠️ reference actual table
+        key: "id",
+      },
+      onDelete: "CASCADE",
     },
   },
   {

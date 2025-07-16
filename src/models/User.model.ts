@@ -10,6 +10,8 @@ class User extends Model<any>  {
   public phone!: string;
   public address!: string;
   public role!: number;
+  public isSubscribed!: boolean;
+  public unsubscribeToken!: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -46,6 +48,14 @@ User.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+     isSubscribed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true, 
+    },
+    unsubscribeToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   },
   {
     sequelize,

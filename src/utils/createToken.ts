@@ -9,9 +9,9 @@ const createToken = (res: Response, id: any) => {
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure: false, // HTTPS only in production
-      sameSite: "none", // Protects from CSRF
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: true, 
+      sameSite: "none", 
+      maxAge: 30 * 24 * 60 * 60 * 1000, 
     });
   } catch (error) {
     console.log("error", error);

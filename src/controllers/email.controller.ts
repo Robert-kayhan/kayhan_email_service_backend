@@ -5,6 +5,7 @@ import LeadGroupAssignment from "../models/LeadGroupAssignment";
 import User from "../models/User.model";
 import Template from "../models/Template";
 import { sendEmail } from "../utils/sendEmail";
+import { v4 as uuidv4 } from "uuid";
 
 const sendEmails = async (req: Request, res: Response) => {
   const { campaignId } = req.params;
@@ -30,7 +31,7 @@ const sendEmails = async (req: Request, res: Response) => {
 
     const usersToEmail = leadAssignments
       .map((assign: any) => assign.User)
-      .filter((user) => user && user.email);
+      .filter((user) => user && user.email && user.isSubscribed);
 
     if (!usersToEmail.length) {
       res
@@ -43,28 +44,63 @@ const sendEmails = async (req: Request, res: Response) => {
 
     for (const user of usersToEmail) {
       try {
-        const subject: string = campaign.campaignName;
-        const html: string = campaign.Template?.html || "<p>No template</p>";
-        const text: string = "You have a new campaign message.";
+        // 1. Generate unsubscribe token if not present
+        if (!user.unsubscribeToken) {
+          user.unsubscribeToken = uuidv4();
+          await user.save();
+        }
 
-        await sendEmail({
-            to: user.email,
-          // to: "mailer@kayhanaudio.com.au",
-          subject,
-          bodyHtml: html,
-          bodyText: text,
-          // from: campaign.fromEmail,
-          from: "noreply@mailer.kayhanaudio.com.au", 
-        });
-
+        // 2. Create log first so you can use log.id in tracking pixel
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
-          status: "sent",
+          status: "pending", // temporary status, will update later
         });
+
+        // 3. Prepare email content
+        const unsubscribeLink = `https://yourdomain.com/unsubscribe?token=${user.unsubscribeToken}`;
+        const pixelUrl = `https://yourdomain.com/api/email/open?emailId=${log.id}`;
+        const subject: string = campaign.campaignName;
+        let html: string = campaign.Template?.html || "<p>No template</p>";
+        const text: string = "You have a new campaign message.";
+
+        // 4. Append unsubscribe link + tracking pixel
+        html += `
+            <hr />
+            <p style="font-size: 12px; color: #888;">
+              Don’t want these emails?
+              <a href="${unsubscribeLink}">Unsubscribe here</a>.
+            </p>
+            <img 
+              src="${pixelUrl}" 
+              width="1" 
+              height="1" 
+              style="display: none;" 
+              alt="tracking-pixel"
+            />
+          `;
+
+        console.log("📧 Sending to:", user.email);
+
+        // 5. Send the email
+        const result = await sendEmail({
+          to: user.email,
+          subject,
+          bodyHtml: html,
+          bodyText: text,
+          from: "noreply@mailer.kayhanaudio.com.au",
+        });
+
+        console.log("✅ Email sent:", result);
+
+        // 6. Update log to sent
+        await log.update({ status: "sent" });
 
         logs.push(log);
       } catch (err: any) {
+        console.error("❌ Failed to send to", user.email, err);
+
+        // Fallback: create log only if it failed before log was created
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
@@ -90,4 +126,32 @@ const sendEmails = async (req: Request, res: Response) => {
   }
 };
 
-export { sendEmails };
+const checkUserOpenEmail = async (req: Request, res: Response) => {
+  const { campaignId, email } = req.params;
+  try {
+    await EmailLog.update(
+      { opened: true, openedAt: new Date() },
+      { where: { campaign_id: campaignId, email } }
+    );
+  } catch (error) {
+    console.log("error message", error);
+  }
+};
+
+const handleUnsubscribe = async (req: Request, res: Response) => {
+  const { token } = req.body;
+
+  const user = await User.findOne({ where: { unsubscribeToken: token } });
+
+  if (!user) {
+    res.status(404).json({ message: "Invalid unsubscribe token" });
+    return;
+  }
+
+  user.isSubscribed = false;
+  await user.save();
+
+  res.json({ message: "Successfully unsubscribed." });
+};
+
+export { sendEmails, checkUserOpenEmail, handleUnsubscribe };

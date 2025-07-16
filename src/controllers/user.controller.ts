@@ -103,9 +103,7 @@ const createMultipleUser = async (
   }
 };
 
-
-
- const getALLUser = async (req: Request, res: Response): Promise<void> => {
+const getALLUser = async (req: Request, res: Response): Promise<void> => {
   try {
     // Default values if query params are not passed
     const page = parseInt(req.query.page as string) || 1;
@@ -113,20 +111,29 @@ const createMultipleUser = async (
     const offset = (page - 1) * limit;
 
     const { count, rows: users } = await User.findAndCountAll({
-      attributes: ["id", "firstname", "lastname", "email", "phone", "address", "role", "createdAt"],
+      attributes: [
+        "id",
+        "firstname",
+        "lastname",
+        "email",
+        "phone",
+        "address",
+        "role",
+        "createdAt",
+      ],
       order: [["createdAt", "DESC"]],
       limit,
       offset,
     });
 
     const formattedUsers = users.map((user) => ({
-      id :  user.id,
+      id: user.id,
       name: `${user.firstname} ${user.lastname}`,
       email: user.email,
       phone: user.phone,
       role: user.role === 1 ? "Admin" : "User",
-      status: "Active", 
-      address:user.address 
+      status: "Active",
+      address: user.address,
     }));
 
     res.status(200).json({
@@ -143,7 +150,6 @@ const createMultipleUser = async (
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -169,12 +175,10 @@ const deleteUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-
-
- const updateUser = async (req: Request, res: Response): Promise<void> => {
+const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id; // You may use `email` instead of `id` if that's how you identify users
-    const { firstname, lastname, phone, address, role,email } = req.body;
+    const { firstname, lastname, phone, address, role, email } = req.body;
 
     const user = await User.findOne({ where: { email: userId } }); // You can use `id` here if needed
     if (!user) {
@@ -207,12 +211,14 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     const hasLeadOnly = req.query.hasLeadOnly === "true";
 
     // 1. Get external users
-    const externalResponse = await axios.get("http://localhost:5003/v1/users/all");
+    const externalResponse = await axios.get(
+      "http://localhost:5003/v1/users/all"
+    );
     const externalUsers = externalResponse.data;
 
     if (!Array.isArray(externalUsers)) {
-       res.status(400).json({ message: "Invalid external users format" });
-       return
+      res.status(400).json({ message: "Invalid external users format" });
+      return;
     }
 
     // 2. Filter by search term (optional)
@@ -266,4 +272,39 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
   }
 };
 
-export { createOneUser, createMultipleUser , getALLUser , deleteUser , updateUser , getUsersWithLeadStatus };
+const unsubscribeUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.isSubscribed = false;
+    await user.save();
+
+    return res.status(200).json({
+      message: "User unsubscribed successfully.",
+      user: {
+        id: user.id,
+        email: user.email,
+        isSubscribed: user.isSubscribed,
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ Error unsubscribing user:", error);
+    return res.status(500).json({ message: "Internal Server Error." });
+  }
+};
+
+export {
+  createOneUser,
+  createMultipleUser,
+  getALLUser,
+  deleteUser,
+  updateUser,
+  getUsersWithLeadStatus,
+  unsubscribeUser,
+};
