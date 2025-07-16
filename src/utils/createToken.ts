@@ -10,7 +10,7 @@ const createToken = (res: Response, id: any) => {
     res.cookie("jwt", token, {
       httpOnly: true,
       secure: false, // HTTPS only in production
-      sameSite: "lax", // Protects from CSRF
+      sameSite: "none", // Protects from CSRF
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
   } catch (error) {
