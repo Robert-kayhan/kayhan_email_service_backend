@@ -21,7 +21,11 @@ const PORT = process.env.PORT || 5002;
 // ✅ Middleware order matters!
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://89.116.134.75:3000"],
+    origin: [
+      "http://localhost:3000",
+      "http://89.116.134.75:3000",
+      "https://cravebuy.com",
+    ],
     credentials: true,
   })
 );
