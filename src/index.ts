@@ -18,7 +18,7 @@ import sendEmailroutes from "./routes/sendEmail.routes";
 const app = express();
 const PORT = process.env.PORT || 5002;
 
-// app.set("trust proxy", 1);
+app.set("trust proxy", 1);
 
 // ✅ Middleware order matters!
 app.use(
