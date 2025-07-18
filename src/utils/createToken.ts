@@ -9,11 +9,13 @@ const createToken = (res: Response, id: any) => {
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure: true, 
-      sameSite: "none", 
-      maxAge: 30 * 24 * 60 * 60 * 1000, 
+      secure: true,
+      sameSite: "none",
+      domain: ".cravebuy.com", // ✅ good
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    console.log("cokkie send")
+
+    console.log("cokkie send");
   } catch (error) {
     console.log("error", error);
   }
