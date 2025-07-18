@@ -212,7 +212,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
 
     // 1. Get external users
     const externalResponse = await axios.get(
-      "http://localhost:5003/v1/users/all"
+      "https://api.kayhanaudio.com.au/v1/users/all"
     );
     const externalUsers = externalResponse.data;
 
