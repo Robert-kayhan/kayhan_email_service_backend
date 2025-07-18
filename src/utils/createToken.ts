@@ -13,6 +13,7 @@ const createToken = (res: Response, id: any) => {
       sameSite: "none", 
       maxAge: 30 * 24 * 60 * 60 * 1000, 
     });
+    console.log("cokkie send")
   } catch (error) {
     console.log("error", error);
   }
