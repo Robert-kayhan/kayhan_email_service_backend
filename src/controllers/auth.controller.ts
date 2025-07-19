@@ -5,9 +5,9 @@ import bcrypt from "bcryptjs";
 
 // 👤 Register New User
 const createUser = async (req: Request, res: Response): Promise<void> => {
-  const { firstname, lastname, email, password} = req.body;
-    console.log("connect successfully")
-  if (!firstname || !lastname || !email || !password ) {
+  const { firstname, lastname, email, password } = req.body;
+  console.log("connect successfully");
+  if (!firstname || !lastname || !email || !password) {
     res.status(400).json({ error: "Please fill all fields" });
     return;
   }
@@ -26,7 +26,7 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
       lastname,
       email,
       password: hashedPassword,
-    }); 
+    });
 
     createToken(res, user.id);
 
@@ -107,4 +107,18 @@ const getMe = async (req: any, res: Response): Promise<void> => {
   }
 };
 
-export { createUser, Sign , getMe };
+const Logout = async (req: any, res: Response): Promise<void> => {
+  try {
+    res.cookie("jwt", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+
+    res.status(200).json({ message: "Logged out successfully." });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Logout failed." });
+  }
+};
+
+export { createUser, Sign, getMe, Logout };
