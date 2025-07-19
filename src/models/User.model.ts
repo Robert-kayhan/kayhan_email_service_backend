@@ -1,14 +1,19 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
-import { UserAttributes } from "../utils/interface";
 
-class User extends Model<any>  {
+class User extends Model<any> {
   public id!: number;
   public firstname!: string;
   public lastname!: string;
   public email!: string;
   public phone!: string;
-  public address!: string;
+
+  public country!: string;
+  public state!: string;
+  public city!: string;
+  public street!: string;
+  public postcode!: string;
+
   public role!: number;
   public isSubscribed!: boolean;
   public unsubscribeToken!: string;
@@ -35,27 +40,44 @@ User.init(
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      unique: true,
     },
     phone: {
       type: DataTypes.STRING(20),
       allowNull: false,
     },
-    address: {
+    country: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    state: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    city: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    street: {
       type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    postcode: {
+      type: DataTypes.STRING(20),
       allowNull: true,
     },
     role: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-     isSubscribed: {
+    isSubscribed: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true, 
+      defaultValue: true,
     },
     unsubscribeToken: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     sequelize,

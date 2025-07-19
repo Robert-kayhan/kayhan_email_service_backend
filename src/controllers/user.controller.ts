@@ -5,14 +5,21 @@ import { Op } from "sequelize";
 import sendError from "../utils/SendResponse";
 import axios from "axios";
 const createOneUser = async (req: Request, res: Response): Promise<void> => {
-  const { firstname, lastname, email, phone, address } = req.body;
+  const {
+    firstname,
+    lastname,
+    email,
+    phone,
+    country,
+    state,
+    city,
+    street,
+    postcode,
+  } = req.body;
 
   try {
-    // Check if a user with the same email OR phone exists
     const existingUser = await User.findOne({
-      where: {
-        [Op.or]: [{ email }, { phone }],
-      },
+      where: { [Op.or]: [{ email }, { phone }] },
     });
 
     if (existingUser) {
@@ -22,14 +29,20 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Create the user
+    const address = [street, city, state, postcode, country]
+      .filter(Boolean)
+      .join(", ");
+
     await User.create({
       firstname,
       lastname,
       email,
       phone,
-      address,
-      password: "", // You can hash/set a default password here if needed
+      street,
+      city,
+      state,
+      postcode,
+      country,
     });
 
     res.status(201).json({ message: "User created successfully." });
@@ -46,54 +59,60 @@ const createMultipleUser = async (
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.file) sendError(res, 404, "please upload file");
+    if (!req.file) return sendError(res, 404, "Please upload a file");
 
-    const workBook = XLSX.read(req.file?.buffer, { type: "buffer" });
+    const workBook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheetName = workBook.SheetNames[0];
-    const SheetData = XLSX.utils.sheet_to_json<any>(workBook.Sheets[sheetName]);
+    const sheetData = XLSX.utils.sheet_to_json<any>(workBook.Sheets[sheetName]);
 
     const usersToCreate = [];
 
-    for (const row of SheetData) {
+    for (const row of sheetData) {
       const firstname = row["First Name"];
       const lastname = row["Last Name"];
       const email = row["Email"];
       const phone = row["Phone"];
-      const mailingStreet = row["Mailing Street"]?.trim() || "";
-      const mailingCity = row["Mailing City"]?.trim() || "";
-      const mailingState = row["Mailing State"]?.trim() || "";
-      const mailingZip = row["Mailing Zip"]?.toString().trim() || "";
-      const mailingCountry = row["Mailing Country"]?.trim() || "";
+      const street = row["Mailing Street"]?.trim();
+      const city = row["Mailing City"]?.trim();
+      const state = row["Mailing State"]?.trim();
+      const postcode = row["Mailing Zip"]?.toString().trim();
+      const country = row["Mailing Country"]?.trim();
 
-      const address = [
-        mailingStreet,
-        mailingCity,
-        mailingState,
-        mailingZip,
-        mailingCountry,
-      ]
-        .filter(Boolean)
-        .join(", ");
-      if (!firstname || !lastname || !email || !phone || !address) continue; // Required
+      // const address = [
+      //   mailingStreet,
+      //   mailingCity,
+      //   mailingState,
+      //   mailingZip,
+      //   mailingCountry,
+      // ]
+      //   .filter(Boolean)
+      //   .join(", ");
 
-      const existing = await User.findOne({
-        where: {
-          [Op.or]: [{ email }, { phone }],
-        },
+      if (!firstname || !lastname || !email || !phone || !country || !state || !city || !street || !postcode) continue;
+
+      const exists = await User.findOne({
+        where: { [Op.or]: [{ email }, { phone }] },
       });
-      if (!existing) {
+
+      if (!exists) {
         usersToCreate.push({
           firstname,
           lastname,
           email,
           phone,
-          address,
+          country,
+          state,
+          city ,
+          street,
+          postcode
         });
       }
     }
+
     if (usersToCreate.length > 0) {
       await User.bulkCreate(usersToCreate);
     }
+
     res.status(200).json({
       message: `Upload complete. ${usersToCreate.length} users created.`,
     });
@@ -117,7 +136,6 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
         "lastname",
         "email",
         "phone",
-        "address",
         "role",
         "createdAt",
       ],
@@ -133,7 +151,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
       phone: user.phone,
       role: user.role === 1 ? "Admin" : "User",
       status: "Active",
-      address: user.address,
+      // address: user.address,
     }));
 
     res.status(200).json({
@@ -189,7 +207,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     user.firstname = firstname ?? user.firstname;
     user.lastname = lastname ?? user.lastname;
     user.phone = phone ?? user.phone;
-    user.address = address ?? user.address;
+    // user.address = address ?? user.address;
     user.role = role ?? user.role;
     user.email = email ?? user.email;
 
