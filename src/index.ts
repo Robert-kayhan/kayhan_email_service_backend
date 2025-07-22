@@ -27,6 +27,7 @@ app.use(
       "http://localhost:3000",
       "http://89.116.134.75:3000",
       "https://cravebuy.com",
+      "https://mailer.kayhanaudio.com.au"
     ],
     credentials: true,
   })
