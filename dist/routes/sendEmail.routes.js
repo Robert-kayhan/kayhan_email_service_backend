@@ -7,4 +7,6 @@ const express_1 = __importDefault(require("express"));
 const email_controller_1 = require("../controllers/email.controller");
 const router = express_1.default.Router();
 router.route("/:campaignId").post(email_controller_1.sendEmails);
+router.route("/unsubscribe").post(email_controller_1.handleUnsubscribe);
+router.route("/open").post(email_controller_1.checkUserOpenEmail);
 exports.default = router;

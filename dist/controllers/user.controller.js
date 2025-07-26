@@ -45,20 +45,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUsersWithLeadStatus = exports.updateUser = exports.deleteUser = exports.getALLUser = exports.createMultipleUser = exports.createOneUser = void 0;
+exports.unsubscribeUser = exports.getUsersWithLeadStatus = exports.updateUser = exports.deleteUser = exports.getALLUser = exports.createMultipleUser = exports.createOneUser = void 0;
 const User_model_1 = __importDefault(require("../models/User.model"));
 const XLSX = __importStar(require("xlsx"));
 const sequelize_1 = require("sequelize");
 const SendResponse_1 = __importDefault(require("../utils/SendResponse"));
 const axios_1 = __importDefault(require("axios"));
 const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { firstname, lastname, email, phone, address } = req.body;
+    const { firstname, lastname, email, phone, country, state, city, street, postcode, } = req.body;
     try {
-        // Check if a user with the same email OR phone exists
         const existingUser = yield User_model_1.default.findOne({
-            where: {
-                [sequelize_1.Op.or]: [{ email }, { phone }],
-            },
+            where: { [sequelize_1.Op.or]: [{ email }, { phone }] },
         });
         if (existingUser) {
             res
@@ -66,14 +63,19 @@ const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 .json({ message: "User already exists with this email or phone." });
             return;
         }
-        // Create the user
+        const address = [street, city, state, postcode, country]
+            .filter(Boolean)
+            .join(", ");
         yield User_model_1.default.create({
             firstname,
             lastname,
             email,
             phone,
-            address,
-            password: "", // You can hash/set a default password here if needed
+            street,
+            city,
+            state,
+            postcode,
+            country,
         });
         res.status(201).json({ message: "User created successfully." });
     }
@@ -86,47 +88,49 @@ const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.createOneUser = createOneUser;
 const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     try {
         if (!req.file)
-            (0, SendResponse_1.default)(res, 404, "please upload file");
-        const workBook = XLSX.read((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer, { type: "buffer" });
+            return (0, SendResponse_1.default)(res, 404, "Please upload a file");
+        const workBook = XLSX.read(req.file.buffer, { type: "buffer" });
         const sheetName = workBook.SheetNames[0];
-        const SheetData = XLSX.utils.sheet_to_json(workBook.Sheets[sheetName]);
+        const sheetData = XLSX.utils.sheet_to_json(workBook.Sheets[sheetName]);
         const usersToCreate = [];
-        for (const row of SheetData) {
+        for (const row of sheetData) {
             const firstname = row["First Name"];
             const lastname = row["Last Name"];
             const email = row["Email"];
             const phone = row["Phone"];
-            const mailingStreet = ((_b = row["Mailing Street"]) === null || _b === void 0 ? void 0 : _b.trim()) || "";
-            const mailingCity = ((_c = row["Mailing City"]) === null || _c === void 0 ? void 0 : _c.trim()) || "";
-            const mailingState = ((_d = row["Mailing State"]) === null || _d === void 0 ? void 0 : _d.trim()) || "";
-            const mailingZip = ((_e = row["Mailing Zip"]) === null || _e === void 0 ? void 0 : _e.toString().trim()) || "";
-            const mailingCountry = ((_f = row["Mailing Country"]) === null || _f === void 0 ? void 0 : _f.trim()) || "";
-            const address = [
-                mailingStreet,
-                mailingCity,
-                mailingState,
-                mailingZip,
-                mailingCountry,
-            ]
-                .filter(Boolean)
-                .join(", ");
-            if (!firstname || !lastname || !email || !phone || !address)
-                continue; // Required
-            const existing = yield User_model_1.default.findOne({
-                where: {
-                    [sequelize_1.Op.or]: [{ email }, { phone }],
-                },
+            const street = (_a = row["Mailing Street"]) === null || _a === void 0 ? void 0 : _a.trim();
+            const city = (_b = row["Mailing City"]) === null || _b === void 0 ? void 0 : _b.trim();
+            const state = (_c = row["Mailing State"]) === null || _c === void 0 ? void 0 : _c.trim();
+            const postcode = (_d = row["Mailing Zip"]) === null || _d === void 0 ? void 0 : _d.toString().trim();
+            const country = (_e = row["Mailing Country"]) === null || _e === void 0 ? void 0 : _e.trim();
+            // const address = [
+            //   mailingStreet,
+            //   mailingCity,
+            //   mailingState,
+            //   mailingZip,
+            //   mailingCountry,
+            // ]
+            //   .filter(Boolean)
+            //   .join(", ");
+            if (!firstname || !lastname || !email || !phone || !country || !state || !city || !street || !postcode)
+                continue;
+            const exists = yield User_model_1.default.findOne({
+                where: { [sequelize_1.Op.or]: [{ email }, { phone }] },
             });
-            if (!existing) {
+            if (!exists) {
                 usersToCreate.push({
                     firstname,
                     lastname,
                     email,
                     phone,
-                    address,
+                    country,
+                    state,
+                    city,
+                    street,
+                    postcode
                 });
             }
         }
@@ -150,7 +154,15 @@ const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
         const { count, rows: users } = yield User_model_1.default.findAndCountAll({
-            attributes: ["id", "firstname", "lastname", "email", "phone", "address", "role", "createdAt"],
+            attributes: [
+                "id",
+                "firstname",
+                "lastname",
+                "email",
+                "phone",
+                "role",
+                "createdAt",
+            ],
             order: [["createdAt", "DESC"]],
             limit,
             offset,
@@ -162,7 +174,7 @@ const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             phone: user.phone,
             role: user.role === 1 ? "Admin" : "User",
             status: "Active",
-            address: user.address
+            // address: user.address,
         }));
         res.status(200).json({
             data: formattedUsers,
@@ -214,7 +226,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         user.firstname = firstname !== null && firstname !== void 0 ? firstname : user.firstname;
         user.lastname = lastname !== null && lastname !== void 0 ? lastname : user.lastname;
         user.phone = phone !== null && phone !== void 0 ? phone : user.phone;
-        user.address = address !== null && address !== void 0 ? address : user.address;
+        // user.address = address ?? user.address;
         user.role = role !== null && role !== void 0 ? role : user.role;
         user.email = email !== null && email !== void 0 ? email : user.email;
         yield user.save();
@@ -234,7 +246,7 @@ const getUsersWithLeadStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
         const search = String(req.query.search || "").toLowerCase();
         const hasLeadOnly = req.query.hasLeadOnly === "true";
         // 1. Get external users
-        const externalResponse = yield axios_1.default.get("http://localhost:5003/v1/users/all");
+        const externalResponse = yield axios_1.default.get("https://api.kayhanaudio.com.au/v1/users/all");
         const externalUsers = externalResponse.data;
         if (!Array.isArray(externalUsers)) {
             res.status(400).json({ message: "Invalid external users format" });
@@ -282,3 +294,27 @@ const getUsersWithLeadStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getUsersWithLeadStatus = getUsersWithLeadStatus;
+const unsubscribeUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const user = yield User_model_1.default.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        user.isSubscribed = false;
+        yield user.save();
+        return res.status(200).json({
+            message: "User unsubscribed successfully.",
+            user: {
+                id: user.id,
+                email: user.email,
+                isSubscribed: user.isSubscribed,
+            },
+        });
+    }
+    catch (error) {
+        console.error("❌ Error unsubscribing user:", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+});
+exports.unsubscribeUser = unsubscribeUser;

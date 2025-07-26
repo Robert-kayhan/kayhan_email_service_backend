@@ -14,12 +14,22 @@ LeadGroupAssignment.init({
         primaryKey: true,
     },
     userId: {
-        type: sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
+        references: {
+            model: "users", // ⚠️ reference actual table
+            key: "id",
+        },
+        onDelete: "CASCADE",
     },
     groupId: {
-        type: sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
+        references: {
+            model: "lead_groups", // ⚠️ reference actual table
+            key: "id",
+        },
+        onDelete: "CASCADE",
     },
 }, {
     sequelize: database_1.default,

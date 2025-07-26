@@ -11,10 +11,12 @@ const createToken = (res, id) => {
         });
         res.cookie("jwt", token, {
             httpOnly: true,
-            secure: false, // HTTPS only in production
-            sameSite: "none", // Protects from CSRF
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            secure: true,
+            sameSite: "none",
+            domain: ".kayhanaudio.com.au", // ✅ good
+            maxAge: 30 * 24 * 60 * 60 * 1000,
         });
+        console.log("cokkie send");
     }
     catch (error) {
         console.log("error", error);

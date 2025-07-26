@@ -19,6 +19,7 @@ const User_model_1 = __importDefault(require("../models/User.model"));
 const createLeadGroupWithUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { groupName, userIds } = req.body;
+        console.log("there are got ");
         if (!groupName || !Array.isArray(userIds)) {
             res.status(400).json({ message: "groupName and userIds are required." });
         }

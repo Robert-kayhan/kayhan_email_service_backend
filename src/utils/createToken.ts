@@ -11,7 +11,7 @@ const createToken = (res: Response, id: any) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      domain: ".cravebuy.com", // ✅ good
+      domain: ".kayhanaudio.com.au", // ✅ good
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
