@@ -16,7 +16,7 @@ import campaignRoutes from "./routes/Campaign.route";
 import sendEmailroutes from "./routes/sendEmail.routes";
 
 const app = express();
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT;
 
 app.set("trust proxy", 1);
 
@@ -45,7 +45,9 @@ app.use("/api/campaign/", campaignRoutes);
 app.use("/api/send-email/", sendEmailroutes);
 
 connectDb();
-
+app.get("/api/check", (req, res) => {
+  res.json({ status: "ok", message: "API is working ✅" });
+});
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });
