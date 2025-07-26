@@ -15,7 +15,13 @@ EmailLog.init({
         primaryKey: true,
     },
     campaign_id: {
-        type: sequelize_1.DataTypes.INTEGER.UNSIGNED
+        type: sequelize_1.DataTypes.INTEGER.UNSIGNED,
+        allowNull: false,
+        references: {
+            model: "campaigns", // match actual table name
+            key: "id",
+        },
+        onDelete: "CASCADE", // optional, but useful
     },
     email: {
         type: sequelize_1.DataTypes.STRING,

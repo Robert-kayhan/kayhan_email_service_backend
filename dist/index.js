@@ -19,9 +19,15 @@ const Campaign_route_1 = __importDefault(require("./routes/Campaign.route"));
 const sendEmail_routes_1 = __importDefault(require("./routes/sendEmail.routes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5002;
+app.set("trust proxy", 1);
 // ✅ Middleware order matters!
 app.use((0, cors_1.default)({
-    origin: ["http://localhost:3000", "http://89.116.134.75:3000"],
+    origin: [
+        "http://localhost:3000",
+        "http://89.116.134.75:3000",
+        "https://cravebuy.com",
+        "https://mailer.kayhanaudio.com.au"
+    ],
     credentials: true,
 }));
 app.use((0, cookie_parser_1.default)());

@@ -19,8 +19,12 @@ const connectDb = () => __awaiter(void 0, void 0, void 0, function* () {
         yield database_1.default.authenticate();
         console.log("✅ Database connected successfully.");
         (0, models_1.setupAssociations)();
-        database_1.default.sync().then(() => {
-            console.log("✅ Database synced");
+        database_1.default.sync({ alter: true })
+            .then(() => {
+            console.log("✅ DB altered successfully");
+        })
+            .catch((error) => {
+            console.error("❌ Alter failed:", error);
         });
     }
     catch (error) {
