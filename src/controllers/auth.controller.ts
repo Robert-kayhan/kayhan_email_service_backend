@@ -106,12 +106,14 @@ const getMe = async (req: any, res: Response): Promise<void> => {
     res.status(500).json({ error: "Something went wrong" });
   }
 };
-
 const Logout = async (req: any, res: Response): Promise<void> => {
   try {
     res.cookie("jwt", "", {
       httpOnly: true,
-      expires: new Date(0),
+      secure: true,
+      sameSite: "none",
+      domain: ".kayhanaudio.com.au", // must match exactly
+      expires: new Date(0), // or maxAge: 0
     });
 
     res.status(200).json({ message: "Logged out successfully." });
@@ -120,5 +122,6 @@ const Logout = async (req: any, res: Response): Promise<void> => {
     res.status(500).json({ message: "Logout failed." });
   }
 };
+
 
 export { createUser, Sign, getMe, Logout };
