@@ -18,7 +18,7 @@ const leadGroup_route_1 = __importDefault(require("./routes/leadGroup.route"));
 const Campaign_route_1 = __importDefault(require("./routes/Campaign.route"));
 const sendEmail_routes_1 = __importDefault(require("./routes/sendEmail.routes"));
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT;
 app.set("trust proxy", 1);
 // ✅ Middleware order matters!
 app.use((0, cors_1.default)({
@@ -41,6 +41,9 @@ app.use("/api/lead-group/", leadGroup_route_1.default);
 app.use("/api/campaign/", Campaign_route_1.default);
 app.use("/api/send-email/", sendEmail_routes_1.default);
 (0, connectDb_1.default)();
+app.get("/api/check", (req, res) => {
+    res.json({ status: "ok", message: "API is working ✅" });
+});
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });

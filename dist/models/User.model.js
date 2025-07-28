@@ -24,11 +24,11 @@ User.init({
     email: {
         type: sequelize_1.DataTypes.STRING(100),
         allowNull: false,
-        unique: true,
+        // unique: true,
     },
     phone: {
         type: sequelize_1.DataTypes.STRING(20),
-        allowNull: false,
+        allowNull: true,
     },
     country: {
         type: sequelize_1.DataTypes.STRING(100),

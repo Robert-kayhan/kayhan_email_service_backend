@@ -65,62 +65,67 @@ const createMultipleUser = async (
     const sheetName = workBook.SheetNames[0];
     const sheetData = XLSX.utils.sheet_to_json<any>(workBook.Sheets[sheetName]);
 
-    const usersToCreate = [];
+    const safeTrim = (val: any): string =>
+      typeof val === "string" || typeof val === "number"
+        ? val.toString().trim()
+        : "";
 
-    for (const row of sheetData) {
-      const firstname = row["First Name"];
-      const lastname = row["Last Name"];
-      const email = row["Email"];
-      const phone = row["Phone"];
-      const street = row["Mailing Street"]?.trim();
-      const city = row["Mailing City"]?.trim();
-      const state = row["Mailing State"]?.trim();
-      const postcode = row["Mailing Zip"]?.toString().trim();
-      const country = row["Mailing Country"]?.trim();
+    // Step 1: Preprocess all rows
+    const allProcessedRows = sheetData
+      .map((row) => {
+        let rawPhone = safeTrim(row["Phone"]);
+        // Clean phone number: remove non-digits except +
+        let cleanedPhone = rawPhone.replace(/[^0-9+]/g, "");
 
-      // const address = [
-      //   mailingStreet,
-      //   mailingCity,
-      //   mailingState,
-      //   mailingZip,
-      //   mailingCountry,
-      // ]
-      //   .filter(Boolean)
-      //   .join(", ");
+        // Limit phone length to 20 chars (MySQL VARCHAR(20) safe)
+        if (cleanedPhone.length > 20) {
+          cleanedPhone = cleanedPhone.slice(0, 20);
+        }
 
-      if (!firstname || !lastname || !email || !phone || !country || !state || !city || !street || !postcode) continue;
+        return {
+          firstname: safeTrim(row["First Name"]),
+          lastname: safeTrim(row["Last Name"]),
+          email: safeTrim(row["Email"]),
+          phone: cleanedPhone || null,
+          country: safeTrim(row["Mailing Country"]),
+          state: safeTrim(row["Mailing State"]),
+          city: safeTrim(row["Mailing City"]),
+          street: safeTrim(row["Mailing Street"]),
+          postcode: safeTrim(row["Mailing Zip"]),
+        };
+      })
+      .filter((row) => row.firstname && row.lastname && row.email); // Remove incomplete rows
 
-      const exists = await User.findOne({
-        where: { [Op.or]: [{ email }, { phone }] },
-      });
+    // Step 2: Get all existing emails
+    const emails = allProcessedRows.map((row) => row.email);
+    const existingUsers = await User.findAll({
+      attributes: ["email"],
+      where: { email: { [Op.in]: emails } },
+    });
+    const existingEmailSet = new Set(existingUsers.map((user) => user.email));
 
-      if (!exists) {
-        usersToCreate.push({
-          firstname,
-          lastname,
-          email,
-          phone,
-          country,
-          state,
-          city ,
-          street,
-          postcode
-        });
-      }
-    }
+    // Step 3: Filter new users only
+    const newUsers = allProcessedRows.filter(
+      (row) => !existingEmailSet.has(row.email)
+    );
 
-    if (usersToCreate.length > 0) {
-      await User.bulkCreate(usersToCreate);
+    // Step 4: Insert in chunks
+    const BATCH_SIZE = 1000;
+    for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
+      const batch = newUsers.slice(i, i + BATCH_SIZE);
+      await User.bulkCreate(batch);
     }
 
     res.status(200).json({
-      message: `Upload complete. ${usersToCreate.length} users created.`,
+      message: `Upload complete. ${newUsers.length} users created.`,
     });
   } catch (error) {
     console.error("Bulk upload error:", error);
     res.status(500).json({ message: "Failed to upload users." });
   }
 };
+
+
 
 const getALLUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -140,7 +145,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
         "createdAt",
       ],
       order: [["createdAt", "DESC"]],
-      limit,
+      limit :100,
       offset,
     });
 

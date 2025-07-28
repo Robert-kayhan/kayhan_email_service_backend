@@ -40,11 +40,11 @@ User.init(
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true,
+      // unique: true,
     },
     phone: {
       type: DataTypes.STRING(20),
-      allowNull: false,
+      allowNull: true,
     },
     country: {
       type: DataTypes.STRING(100),
