@@ -113,7 +113,10 @@ const Logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         res.cookie("jwt", "", {
             httpOnly: true,
-            expires: new Date(0),
+            secure: true,
+            sameSite: "none",
+            domain: ".kayhanaudio.com.au", // must match exactly
+            expires: new Date(0), // or maxAge: 0
         });
         res.status(200).json({ message: "Logged out successfully." });
     }

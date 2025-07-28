@@ -13,7 +13,7 @@ const createToken = (res, id) => {
             httpOnly: true,
             secure: true,
             sameSite: "none",
-            domain: ".kayhanaudio.com.au", // ✅ good
+            domain: ".kayhanaudio.com.au",
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
         console.log("cokkie send");

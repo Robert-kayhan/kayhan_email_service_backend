@@ -88,57 +88,55 @@ const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.createOneUser = createOneUser;
 const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
     try {
         if (!req.file)
             return (0, SendResponse_1.default)(res, 404, "Please upload a file");
         const workBook = XLSX.read(req.file.buffer, { type: "buffer" });
         const sheetName = workBook.SheetNames[0];
         const sheetData = XLSX.utils.sheet_to_json(workBook.Sheets[sheetName]);
-        const usersToCreate = [];
-        for (const row of sheetData) {
-            const firstname = row["First Name"];
-            const lastname = row["Last Name"];
-            const email = row["Email"];
-            const phone = row["Phone"];
-            const street = (_a = row["Mailing Street"]) === null || _a === void 0 ? void 0 : _a.trim();
-            const city = (_b = row["Mailing City"]) === null || _b === void 0 ? void 0 : _b.trim();
-            const state = (_c = row["Mailing State"]) === null || _c === void 0 ? void 0 : _c.trim();
-            const postcode = (_d = row["Mailing Zip"]) === null || _d === void 0 ? void 0 : _d.toString().trim();
-            const country = (_e = row["Mailing Country"]) === null || _e === void 0 ? void 0 : _e.trim();
-            // const address = [
-            //   mailingStreet,
-            //   mailingCity,
-            //   mailingState,
-            //   mailingZip,
-            //   mailingCountry,
-            // ]
-            //   .filter(Boolean)
-            //   .join(", ");
-            if (!firstname || !lastname || !email || !phone || !country || !state || !city || !street || !postcode)
-                continue;
-            const exists = yield User_model_1.default.findOne({
-                where: { [sequelize_1.Op.or]: [{ email }, { phone }] },
-            });
-            if (!exists) {
-                usersToCreate.push({
-                    firstname,
-                    lastname,
-                    email,
-                    phone,
-                    country,
-                    state,
-                    city,
-                    street,
-                    postcode
-                });
+        const safeTrim = (val) => typeof val === "string" || typeof val === "number"
+            ? val.toString().trim()
+            : "";
+        // Step 1: Preprocess all rows
+        const allProcessedRows = sheetData
+            .map((row) => {
+            let rawPhone = safeTrim(row["Phone"]);
+            // Clean phone number: remove non-digits except +
+            let cleanedPhone = rawPhone.replace(/[^0-9+]/g, "");
+            // Limit phone length to 20 chars (MySQL VARCHAR(20) safe)
+            if (cleanedPhone.length > 20) {
+                cleanedPhone = cleanedPhone.slice(0, 20);
             }
-        }
-        if (usersToCreate.length > 0) {
-            yield User_model_1.default.bulkCreate(usersToCreate);
+            return {
+                firstname: safeTrim(row["First Name"]),
+                lastname: safeTrim(row["Last Name"]),
+                email: safeTrim(row["Email"]),
+                phone: cleanedPhone || null,
+                country: safeTrim(row["Mailing Country"]),
+                state: safeTrim(row["Mailing State"]),
+                city: safeTrim(row["Mailing City"]),
+                street: safeTrim(row["Mailing Street"]),
+                postcode: safeTrim(row["Mailing Zip"]),
+            };
+        })
+            .filter((row) => row.firstname && row.lastname && row.email); // Remove incomplete rows
+        // Step 2: Get all existing emails
+        const emails = allProcessedRows.map((row) => row.email);
+        const existingUsers = yield User_model_1.default.findAll({
+            attributes: ["email"],
+            where: { email: { [sequelize_1.Op.in]: emails } },
+        });
+        const existingEmailSet = new Set(existingUsers.map((user) => user.email));
+        // Step 3: Filter new users only
+        const newUsers = allProcessedRows.filter((row) => !existingEmailSet.has(row.email));
+        // Step 4: Insert in chunks
+        const BATCH_SIZE = 1000;
+        for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
+            const batch = newUsers.slice(i, i + BATCH_SIZE);
+            yield User_model_1.default.bulkCreate(batch);
         }
         res.status(200).json({
-            message: `Upload complete. ${usersToCreate.length} users created.`,
+            message: `Upload complete. ${newUsers.length} users created.`,
         });
     }
     catch (error) {
@@ -164,7 +162,7 @@ const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 "createdAt",
             ],
             order: [["createdAt", "DESC"]],
-            limit,
+            limit: 100,
             offset,
         });
         const formattedUsers = users.map((user) => ({

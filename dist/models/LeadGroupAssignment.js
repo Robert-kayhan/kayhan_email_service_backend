@@ -14,7 +14,7 @@ LeadGroupAssignment.init({
         primaryKey: true,
     },
     userId: {
-        type: sequelize_1.DataTypes.INTEGER.UNSIGNED,
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: "users", // ⚠️ reference actual table
@@ -23,7 +23,7 @@ LeadGroupAssignment.init({
         onDelete: "CASCADE",
     },
     groupId: {
-        type: sequelize_1.DataTypes.INTEGER.UNSIGNED,
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: "lead_groups", // ⚠️ reference actual table
