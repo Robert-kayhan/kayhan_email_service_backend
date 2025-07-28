@@ -49,7 +49,6 @@ exports.unsubscribeUser = exports.getUsersWithLeadStatus = exports.updateUser = 
 const User_model_1 = __importDefault(require("../models/User.model"));
 const XLSX = __importStar(require("xlsx"));
 const sequelize_1 = require("sequelize");
-const SendResponse_1 = __importDefault(require("../utils/SendResponse"));
 const axios_1 = __importDefault(require("axios"));
 const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { firstname, lastname, email, phone, country, state, city, street, postcode, } = req.body;
@@ -89,29 +88,29 @@ const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.createOneUser = createOneUser;
 const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.file)
-            return (0, SendResponse_1.default)(res, 404, "Please upload a file");
+        if (!req.file) {
+            res.status(404).json({ message: "Please upload a file" });
+            return;
+        }
         const workBook = XLSX.read(req.file.buffer, { type: "buffer" });
         const sheetName = workBook.SheetNames[0];
         const sheetData = XLSX.utils.sheet_to_json(workBook.Sheets[sheetName]);
         const safeTrim = (val) => typeof val === "string" || typeof val === "number"
             ? val.toString().trim()
             : "";
-        // Step 1: Preprocess all rows
+        // Preprocess data
         const allProcessedRows = sheetData
             .map((row) => {
-            let rawPhone = safeTrim(row["Phone"]);
-            // Clean phone number: remove non-digits except +
-            let cleanedPhone = rawPhone.replace(/[^0-9+]/g, "");
-            // Limit phone length to 20 chars (MySQL VARCHAR(20) safe)
-            if (cleanedPhone.length > 20) {
-                cleanedPhone = cleanedPhone.slice(0, 20);
+            let phone = safeTrim(row["Phone"]).replace(/[^0-9+]/g, "");
+            // Ensure phone number does not exceed 20 chars (MySQL VARCHAR(20))
+            if (phone.length > 20) {
+                phone = phone.slice(0, 20);
             }
             return {
                 firstname: safeTrim(row["First Name"]),
                 lastname: safeTrim(row["Last Name"]),
                 email: safeTrim(row["Email"]),
-                phone: cleanedPhone || null,
+                phone: phone || null,
                 country: safeTrim(row["Mailing Country"]),
                 state: safeTrim(row["Mailing State"]),
                 city: safeTrim(row["Mailing City"]),
@@ -119,17 +118,14 @@ const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 postcode: safeTrim(row["Mailing Zip"]),
             };
         })
-            .filter((row) => row.firstname && row.lastname && row.email); // Remove incomplete rows
-        // Step 2: Get all existing emails
+            .filter((row) => row.firstname && row.lastname && row.email);
         const emails = allProcessedRows.map((row) => row.email);
         const existingUsers = yield User_model_1.default.findAll({
             attributes: ["email"],
             where: { email: { [sequelize_1.Op.in]: emails } },
         });
-        const existingEmailSet = new Set(existingUsers.map((user) => user.email));
-        // Step 3: Filter new users only
+        const existingEmailSet = new Set(existingUsers.map((u) => u.email));
         const newUsers = allProcessedRows.filter((row) => !existingEmailSet.has(row.email));
-        // Step 4: Insert in chunks
         const BATCH_SIZE = 1000;
         for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
             const batch = newUsers.slice(i, i + BATCH_SIZE);
@@ -141,7 +137,7 @@ const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
     catch (error) {
         console.error("Bulk upload error:", error);
-        res.status(500).json({ message: "Failed to upload users." });
+        res.status(500).json({ message: "Failed to upload users.", error });
     }
 });
 exports.createMultipleUser = createMultipleUser;
