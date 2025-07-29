@@ -130,7 +130,7 @@ const createMultipleUser = async (
     console.error("Bulk upload error:", error);
     res.status(500).json({
       message: "Failed to upload users.",
-      error: error?.message || error,
+      error:  error,
     });
   }
 };
