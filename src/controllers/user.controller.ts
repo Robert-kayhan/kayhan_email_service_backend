@@ -74,21 +74,21 @@ const createMultipleUser = async (
         : "";
 
     const allProcessedRows = sheetData
-      .map((row, index) => {
+      .map((row) => {
         let phone = safeTrim(row["Phone"]).replace(/[^0-9+]/g, "");
         if (phone.length > 20) phone = phone.slice(0, 20);
 
         return {
           firstname: safeTrim(row["First Name"]),
           lastname: safeTrim(row["Last Name"]),
-          email: safeTrim(row["Email"]).toLowerCase(),
+          email: safeTrim(row["Email"]).toLowerCase(), // Normalize here
           phone: phone || null,
           country: safeTrim(row["Mailing Country"]),
           state: safeTrim(row["Mailing State"]),
           city: safeTrim(row["Mailing City"]),
           street: safeTrim(row["Mailing Street"]),
           postcode: safeTrim(row["Mailing Zip"]),
-          isDeleted: false, // optional: if you're using soft delete
+          isDeleted: false,
           isActive: true,
         };
       })
@@ -99,15 +99,19 @@ const createMultipleUser = async (
       return;
     }
 
-    const emails = allProcessedRows.map((row) => row.email);
+    const emails = allProcessedRows.map((row) => row.email.toLowerCase());
     const existingUsers = await User.findAll({
       attributes: ["email"],
       where: { email: { [Op.in]: emails } },
     });
 
-    const existingEmailSet = new Set(existingUsers.map((u) => u.email));
+    // Normalize email case for comparison
+    const existingEmailSet = new Set(
+      existingUsers.map((u) => u.email.toLowerCase())
+    );
+
     const newUsers = allProcessedRows.filter(
-      (row) => !existingEmailSet.has(row.email)
+      (row) => !existingEmailSet.has(row.email.toLowerCase())
     );
 
     if (newUsers.length === 0) {
@@ -128,12 +132,19 @@ const createMultipleUser = async (
     });
   } catch (error: any) {
     console.error("Bulk upload error:", error);
+
+    if (error?.errors) {
+      console.error("Validation Errors:", error.errors);
+    }
+
     res.status(500).json({
       message: "Failed to upload users.",
-      error:  error,
+      error: error.message,
+      details: error.errors ?? null,
     });
   }
 };
+
 
 const getALLUser = async (req: Request, res: Response): Promise<void> => {
   try {
