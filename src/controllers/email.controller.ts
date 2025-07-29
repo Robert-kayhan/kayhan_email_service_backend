@@ -58,8 +58,8 @@ const sendEmails = async (req: Request, res: Response) => {
         });
 
         // 3. Prepare email content
-        const unsubscribeLink = `https://yourdomain.com/unsubscribe?token=${user.unsubscribeToken}`;
-        const pixelUrl = `https://yourdomain.com/api/email/open?emailId=${log.id}`;
+        const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
+        const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
         const subject: string = campaign.campaignName;
         let html: string = campaign.Template?.html || "<p>No template</p>";
         const text: string = "You have a new campaign message.";
