@@ -6,8 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupAssociations = void 0;
 const Campaign_1 = __importDefault(require("./Campaign"));
 const EmailLog_1 = __importDefault(require("./EmailLog"));
+const LeadFolowUp_1 = __importDefault(require("./LeadFolowUp"));
 const LeadGroup_1 = __importDefault(require("./LeadGroup"));
 const LeadGroupAssignment_1 = __importDefault(require("./LeadGroupAssignment"));
+const Note_1 = __importDefault(require("./Note"));
 const Template_1 = __importDefault(require("./Template"));
 const User_model_1 = __importDefault(require("./User.model"));
 const setupAssociations = () => {
@@ -53,3 +55,14 @@ const setupAssociations = () => {
     });
 };
 exports.setupAssociations = setupAssociations;
+LeadFolowUp_1.default.hasMany(Note_1.default, {
+    foreignKey: "leadFollowUpId",
+    as: "Notes",
+    onDelete: "CASCADE",
+    constraints: false,
+});
+Note_1.default.belongsTo(LeadFolowUp_1.default, {
+    foreignKey: "leadFollowUpId",
+    as: "LeadFollowUp",
+    constraints: false,
+});

@@ -24,7 +24,7 @@ User.init({
     email: {
         type: sequelize_1.DataTypes.STRING(100),
         allowNull: false,
-        // unique: true,
+        unique: false,
     },
     phone: {
         type: sequelize_1.DataTypes.STRING(20),

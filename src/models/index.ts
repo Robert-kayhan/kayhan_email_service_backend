@@ -1,7 +1,9 @@
 import Campaign from "./Campaign";
 import EmailLog from "./EmailLog";
+import LeadFollowUp from "./LeadFolowUp";
 import LeadGroup from "./LeadGroup";
 import LeadGroupAssignment from "./LeadGroupAssignment";
+import LeadNote from "./Note";
 import Template from "./Template";
 import User from "./User.model";
 
@@ -53,3 +55,17 @@ export const setupAssociations = () => {
     constraints: false,
   });
 };
+
+
+LeadFollowUp.hasMany(LeadNote, {
+    foreignKey: "leadFollowUpId",
+    as: "Notes",
+    onDelete: "CASCADE",
+    constraints: false,
+  });
+
+  LeadNote.belongsTo(LeadFollowUp, {
+    foreignKey: "leadFollowUpId",
+    as: "LeadFollowUp",
+    constraints: false,
+  });

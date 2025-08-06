@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import templateRoutes from "./routes/template.route";
 import LeadGroupRoutes from "./routes/leadGroup.route";
+import LeadFolowUp from "./routes/leadFollowUp.route"
 import campaignRoutes from "./routes/Campaign.route";
 import sendEmailroutes from "./routes/sendEmail.routes";
 
@@ -41,6 +42,7 @@ app.use("/api/auth/", authRoutes);
 app.use("/api/users/", userRoutes);
 app.use("/api/templates/", templateRoutes);
 app.use("/api/lead-group/", LeadGroupRoutes);
+app.use("/api/lead-follow-up/", LeadFolowUp);
 app.use("/api/campaign/", campaignRoutes);
 app.use("/api/send-email/", sendEmailroutes);
 
@@ -51,3 +53,4 @@ app.get("/api/check", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });
+  
