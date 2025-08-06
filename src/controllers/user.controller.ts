@@ -164,7 +164,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
         "createdAt",
       ],
       order: [["createdAt", "DESC"]],
-      limit: 100,
+      limit,
       offset,
     });
 

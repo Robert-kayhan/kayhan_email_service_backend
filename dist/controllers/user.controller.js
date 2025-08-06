@@ -87,9 +87,10 @@ const createOneUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.createOneUser = createOneUser;
 const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         if (!req.file) {
-            res.status(404).json({ message: "Please upload a file" });
+            res.status(400).json({ message: "Please upload a file" });
             return;
         }
         const workBook = XLSX.read(req.file.buffer, { type: "buffer" });
@@ -98,46 +99,63 @@ const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, funct
         const safeTrim = (val) => typeof val === "string" || typeof val === "number"
             ? val.toString().trim()
             : "";
-        // Preprocess data
         const allProcessedRows = sheetData
             .map((row) => {
             let phone = safeTrim(row["Phone"]).replace(/[^0-9+]/g, "");
-            // Ensure phone number does not exceed 20 chars (MySQL VARCHAR(20))
-            if (phone.length > 20) {
+            if (phone.length > 20)
                 phone = phone.slice(0, 20);
-            }
             return {
                 firstname: safeTrim(row["First Name"]),
                 lastname: safeTrim(row["Last Name"]),
-                email: safeTrim(row["Email"]),
+                email: safeTrim(row["Email"]).toLowerCase(), // Normalize here
                 phone: phone || null,
                 country: safeTrim(row["Mailing Country"]),
                 state: safeTrim(row["Mailing State"]),
                 city: safeTrim(row["Mailing City"]),
                 street: safeTrim(row["Mailing Street"]),
                 postcode: safeTrim(row["Mailing Zip"]),
+                isDeleted: false,
+                isActive: true,
             };
         })
             .filter((row) => row.firstname && row.lastname && row.email);
-        const emails = allProcessedRows.map((row) => row.email);
+        if (allProcessedRows.length === 0) {
+            res.status(400).json({ message: "No valid data found in sheet" });
+            return;
+        }
+        const emails = allProcessedRows.map((row) => row.email.toLowerCase());
         const existingUsers = yield User_model_1.default.findAll({
             attributes: ["email"],
             where: { email: { [sequelize_1.Op.in]: emails } },
         });
-        const existingEmailSet = new Set(existingUsers.map((u) => u.email));
-        const newUsers = allProcessedRows.filter((row) => !existingEmailSet.has(row.email));
+        // Normalize email case for comparison
+        const existingEmailSet = new Set(existingUsers.map((u) => u.email.toLowerCase()));
+        const newUsers = allProcessedRows.filter((row) => !existingEmailSet.has(row.email.toLowerCase()));
+        if (newUsers.length === 0) {
+            res.status(200).json({
+                message: "No new users to create. All emails already exist.",
+            });
+            return;
+        }
         const BATCH_SIZE = 1000;
         for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
             const batch = newUsers.slice(i, i + BATCH_SIZE);
-            yield User_model_1.default.bulkCreate(batch);
+            yield User_model_1.default.bulkCreate(batch, { validate: true });
         }
         res.status(200).json({
-            message: `Upload complete. ${newUsers.length} users created.`,
+            message: `Upload complete. ${newUsers.length} new users created.`,
         });
     }
     catch (error) {
         console.error("Bulk upload error:", error);
-        res.status(500).json({ message: "Failed to upload users.", error });
+        if (error === null || error === void 0 ? void 0 : error.errors) {
+            console.error("Validation Errors:", error.errors);
+        }
+        res.status(500).json({
+            message: "Failed to upload users.",
+            error: error.message,
+            details: (_a = error.errors) !== null && _a !== void 0 ? _a : null,
+        });
     }
 });
 exports.createMultipleUser = createMultipleUser;
@@ -158,7 +176,7 @@ const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 "createdAt",
             ],
             order: [["createdAt", "DESC"]],
-            limit: 100,
+            limit,
             offset,
         });
         const formattedUsers = users.map((user) => ({

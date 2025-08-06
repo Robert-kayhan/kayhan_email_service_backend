@@ -63,8 +63,8 @@ const sendEmails = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     status: "pending", // temporary status, will update later
                 });
                 // 3. Prepare email content
-                const unsubscribeLink = `https://yourdomain.com/unsubscribe?token=${user.unsubscribeToken}`;
-                const pixelUrl = `https://yourdomain.com/api/email/open?emailId=${log.id}`;
+                const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
+                const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
                 const subject = campaign.campaignName;
                 let html = ((_a = campaign.Template) === null || _a === void 0 ? void 0 : _a.html) || "<p>No template</p>";
                 const text = "You have a new campaign message.";
