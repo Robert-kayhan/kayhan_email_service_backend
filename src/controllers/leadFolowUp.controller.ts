@@ -122,7 +122,6 @@ const getAllLeads = async (req: Request, res: Response) => {
         // Filter by sale status
         where.saleStatus = leadStatus;
       } else {
-        // For "New", "first Follow up", etc. — filter by status
         where.status = leadStatus;
       }
     }
@@ -288,7 +287,9 @@ const updateSaleStatus = async (req: Request, res: Response) => {
     }
 
     lead.saleStatus = saleStatus;
-    lead.status = saleStatus;
+    if(saleStatus === "Sale done"){
+      lead.status = saleStatus;
+    }
     await lead.save();
 
     res
