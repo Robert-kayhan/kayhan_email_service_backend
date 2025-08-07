@@ -112,6 +112,7 @@ const getAllLeads = async (req: Request, res: Response) => {
       if (leadStatus === "Today's  Follow up") {
         // Match today's date in any of the follow-up date fields
         where[Op.or] = [
+          { followUpDate: todayStr },
           { firstNextFollowUpDate: todayStr },
           { secondNextFollowUpDate: todayStr },
           { thirdNextFollowUpDate: todayStr },
@@ -240,7 +241,7 @@ const updateFollowUpStage = async (req: any, res: Response) => {
     const nextDateKey = `${stage}NextFollowUpDate`;
 
     const updatePayload: any = {
-      status : `${stage} Follow up`
+      status: `${stage} Follow up`,
     };
 
     // If follow-up date is being newly set, also set "by"
@@ -287,7 +288,7 @@ const updateSaleStatus = async (req: Request, res: Response) => {
     }
 
     lead.saleStatus = saleStatus;
-    lead.status = saleStatus
+    lead.status = saleStatus;
     await lead.save();
 
     res
@@ -300,9 +301,9 @@ const updateSaleStatus = async (req: Request, res: Response) => {
 };
 const addNote = async (req: any, res: Response) => {
   const { id } = req.params;
-  console.log(req.body)
+  console.log(req.body);
   const { note } = req.body;
-  console.log("api call",id ,note)
+  console.log("api call", id, note);
   try {
     const newNote = await LeadNote.create({
       leadFollowUpId: id,
@@ -317,13 +318,15 @@ const getNotesByLeadId = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const notes = await LeadNote.findAll({
-      where: { leadFollowUpId :id },
+      where: { leadFollowUpId: id },
       order: [["createdAt", "DESC"]],
     });
 
     res.status(200).json(notes);
   } catch (err: any) {
-    res.status(500).json({ error: "Failed to fetch notes", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch notes", details: err.message });
   }
 };
 export {
@@ -335,5 +338,5 @@ export {
   updateFollowUpStage,
   updateSaleStatus,
   addNote,
-  getNotesByLeadId
+  getNotesByLeadId,
 };
