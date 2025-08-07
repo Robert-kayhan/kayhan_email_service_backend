@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import LeadFolowUp from "../models/LeadFolowUp"; // Adjust path if needed
 import LeadNote from "../models/Note";
+import { Op } from "sequelize";
 
 const createLead = async (req: any, res: Response) => {
   console.log("API call: Create Lead");
@@ -102,16 +103,33 @@ const getAllLeads = async (req: Request, res: Response) => {
     const offset = (page - 1) * limit;
     const leadStatus = req.query.leadStatus as string | undefined;
 
-    // Build where condition dynamically
     const where: any = {};
-    if (leadStatus) {
-      where.status = leadStatus;
+
+    // Build filtering logic
+    if (leadStatus && leadStatus !== "all") {
+      const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+      if (leadStatus === "Today's  Follow up") {
+        // Match today's date in any of the follow-up date fields
+        where[Op.or] = [
+          { firstNextFollowUpDate: todayStr },
+          { secondNextFollowUpDate: todayStr },
+          { thirdNextFollowUpDate: todayStr },
+          { finalNextFollowUpDate: todayStr },
+        ];
+      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done") {
+        // Filter by sale status
+        where.saleStatus = leadStatus;
+      } else {
+        // For "New", "first Follow up", etc. — filter by status
+        where.status = leadStatus;
+      }
     }
 
-    // Count total items with the filter
+    // Count total matching records
     const totalItems = await LeadFolowUp.count({ where });
 
-    // Fetch paginated leads
+    // Fetch paginated records
     const leads = await LeadFolowUp.findAll({
       where,
       offset,
@@ -133,7 +151,6 @@ const getAllLeads = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
-
 // GET a single lead by ID
 const getLeadById = async (req: Request, res: Response) => {
   try {
