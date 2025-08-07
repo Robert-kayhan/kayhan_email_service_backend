@@ -148,10 +148,22 @@ const createMultipleUser = async (
 
 const getALLUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Default values if query params are not passed
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string)?.trim() || "";
     const offset = (page - 1) * limit;
+
+    // Build where clause
+    const whereClause = search
+      ? {
+          [Op.or]: [
+            { firstname: { [Op.like]: `%${search}%` } },
+            { lastname: { [Op.like]: `%${search}%` } },
+            { email: { [Op.like]: `%${search}%` } },
+            { phone: { [Op.like]: `%${search}%` } },
+          ],
+        }
+      : {};
 
     const { count, rows: users } = await User.findAndCountAll({
       attributes: [
@@ -163,6 +175,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
         "role",
         "createdAt",
       ],
+      where: whereClause,
       order: [["createdAt", "DESC"]],
       limit,
       offset,
@@ -175,7 +188,6 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
       phone: user.phone,
       role: user.role === 1 ? "Admin" : "User",
       status: "Active",
-      // address: user.address,
     }));
 
     res.status(200).json({
