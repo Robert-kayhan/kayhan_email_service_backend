@@ -1,4 +1,5 @@
 import sequelize from "../config/database";
+import LeadFollowUp from "../models/LeadFolowUp";
 import { setupAssociations } from "../models";
 
 const connectDb = async () => {
