@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNotesByLeadId = exports.addNote = exports.updateSaleStatus = exports.updateFollowUpStage = exports.updateLead = exports.deleteLead = exports.getLeadById = exports.getAllLeads = exports.createLead = void 0;
 const LeadFolowUp_1 = __importDefault(require("../models/LeadFolowUp")); // Adjust path if needed
 const Note_1 = __importDefault(require("../models/Note"));
+const sequelize_1 = require("sequelize");
 const createLead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     console.log("API call: Create Lead");
@@ -89,14 +90,28 @@ const getAllLeads = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const limit = parseInt(req.query.limit) || 25;
         const offset = (page - 1) * limit;
         const leadStatus = req.query.leadStatus;
-        // Build where condition dynamically
         const where = {};
-        if (leadStatus) {
-            where.status = leadStatus;
+        if (leadStatus && leadStatus !== "all") {
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const todayEnd = new Date();
+            todayEnd.setHours(23, 59, 59, 999);
+            if (leadStatus === "Today") {
+                // Filter by followUpDate being today
+                where.followUpDate = {
+                    [sequelize_1.Op.between]: [todayStart, todayEnd],
+                };
+            }
+            else if (leadStatus === "Sale done" || leadStatus === "Sale not done") {
+                // Filter by saleStatus field
+                where.saleStatus = leadStatus;
+            }
+            else {
+                // Filter by general status field
+                where.status = leadStatus;
+            }
         }
-        // Count total items with the filter
         const totalItems = yield LeadFolowUp_1.default.count({ where });
-        // Fetch paginated leads
         const leads = yield LeadFolowUp_1.default.findAll({
             where,
             offset,
