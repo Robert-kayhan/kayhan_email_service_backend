@@ -8,12 +8,12 @@ const connectDb = async () => {
     console.log("✅ Database connected successfully.");
     setupAssociations();
     sequelize.sync({ alter: true })
-  .then(() => {
-    console.log("✅ DB altered successfully");
-  })
-  .catch((error) => {
-    console.error("❌ Alter failed:", error);
-  });
+  // .then(() => {
+  //   console.log("✅ DB altered successfully");
+  // })
+  // .catch((error) => {
+  //   console.error("❌ Alter failed:", error);
+  // });
 
   } catch (error) {
     console.error("❌ Database connection failed:", error);
