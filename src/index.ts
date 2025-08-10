@@ -15,6 +15,9 @@ import LeadGroupRoutes from "./routes/leadGroup.route";
 import LeadFolowUp from "./routes/leadFollowUp.route"
 import campaignRoutes from "./routes/Campaign.route";
 import sendEmailroutes from "./routes/sendEmail.routes";
+import Specificationroutes from "./routes/Specification.routes";
+import Flyerroutes from "./routes/flyer.routes";
+
 
 const app = express();
 const PORT = process.env.PORT;
@@ -45,6 +48,9 @@ app.use("/api/lead-group/", LeadGroupRoutes);
 app.use("/api/lead-follow-up/", LeadFolowUp);
 app.use("/api/campaign/", campaignRoutes);
 app.use("/api/send-email/", sendEmailroutes);
+app.use("/api/product-specifications", Specificationroutes);
+app.use("/api/flyer", Flyerroutes);
+
 
 connectDb();
 app.get("/api/check", (req, res) => {
