@@ -21,7 +21,7 @@ const connectDb = () => __awaiter(void 0, void 0, void 0, function* () {
         (0, models_1.setupAssociations)();
         database_1.default.sync({ alter: true });
         // .then(() => {
-        //   console.log("✅ DB altered successfully");
+        console.log("✅ DB altered successfully");
         // })
         // .catch((error) => {
         //   console.error("❌ Alter failed:", error);

@@ -1,7 +1,7 @@
 // routes/flyerRoutes.ts
 import { Router } from "express";
 import {
-  createFlyer,
+  createsFlyer,
   getAllFlyers,
   getFlyerById,
   updateFlyer,
@@ -9,9 +9,12 @@ import {
 } from "../controllers/flyer.Controller";
 
 const router = Router();
-
-router.post("/", createFlyer);
+const createFlyer = async (req: Request, res: Response) => {
+  // res.send("ok");
+};
+// router.route("/").post(createFlyer)
 router.get("/", getAllFlyers);
+router.post("/", createsFlyer);
 router.get("/:id", getFlyerById);
 router.put("/:id", updateFlyer);
 router.delete("/:id", deleteFlyer);

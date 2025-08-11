@@ -160,11 +160,23 @@ const createMultipleUser = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.createMultipleUser = createMultipleUser;
 const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        // Default values if query params are not passed
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const search = ((_a = req.query.search) === null || _a === void 0 ? void 0 : _a.trim()) || "";
         const offset = (page - 1) * limit;
+        // Build where clause
+        const whereClause = search
+            ? {
+                [sequelize_1.Op.or]: [
+                    { firstname: { [sequelize_1.Op.like]: `%${search}%` } },
+                    { lastname: { [sequelize_1.Op.like]: `%${search}%` } },
+                    { email: { [sequelize_1.Op.like]: `%${search}%` } },
+                    { phone: { [sequelize_1.Op.like]: `%${search}%` } },
+                ],
+            }
+            : {};
         const { count, rows: users } = yield User_model_1.default.findAndCountAll({
             attributes: [
                 "id",
@@ -175,6 +187,7 @@ const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 "role",
                 "createdAt",
             ],
+            where: whereClause,
             order: [["createdAt", "DESC"]],
             limit,
             offset,
@@ -186,7 +199,6 @@ const getALLUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             phone: user.phone,
             role: user.role === 1 ? "Admin" : "User",
             status: "Active",
-            // address: user.address,
         }));
         res.status(200).json({
             data: formattedUsers,
