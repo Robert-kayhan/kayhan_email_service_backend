@@ -45,18 +45,11 @@ function validateFlyerData(data: any) {
 
   return errors;
 }
-
-
-
-// ---------------------- PDF GENERATOR ----------------------
-
-
-// ---------------------- CONTROLLER ----------------------
-export const createFlyer = async (req: Request, res: Response) => {
+export const createsFlyer = async (req: Request, res: Response) : Promise<void>=> {
   try {
     const errors = validateFlyerData(req.body);
     if (errors.length > 0) {
-      return res.status(400).json({ success: false, errors });
+       res.status(400).json({ success: false, errors });
     }
 
     const {
@@ -75,7 +68,31 @@ export const createFlyer = async (req: Request, res: Response) => {
       validationTime,
     } = req.body;
 
-    const flyerData = {
+    // Validate existence of product specifications
+    const productSpecOne:any = productSpecificationId
+      ? await ProductSpecification.findByPk(productSpecificationId)
+      : null;
+    if (productSpecificationId && !productSpecOne) {
+       res.status(400).json({
+        success: false,
+        message: "Invalid productSpecificationIdOne",
+      });
+      return
+    }
+
+    const productSpecTwo:any = productSpecificationIdtwo
+      ? await ProductSpecification.findByPk(productSpecificationIdtwo)
+      : null;
+    if (productSpecificationIdtwo && !productSpecTwo) {
+       res.status(400).json({
+        success: false,
+        message: "Invalid productSpecificationIdTwo",
+      });
+      return
+    }
+
+    // Prepare flyer data object to save
+    const flyerDataToSave = {
       title,
       description,
       productOneImageUrl: prodcutoneimageUrl,
@@ -91,35 +108,69 @@ export const createFlyer = async (req: Request, res: Response) => {
       validationTime,
     };
 
-    if (flyerData.productSpecificationIdOne) {
-      const exists = await ProductSpecification.findByPk(
-        flyerData.productSpecificationIdOne
-      );
-      if (!exists) {
-         res.status(400).json({
-          success: false,
-          message: "Invalid productSpecificationIdOne",
-        });
-        return
-      }
-    }
+    // Save flyer to DB
+    const flyer = await Flyer.create(flyerDataToSave);
 
-    if (flyerData.productSpecificationIdTwo) {
-      const exists = await ProductSpecification.findByPk(
-        flyerData.productSpecificationIdTwo
-      );
-      if (!exists) {
-         res.status(400).json({
-          success: false,
-          message: "Invalid productSpecificationIdTwo",
-        });
-      }
-      return
-    }
+    // Prepare specs array for PDF table by comparing keys
+    const specKeys = [
+      "processor",
+      "operatingSystem",
+      "memory",
+      "wirelessCarPlayAndroidAuto",
+      "audioVideoOutput",
+      "amplifier",
+      "cameraInputs",
+      "microphone",
+      "bluetooth",
+      "usbPorts",
+      "steeringWheelACControls",
+      "factoryReversingCamera",
+      "audioVideoFeatures",
+      "radioTuner",
+      "googlePlayStore",
+      "netflix",
+      "disneyPlus",
+      "foxtel",
+      "apps",
+      "screenSize",
+      "screenResolution",
+      "onlineVideos",
+    ];
 
-    const flyer = await Flyer.create(flyerData);
+    // Helper for friendly display names
+    const friendlyNames: Record<string, string> = {
+      processor: "Processor",
+      operatingSystem: "OS",
+      memory: "Memory",
+      wirelessCarPlayAndroidAuto: "Apple CarPlay / Android Auto",
+      audioVideoOutput: "Audio/Video Output",
+      amplifier: "Amplifier",
+      cameraInputs: "Camera Inputs",
+      microphone: "Microphone",
+      bluetooth: "Bluetooth",
+      usbPorts: "USB Ports",
+      steeringWheelACControls: "Steering Wheel AC Controls",
+      factoryReversingCamera: "Factory Reversing Camera",
+      audioVideoFeatures: "Audio/Video Features",
+      radioTuner: "Radio Tuner",
+      googlePlayStore: "Google Play Store",
+      netflix: "Netflix",
+      disneyPlus: "Disney Plus",
+      foxtel: "Foxtel",
+      apps: "Apps",
+      screenSize: "Screen Size",
+      screenResolution: "Screen Resolution",
+      onlineVideos: "Online Videos",
+    };
 
-    // Generate PDF
+    // Build specs array for PDF
+    const specs = specKeys.map((key) => ({
+      feature: friendlyNames[key] || key,
+      p1: productSpecOne?.[key] || "-",
+      p2: productSpecTwo?.[key] || "-",
+    }));
+
+    // Call your PDF generator with real data
     const pdfPath = await generateStyledFlyerPdf({
       flyerData: {
         customerName,
@@ -129,27 +180,31 @@ export const createFlyer = async (req: Request, res: Response) => {
         deliveryFees,
         quotationNumber,
         validationTime,
+        logoUrl: "/logo.jpg", 
       },
       firstProduct: {
         image: prodcutoneimageUrl,
-        title: "Product One",
+        title: productSpecOne?.name || "Product One",
+        price: flyerDataToSave.installationFees, // optionally add price here if available
       },
       secondProduct: {
         image: prodcutwoimageUrl,
-        title: "Product Two",
+        title: productSpecTwo?.name || "Product Two",
+        price: flyerDataToSave.deliveryFees,
       },
-      specs: [],
+      specs,
     });
-
-    res.status(201).json({
+    console.log(pdfPath)
+     res.status(201).json({
       success: true,
       data: flyer,
       pdf: pdfPath,
     });
   } catch (error: any) {
-     res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 // Get all flyers

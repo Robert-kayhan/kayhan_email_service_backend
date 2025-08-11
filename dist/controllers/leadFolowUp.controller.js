@@ -91,27 +91,30 @@ const getAllLeads = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const offset = (page - 1) * limit;
         const leadStatus = req.query.leadStatus;
         const where = {};
+        // Build filtering logic
         if (leadStatus && leadStatus !== "all") {
-            const todayStart = new Date();
-            todayStart.setHours(0, 0, 0, 0);
-            const todayEnd = new Date();
-            todayEnd.setHours(23, 59, 59, 999);
-            if (leadStatus === "Today") {
-                // Filter by followUpDate being today
-                where.followUpDate = {
-                    [sequelize_1.Op.between]: [todayStart, todayEnd],
-                };
+            const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+            if (leadStatus === "Today's  Follow up") {
+                // Match today's date in any of the follow-up date fields
+                where[sequelize_1.Op.or] = [
+                    { followUpDate: todayStr },
+                    { firstNextFollowUpDate: todayStr },
+                    { secondNextFollowUpDate: todayStr },
+                    { thirdNextFollowUpDate: todayStr },
+                    { finalNextFollowUpDate: todayStr },
+                ];
             }
             else if (leadStatus === "Sale done" || leadStatus === "Sale not done") {
-                // Filter by saleStatus field
+                // Filter by sale status
                 where.saleStatus = leadStatus;
             }
             else {
-                // Filter by general status field
                 where.status = leadStatus;
             }
         }
+        // Count total matching records
         const totalItems = yield LeadFolowUp_1.default.count({ where });
+        // Fetch paginated records
         const leads = yield LeadFolowUp_1.default.findAll({
             where,
             offset,
@@ -217,7 +220,7 @@ const updateFollowUpStage = (req, res) => __awaiter(void 0, void 0, void 0, func
         const typeKey = `${stage}FollowUpType`;
         const nextDateKey = `${stage}NextFollowUpDate`;
         const updatePayload = {
-            status: `${stage} Follow up`
+            status: `${stage} Follow up`,
         };
         // If follow-up date is being newly set, also set "by"
         if (updates[dateKey] && !lead[dateKey]) {
@@ -262,7 +265,9 @@ const updateSaleStatus = (req, res) => __awaiter(void 0, void 0, void 0, functio
             return;
         }
         lead.saleStatus = saleStatus;
-        lead.status = saleStatus;
+        if (saleStatus === "Sale done") {
+            lead.status = saleStatus;
+        }
         yield lead.save();
         res
             .status(200)
@@ -301,7 +306,9 @@ const getNotesByLeadId = (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(200).json(notes);
     }
     catch (err) {
-        res.status(500).json({ error: "Failed to fetch notes", details: err.message });
+        res
+            .status(500)
+            .json({ error: "Failed to fetch notes", details: err.message });
     }
 });
 exports.getNotesByLeadId = getNotesByLeadId;

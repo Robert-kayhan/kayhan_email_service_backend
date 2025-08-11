@@ -18,6 +18,8 @@ const leadGroup_route_1 = __importDefault(require("./routes/leadGroup.route"));
 const leadFollowUp_route_1 = __importDefault(require("./routes/leadFollowUp.route"));
 const Campaign_route_1 = __importDefault(require("./routes/Campaign.route"));
 const sendEmail_routes_1 = __importDefault(require("./routes/sendEmail.routes"));
+const Specification_routes_1 = __importDefault(require("./routes/Specification.routes"));
+const flyer_routes_1 = __importDefault(require("./routes/flyer.routes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT;
 app.set("trust proxy", 1);
@@ -42,6 +44,8 @@ app.use("/api/lead-group/", leadGroup_route_1.default);
 app.use("/api/lead-follow-up/", leadFollowUp_route_1.default);
 app.use("/api/campaign/", Campaign_route_1.default);
 app.use("/api/send-email/", sendEmail_routes_1.default);
+app.use("/api/product-specifications", Specification_routes_1.default);
+app.use("/api/flyer", flyer_routes_1.default);
 (0, connectDb_1.default)();
 app.get("/api/check", (req, res) => {
     res.json({ status: "ok", message: "API is working ✅" });

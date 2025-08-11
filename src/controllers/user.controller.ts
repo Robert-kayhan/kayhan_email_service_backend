@@ -269,7 +269,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
       "https://api.kayhanaudio.com.au/v1/users/all"
     );
     const externalUsers = externalResponse.data;
-
+    console.log(Array.isArray(externalUsers) , "this is lenght")
     if (!Array.isArray(externalUsers)) {
       res.status(400).json({ message: "Invalid external users format" });
       return;
@@ -293,6 +293,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
       where: { email: { [Op.in]: emails } },
       attributes: ["email"],
     });
+    console.log(leads.length , "this is leadth")
     const leadEmailSet = new Set(leads.map((l) => l.email));
 
     // 4. Attach hasLead
@@ -303,6 +304,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
 
     // 5. Apply hasLeadOnly filter if requested
     let finalUsers = combinedUsers;
+    console.log(finalUsers.length ,   )
     if (hasLeadOnly) {
       finalUsers = combinedUsers.filter((u: any) => u.hasLead);
     }
