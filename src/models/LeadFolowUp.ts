@@ -30,10 +30,10 @@ LeadFollowUp.init(
     supportNotes: { type: DataTypes.TEXT  ,allowNull : false},
 
     // Communication
-    communicationType: { type: DataTypes.STRING ,allowNull : false },
-    communicationDate: { type: DataTypes.STRING  ,allowNull : false},
+    communicationType: { type: DataTypes.STRING ,allowNull : true },
+    communicationDate: { type: DataTypes.STRING  ,allowNull : true},
     followUpDate: { type: DataTypes.STRING  ,allowNull : true},
-    communicationNotes: { type: DataTypes.TEXT  ,allowNull : false},
+    communicationNotes: { type: DataTypes.TEXT  ,allowNull : true},
 
     createdBy: { type: DataTypes.STRING },
 

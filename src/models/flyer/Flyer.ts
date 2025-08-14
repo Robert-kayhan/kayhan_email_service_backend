@@ -18,6 +18,7 @@ interface FlyerAttributes {
   deliveryFees?: string;
   quotationNumber?: string;
   validationTime?: string;
+  flyer_url?: string;
 
   createdAt?: Date;
   updatedAt?: Date;
@@ -41,6 +42,7 @@ class Flyer extends Model<FlyerAttributes, FlyerCreationAttributes> implements F
   public deliveryFees?: string;
   public quotationNumber?: string;
   public validationTime?: string;
+  public flyer_url?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -116,6 +118,10 @@ Flyer.init(
       allowNull: true,
     },
     validationTime: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+     flyer_url: {
       type: DataTypes.STRING,
       allowNull: true,
     },

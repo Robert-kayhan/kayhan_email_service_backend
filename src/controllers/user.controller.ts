@@ -176,7 +176,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
         "createdAt",
       ],
       where: whereClause,
-      order: [["createdAt", "DESC"]],
+      order: [["id", "DESC"]],
       limit,
       offset,
     });
