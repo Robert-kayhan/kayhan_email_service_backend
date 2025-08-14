@@ -92,24 +92,7 @@ export const createsFlyer = async (req: Request, res: Response) : Promise<void>=
     }
 
     // Prepare flyer data object to save
-    const flyerDataToSave = {
-      title,
-      description,
-      productOneImageUrl: prodcutoneimageUrl,
-      productTwoImageUrl: prodcutwoimageUrl,
-      productSpecificationIdOne: productSpecificationId,
-      productSpecificationIdTwo: productSpecificationIdtwo,
-      customerName,
-      customerPhone,
-      customerEmail,
-      installationFees,
-      deliveryFees,
-      quotationNumber,
-      validationTime,
-    };
 
-    // Save flyer to DB
-    const flyer = await Flyer.create(flyerDataToSave);
 
     // Prepare specs array for PDF table by comparing keys
     const specKeys = [
@@ -184,17 +167,37 @@ export const createsFlyer = async (req: Request, res: Response) : Promise<void>=
       },
       firstProduct: {
         image: prodcutoneimageUrl,
-        title: productSpecOne?.name || "Product One",
-        price: flyerDataToSave.installationFees, // optionally add price here if available
+        title: productSpecOne.name || "Product One",
+        price: installationFees, 
       },
       secondProduct: {
         image: prodcutwoimageUrl,
         title: productSpecTwo?.name || "Product Two",
-        price: flyerDataToSave.deliveryFees,
+        price: deliveryFees,
       },
       specs,
     });
+    
     console.log(pdfPath)
+        const flyerDataToSave = {
+      title,
+      description,
+      productOneImageUrl: prodcutoneimageUrl,
+      productTwoImageUrl: prodcutwoimageUrl,
+      productSpecificationIdOne: productSpecificationId,
+      productSpecificationIdTwo: productSpecificationIdtwo,
+      customerName,
+      customerPhone,
+      customerEmail,
+      installationFees,
+      deliveryFees,
+      quotationNumber,
+      validationTime,
+      flyer_url :pdfPath
+    };
+
+    // Save flyer to DB
+    const flyer = await Flyer.create(flyerDataToSave);
      res.status(201).json({
       success: true,
       data: flyer,
@@ -207,15 +210,41 @@ export const createsFlyer = async (req: Request, res: Response) : Promise<void>=
 
 
 
-// Get all flyers
+
 export const getAllFlyers = async (req: Request, res: Response) => {
   try {
-    const flyers = await Flyer.findAll();
-    res.json({ success: true, data: flyers });
+    // Get page & limit from query (default: page=1, limit=10)
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Count total flyers
+    const totalFlyers = await Flyer.count();
+
+    // Fetch flyers with pagination
+    const flyers = await Flyer.findAll({
+      offset,
+      limit,
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json({
+      success: true,
+      data: flyers,
+      pagination: {
+        total: totalFlyers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalFlyers / limit),
+        hasNextPage: page < Math.ceil(totalFlyers / limit),
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Get flyer by ID
 export const getFlyerById = async (req: Request, res: Response) => {

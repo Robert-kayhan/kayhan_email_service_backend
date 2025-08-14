@@ -3,6 +3,7 @@ import LeadFolowUp from "../models/LeadFolowUp"; // Adjust path if needed
 import LeadNote from "../models/Note";
 import { Op } from "sequelize";
 
+
 const createLead = async (req: any, res: Response) => {
   console.log("API call: Create Lead");
 
@@ -21,10 +22,7 @@ const createLead = async (req: any, res: Response) => {
     isActiveCustomer,
     purchaseHistory,
     supportNotes,
-    communicationType,
-    communicationDate,
     followUpDate,
-    communicationNotes,
   } = req.body;
 
   // ✅ Validate required fields
@@ -35,32 +33,29 @@ const createLead = async (req: any, res: Response) => {
     email,
     leadSource,
     interest,
-    saleStatus,
     quoteGiven,
     expectedValue,
     expectedCloseDate,
     isActiveCustomer,
     purchaseHistory,
-    communicationType,
-    communicationDate,
   };
-  console.log(req.body);
+
   // Conditional required field if sale was not done
   if (saleStatus === "Sale not done") {
     requiredFields["followUpDate"] = followUpDate;
   }
 
   const missingFields = Object.entries(requiredFields).filter(
-    ([_, value]) => value === undefined || value === null
+    ([_, value]) => value === undefined || value === null || value === ""
   );
 
-  if (missingFields.length > 0) {
-    res.status(400).json({
-      message: "Missing required fields",
-      missing: missingFields.map(([key]) => key),
-    });
-    return;
-  }
+  // if (missingFields.length > 0) {
+  //   res.status(400).json({
+  //     message: "Missing required fields",
+  //     missing: missingFields.map(([key]) => key),
+  //   });
+  //   return;
+  // }
 
   try {
     const lead = await LeadFolowUp.create({
@@ -78,10 +73,7 @@ const createLead = async (req: any, res: Response) => {
       isActiveCustomer,
       purchaseHistory,
       supportNotes,
-      communicationType,
-      communicationDate,
       followUpDate,
-      communicationNotes,
       createdBy: req.user?.email || "system",
     });
 
@@ -94,6 +86,8 @@ const createLead = async (req: any, res: Response) => {
     });
   }
 };
+
+
 
 // GET all leads
 const getAllLeads = async (req: Request, res: Response) => {

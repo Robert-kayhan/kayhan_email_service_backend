@@ -128,8 +128,8 @@ export const generateStyledFlyerPdf = async ({
     font-weight: 700;
     margin-bottom: 2px;
   }
-  .price.purple { color: #7c3aed; }
-  .price.yellow { color: #b45309; }
+  .price.purple { color:rgb(188, 188, 219); }
+  .price.yellow { color:rgb(26, 21, 17); }
   .product-name {
     text-transform: uppercase;
     font-weight: 600;
@@ -138,7 +138,7 @@ export const generateStyledFlyerPdf = async ({
   }
   .order-button {
     margin-top: 8px;
-    background-color: #7c3aed;
+    background-color:rgb(6, 6, 7);
     color: white;
     border: none;
     padding: 4px 10px;
@@ -148,7 +148,7 @@ export const generateStyledFlyerPdf = async ({
   }
   .table-container {
     overflow-x: auto;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(24, 21, 185, 0.1);
     margin-top: 12px;
   }
   table {
@@ -157,7 +157,7 @@ export const generateStyledFlyerPdf = async ({
     font-size: 0.75rem;
   }
   thead {
-    background-color: #ea580c;
+    background-color: rgb(41, 18, 141);
     color: white;
   }
   th, td {
@@ -331,5 +331,5 @@ export const generateStyledFlyerPdf = async ({
   fs.unlinkSync(pdfPath);
 
   // Return public S3 URL
-  return `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/flyers/${pdfFileName}`;
+  return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
 };
