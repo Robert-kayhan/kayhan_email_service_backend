@@ -7,10 +7,9 @@ const getLeadsDashboardStats = async (req: Request, res: Response) => {
   try {
     const { userId = "all", timeRange = "today" } = req.query;
     const where: any = {};
-
     // Filter by user
     if (userId !== "all") {
-      where.created_by = userId; // use your actual DB column name
+      where.createdBy = userId; // use your actual DB column name
     }
 
     // Date filter
