@@ -33,7 +33,7 @@ EmailLog.init(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("sent", "failed"),
+      type: DataTypes.ENUM("sent", "failed" , "pending"),
       allowNull: false,
     },
     errorMessage: {

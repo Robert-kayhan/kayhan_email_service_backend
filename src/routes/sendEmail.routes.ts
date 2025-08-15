@@ -7,7 +7,7 @@ import {
 const router = express.Router();
 
 router.route("/:campaignId").post(sendEmails);
-router.route("/unsubscribe").post(handleUnsubscribe);
-router.route("/open").post(checkUserOpenEmail);
+router.route("/unsubscribe").get(handleUnsubscribe);
+router.route("/open").get(checkUserOpenEmail);
 
 export default router;
