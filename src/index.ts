@@ -55,9 +55,7 @@ app.use("/api/dashboard", DashBoardRoutes);
 
 
 connectDb();
-app.get("/api/check", (req, res) => {
-  res.json({ status: "ok", message: "API is working ✅" });
-});
+
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });

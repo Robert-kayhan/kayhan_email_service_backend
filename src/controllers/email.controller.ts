@@ -7,6 +7,7 @@ import Template from "../models/Template";
 import { sendEmail } from "../utils/sendEmail";
 import { v4 as uuidv4 } from "uuid";
 
+
 const sendEmails = async (req: Request, res: Response) => {
   const { campaignId } = req.params;
 
@@ -20,7 +21,8 @@ const sendEmails = async (req: Request, res: Response) => {
     });
 
     if (!campaign) {
-      res.status(404).json({ message: "Campaign not found" });
+       res.status(404).json({ message: "Campaign not found" });
+       return
     }
 
     // 2. Get users from lead group
@@ -34,12 +36,12 @@ const sendEmails = async (req: Request, res: Response) => {
       .filter((user) => user && user.email && user.isSubscribed);
 
     if (!usersToEmail.length) {
-      res
+       res
         .status(400)
         .json({ message: "No users with emails found in lead group" });
+        return
     }
 
-    // 3. Send emails and log results
     const logs: EmailLog[] = [];
 
     for (const user of usersToEmail) {
@@ -50,57 +52,50 @@ const sendEmails = async (req: Request, res: Response) => {
           await user.save();
         }
 
-        // 2. Create log first so you can use log.id in tracking pixel
+        // 2. Create log first
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
-          status: "pending", // temporary status, will update later
+          status: "pending",
         });
 
         // 3. Prepare email content
         const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
         const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
-        const subject: string = campaign.campaignName;
-        let html: string = campaign.Template?.html || "<p>No template</p>";
-        const text: string = "You have a new campaign message.";
 
-        // 4. Append unsubscribe link + tracking pixel
-        html += `
-            <hr />
-            <p style="font-size: 12px; color: #888;">
-              Don’t want these emails?
-              <a href="${unsubscribeLink}">Unsubscribe here</a>.
-            </p>
-            <img 
-              src="${pixelUrl}" 
-              width="1" 
-              height="1" 
-              style="display: none;" 
-              alt="tracking-pixel"
-            />
-          `;
+        const subject: string = `Hi ${user.firstname}, ${campaign.campaignName}`;
+
+        const html: string = `
+          <p>Hi ${user.firstname},</p>
+          <p>${campaign.Template?.html || "You have a new update from Kayhan Audio."}</p>
+          <hr />
+          <p style="font-size:12px;color:#888;">
+            Don’t want these emails? <a href="${unsubscribeLink}">Unsubscribe here</a>.
+          </p>
+          <img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="tracking-pixel"/>
+        `;
+
+        const text: string = `Hi ${user.name},\nYou have a new update from Kayhan Audio.\nUnsubscribe: ${unsubscribeLink}`;
 
         console.log("📧 Sending to:", user.email);
 
-        // 5. Send the email
+        // 4. Send the email
         const result = await sendEmail({
           to: user.email,
           subject,
           bodyHtml: html,
           bodyText: text,
-          from: "noreply@mailer.kayhanaudio.com.au",
+          from: "support@mailer.kayhanaudio.com.au", // verified domain
         });
 
         console.log("✅ Email sent:", result);
 
-        // 6. Update log to sent
+        // 5. Update log to sent
         await log.update({ status: "sent" });
-
         logs.push(log);
       } catch (err: any) {
         console.error("❌ Failed to send to", user.email, err);
 
-        // Fallback: create log only if it failed before log was created
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
@@ -125,6 +120,7 @@ const sendEmails = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const checkUserOpenEmail = async (req: Request, res: Response) => {
   const { campaignId, email } = req.params;

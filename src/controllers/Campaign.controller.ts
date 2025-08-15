@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Campaign from "../models/Campaign";
 import Template from "../models/Template";
 import LeadGroup from "../models/LeadGroup";
+import EmailLog from "../models/EmailLog";
 
 // CREATE Campaign
 const createCampaign = async (req: Request, res: Response) => {
@@ -85,21 +86,47 @@ const getAllCampaigns = async (req: Request, res: Response) => {
 // GET single campaign by ID
 const getCampaignById = async (req: Request, res: Response) => {
   try {
-    const campaign = await Campaign.findByPk(req.params.id, {
+    const campaignId = parseInt(req.params.id, 10);
+    console.log("api call ")
+    if (isNaN(campaignId)) {
+      res.status(400).json({ message: "Invalid campaign ID." });
+      return 
+    }
+
+    // Fetch campaign with related template and lead group
+    const campaign = await Campaign.findByPk(campaignId, {
       include: [
-        { model: Template, as: "Template" },    // ✅ Use alias
-        { model: LeadGroup, as: "LeadGroup" },  // ✅ Use alias
+        { model: Template, as: "Template" },
+        { model: LeadGroup, as: "LeadGroup" },
       ],
     });
 
     if (!campaign) {
-      res.status(404).json({ message: "Campaign not found." });
+       res.status(404).json({ message: "Campaign not found." });
+       return
     }
 
-    res.json({ data: campaign });
+    // Fetch email stats for this campaign
+    const total = await EmailLog.count({ where: { campaign_id: campaignId } });
+    const sent = await EmailLog.count({ where: { campaign_id: campaignId, status: "sent" } });
+    const pending = await EmailLog.count({ where: { campaign_id: campaignId, status: "pending" } });
+    const failed = await EmailLog.count({ where: { campaign_id: campaignId, status: "failed" } });
+
+    // Optionally, calculate opened if you track it
+    // const opened = await EmailLog.count({ where: { campaign_id: campaignId, status: "sent", isOpened: true } });
+
+    const stats = {
+      total,
+      sent,
+      pending,
+      failed,
+      opened: 0, // replace with actual opened if available
+    };
+
+    res.json({ data: campaign, stats });
   } catch (error) {
     console.error("Error fetching campaign:", error);
-    res.status(500).json({ message: "Internal server error." });
+     res.status(500).json({ message: "Internal server error." });
   }
 };
 
@@ -152,10 +179,32 @@ const deleteCampaign = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+const getCampaignStats = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    // Count total emails for the campaign
+    const total = await EmailLog.count({ where: { campaign_id: id } });
+
+    // Count emails by status
+    const sent = await EmailLog.count({ where: { campaign_id: id, status: "sent" } });
+    const pending = await EmailLog.count({ where: { campaign_id: id, status: "pending" } });
+    const failed = await EmailLog.count({ where: { campaign_id: id, status: "failed" } });
+
+    // If you have "opened" tracking (e.g., via a column `isOpened`)
+    const opened = await EmailLog.count({ where: { campaign_id: id, status: "sent", /* isOpened: true */ } });
+
+    return res.json({ total, sent, pending, failed, opened });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 export {
   createCampaign,
   deleteCampaign,
   updateCampaign,
   getAllCampaigns,
   getCampaignById,
+  getCampaignStats
 };
