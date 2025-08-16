@@ -58,11 +58,12 @@ const sendEmails = async (req: Request, res: Response) => {
           email: user.email,
           status: "pending",
         });
-
+        // console.log(user)
         // 3. Prepare email content
         const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
         const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
-
+        console.log(unsubscribeLink)
+        console.log(pixelUrl)
         const subject: string = `Hi ${user.firstname}, ${campaign.campaignName}`;
 
         const html: string = `
@@ -123,19 +124,33 @@ const sendEmails = async (req: Request, res: Response) => {
 
 
 const checkUserOpenEmail = async (req: Request, res: Response) => {
-  const { campaignId, email } = req.params;
   try {
+    const { email, emailId } = req.query;
+
+    if (!emailId) {
+       res.status(400).json({ success: false, message: "emailId is required" });
+       return
+    }
+
     await EmailLog.update(
-      { opened: true, openedAt: new Date() },
-      { where: { campaign_id: campaignId, email } }
+      { 
+        // status: "opened",
+        opened: true,
+        openedAt: new Date(),
+      },
+      { where: { id: Number(emailId)} } // 👈 ensures matching email too
     );
+
+    res.json({ success: true });
   } catch (error) {
-    console.log("error message", error);
+    console.error("Error updating email log:", error);
+     res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
 
+
 const handleUnsubscribe = async (req: Request, res: Response) => {
-  const { token } = req.body;
+  const { token } = req.query;
 
   const user = await User.findOne({ where: { unsubscribeToken: token } });
 

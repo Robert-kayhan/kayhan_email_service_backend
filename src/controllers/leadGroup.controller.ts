@@ -119,7 +119,7 @@ const updateLeadGroupWithUsers = async (req: Request, res: Response) => {
   try {
     const { groupName, userIds } = req.body || {};
       console.log(req.body)
-    const groupId = parseInt(req.params.id);
+    const groupId = parseInt(req.params.id);  
 
     if (!groupName || !Array.isArray(userIds) || isNaN(groupId)) {
       res.status(400).json({ message: "groupName, userIds, and valid group ID are required." });
