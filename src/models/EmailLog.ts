@@ -27,13 +27,21 @@ EmailLog.init(
       },
       onDelete: "CASCADE", // optional, but useful
     },
-
+ opened: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false, // 👈 safe default
+    },
+    openedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,     // null until opened
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("sent", "failed" , "pending"),
+      type: DataTypes.ENUM("sent", "failed" , "pending",),
       allowNull: false,
     },
     errorMessage: {

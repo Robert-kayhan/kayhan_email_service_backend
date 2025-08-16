@@ -111,7 +111,7 @@ const getCampaignById = async (req: Request, res: Response) => {
     const sent = await EmailLog.count({ where: { campaign_id: campaignId, status: "sent" } });
     const pending = await EmailLog.count({ where: { campaign_id: campaignId, status: "pending" } });
     const failed = await EmailLog.count({ where: { campaign_id: campaignId, status: "failed" } });
-
+ const opened = await EmailLog.count({ where: { campaign_id: campaignId, opened : true } });
     // Optionally, calculate opened if you track it
     // const opened = await EmailLog.count({ where: { campaign_id: campaignId, status: "sent", isOpened: true } });
 
@@ -120,7 +120,7 @@ const getCampaignById = async (req: Request, res: Response) => {
       sent,
       pending,
       failed,
-      opened: 0, // replace with actual opened if available
+      opened, // replace with actual opened if available
     };
 
     res.json({ data: campaign, stats });
@@ -191,13 +191,12 @@ const getCampaignStats = async (req: Request, res: Response) => {
     const pending = await EmailLog.count({ where: { campaign_id: id, status: "pending" } });
     const failed = await EmailLog.count({ where: { campaign_id: id, status: "failed" } });
 
-    // If you have "opened" tracking (e.g., via a column `isOpened`)
-    const opened = await EmailLog.count({ where: { campaign_id: id, status: "sent", /* isOpened: true */ } });
-
-    return res.json({ total, sent, pending, failed, opened });
+    const opened = await EmailLog.count({ where: { campaign_id: id, status: "opened",  } });
+    console.log(opened)
+     res.json({ total, sent, pending, failed, opened });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Server error" });
+     res.status(500).json({ message: "Server error" });
   }
 };
 export {
