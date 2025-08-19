@@ -281,7 +281,7 @@ const updateSaleStatus = async (req: Request, res: Response) => {
     }
 
     lead.saleStatus = saleStatus;
-    lead.saleStatusUpdatedAt = new Date()
+    // lead.saleStatusUpdatedAt = new Date()
     if(saleStatus === "Sale done"){
       lead.status = saleStatus;
     }
