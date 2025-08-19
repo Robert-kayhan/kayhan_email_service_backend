@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import LeadFolowUp from "../models/LeadFolowUp"; // Adjust path if needed
 import LeadNote from "../models/Note";
 import { DATE, Op } from "sequelize";
-
+import LeadSalesTracking from "../models/LeadSalesTracking";
 
 const createLead = async (req: any, res: Response) => {
   console.log("API call: Create Lead");
@@ -87,8 +87,6 @@ const createLead = async (req: any, res: Response) => {
   }
 };
 
-
-
 // GET all leads
 const getAllLeads = async (req: Request, res: Response) => {
   try {
@@ -101,7 +99,7 @@ const getAllLeads = async (req: Request, res: Response) => {
 
     // Build filtering logic
     if (leadStatus && leadStatus !== "all") {
-      const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const todayStr = new Date().toISOString().slice(0, 10);
 
       if (leadStatus === "Today's  Follow up") {
         // Match today's date in any of the follow-up date fields
@@ -262,39 +260,67 @@ const updateFollowUpStage = async (req: any, res: Response) => {
 
 const updateSaleStatus = async (req: Request, res: Response) => {
   try {
-    console.log("api is calls ", req.body);
     const { id } = req.params;
-    const { saleStatus } = req.body;
-    console.log(req.body, "this is body");
+    const {
+      saleStatus,
+      invoiceNumber,
+      invoiceSentDate,
+      quotationNumber,
+      quotationSentDate,
+      is_quotation,
+      is_invoice,
+    } = req.body;
+    console.log(req.body);
     if (!saleStatus) {
-      res
-        .status(400)
-        .json({ message: "Missing 'saleStatus' in request body." });
-      return;
+      {
+        res
+          .status(400)
+          .json({ message: "Missing 'saleStatus' in request body." });
+      }
     }
 
     const lead: any = await LeadFolowUp.findByPk(id);
-
     if (!lead) {
       res.status(404).json({ message: "Lead not found." });
-      return;
     }
-
+    // Update lead status
     lead.saleStatus = saleStatus;
-    // lead.saleStatusUpdatedAt = new Date()
-    if(saleStatus === "Sale done"){
-      lead.status = saleStatus;
-    }
+    if (saleStatus === "Sale done") lead.status = "Sale done";
     await lead.save();
+
+    // Track in LeadSalesTracking
+    const existingTracking: any = await LeadSalesTracking.findOne({
+      where: { lead_id: id },
+    });
+    const now = new Date(); // current date-time
+
+    const trackingData = {
+      sale_status: saleStatus,
+      is_quotation: !!quotationNumber, // true if quotationNumber exists
+      is_invoice: !!invoiceNumber, // true if invoiceNumber exists
+      invoice_number: invoiceNumber || null,
+      invoice_send_date: invoiceNumber ? now : null,
+      quotation_number: quotationNumber || null,
+      quotation_send_date: quotationNumber ? now : null,
+      sale_status_update_date: now,
+      updatedAt: now,
+    };
+
+    if (existingTracking) {
+      await existingTracking.update(trackingData);
+    } else {
+      await LeadSalesTracking.create({ lead_id: id, ...trackingData });
+    }
 
     res
       .status(200)
       .json({ message: "Sale status updated successfully.", lead });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating sale status:", error);
-    res.status(500).json({ message: "Server error." });
+    res.status(500).json({ message: "Server error.", error: error.message });
   }
 };
+
 const addNote = async (req: any, res: Response) => {
   const { id } = req.params;
   console.log(req.body);

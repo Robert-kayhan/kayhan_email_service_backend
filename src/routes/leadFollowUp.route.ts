@@ -13,7 +13,7 @@ import {
 import protect from "../middlewares/auth.middleware";
 const router = express.Router();
 
-router.post("/",protect, createLead);
+router.post("/", createLead);
 router.get("/", getAllLeads);
 router.get("/:id", getLeadById);
 router.put("/:id", updateLead);
