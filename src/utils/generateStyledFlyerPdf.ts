@@ -227,11 +227,9 @@ export const generateStyledFlyerPdf = async ({
       <div class="product-card" style="border-color:#7c3aed">
         <img src="${firstProduct.image}" alt="${firstProduct.title}" />
         <div class="product-name">${firstProduct.title}</div>
-        <button class="order-button">Order Now</button>
       </div>
       <div class="product-card" style="border-color:#fbbf24">
         <img src="${secondProduct.image}" alt="${secondProduct.title}" />
-        <div class="price yellow">$${secondProduct.price || ""}</div>
         <div class="product-name">${secondProduct.title}</div>
       </div>
     </div>
