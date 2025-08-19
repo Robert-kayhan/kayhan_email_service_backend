@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import LeadFolowUp from "../models/LeadFolowUp"; // Adjust path if needed
 import LeadNote from "../models/Note";
-import { Op } from "sequelize";
+import { DATE, Op } from "sequelize";
 
 
 const createLead = async (req: any, res: Response) => {
@@ -281,6 +281,7 @@ const updateSaleStatus = async (req: Request, res: Response) => {
     }
 
     lead.saleStatus = saleStatus;
+    lead.saleStatusUpdatedAt = new Date()
     if(saleStatus === "Sale done"){
       lead.status = saleStatus;
     }

@@ -6,34 +6,38 @@ class LeadFollowUp extends Model {}
 LeadFollowUp.init(
   {
     // Contact Info
-    firstName: { type: DataTypes.STRING , allowNull : false },
-    lastName: { type: DataTypes.STRING ,allowNull : false },
-    phone: { type: DataTypes.STRING  ,allowNull : false},
-    email: { type: DataTypes.STRING  ,allowNull : false},
-    address: { type: DataTypes.STRING ,allowNull : false },
+    firstName: { type: DataTypes.STRING, allowNull: false },
+    lastName: { type: DataTypes.STRING, allowNull: false },
+    phone: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false },
+    address: { type: DataTypes.STRING, allowNull: false },
 
     // Lead Details
-    leadSource: { type: DataTypes.STRING ,allowNull : false },
-    interest: { type: DataTypes.STRING  ,allowNull : false},
-    leadStatus: { type: DataTypes.STRING, defaultValue: "New" ,allowNull : false },
-    status: { type: DataTypes.STRING, defaultValue: "New" ,allowNull : false },
+    leadSource: { type: DataTypes.STRING, allowNull: false },
+    interest: { type: DataTypes.STRING, allowNull: false },
+    leadStatus: {
+      type: DataTypes.STRING,
+      defaultValue: "New",
+      allowNull: false,
+    },
+    status: { type: DataTypes.STRING, defaultValue: "New", allowNull: false },
 
     // Sales Tracking
-    quoteGiven: { type: DataTypes.STRING  ,allowNull : false},
-    expectedValue: { type: DataTypes.DECIMAL(10, 2)  ,allowNull : false},
+    quoteGiven: { type: DataTypes.STRING, allowNull: false },
+    expectedValue: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     // expectedCloseDate: { type: DataTypes.STRING  ,allowNull : false},
-    saleStatus: { type: DataTypes.STRING  ,allowNull : false},
-
+    saleStatus: { type: DataTypes.STRING, allowNull: false },
+    saleStatusUpdatedAt: { type: DataTypes.DATE, allowNull: true },
     // Customer Status
-    isActiveCustomer: { type: DataTypes.STRING ,allowNull : false },
-    purchaseHistory: { type: DataTypes.TEXT  ,allowNull : false},
-    supportNotes: { type: DataTypes.TEXT  ,allowNull : false},
+    isActiveCustomer: { type: DataTypes.STRING, allowNull: false },
+    purchaseHistory: { type: DataTypes.TEXT, allowNull: false },
+    supportNotes: { type: DataTypes.TEXT, allowNull: false },
 
     // Communication
-    communicationType: { type: DataTypes.STRING ,allowNull : true },
-    communicationDate: { type: DataTypes.STRING  ,allowNull : true},
-    followUpDate: { type: DataTypes.STRING  ,allowNull : true},
-    communicationNotes: { type: DataTypes.TEXT  ,allowNull : true},
+    communicationType: { type: DataTypes.STRING, allowNull: true },
+    communicationDate: { type: DataTypes.STRING, allowNull: true },
+    followUpDate: { type: DataTypes.STRING, allowNull: true },
+    communicationNotes: { type: DataTypes.TEXT, allowNull: true },
 
     createdBy: { type: DataTypes.STRING },
 
