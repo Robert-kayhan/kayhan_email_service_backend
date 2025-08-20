@@ -146,18 +146,28 @@ const getAllLeads = async (req: Request, res: Response) => {
 // GET a single lead by ID
 const getLeadById = async (req: Request, res: Response) => {
   try {
-    // console.log("api call");
     const lead = await LeadFolowUp.findByPk(req.params.id);
+    const leadSales = await LeadSalesTracking.findOne({
+      where: { lead_id: req.params.id }
+    });
+
     if (!lead) {
-      res.status(404).json({ message: "Lead not found" });
+      return res.status(404).json({ message: "Lead not found" });
     }
-    res.status(200).json(lead);
+
+    // Convert Sequelize instances to plain objects
+    const leadData = lead.toJSON();
+    const leadSalesData = leadSales ? leadSales.toJSON() : {};
+      // console.log(leadSales)
+    // Merge into one response object
+    const data = { ...leadData, ...leadSalesData };
+
+    res.status(200).json(data);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch lead", error: error.message });
+    res.status(500).json({ message: "Failed to fetch lead", error: error.message });
   }
 };
+
 
 const updateLead = async (req: Request, res: Response) => {
   try {
