@@ -152,7 +152,8 @@ const getLeadById = async (req: Request, res: Response) => {
     });
 
     if (!lead) {
-      return res.status(404).json({ message: "Lead not found" });
+       res.status(404).json({ message: "Lead not found" });
+       return
     }
 
     // Convert Sequelize instances to plain objects
