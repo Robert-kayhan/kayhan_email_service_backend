@@ -88,12 +88,15 @@ const createLead = async (req: any, res: Response) => {
 };
 
 // GET all leads
+
 const getAllLeads = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 25;
     const offset = (page - 1) * limit;
+
     const leadStatus = req.query.leadStatus as string | undefined;
+    const search = req.query.search as string | undefined;
 
     const where: any = {};
 
@@ -102,7 +105,6 @@ const getAllLeads = async (req: Request, res: Response) => {
       const todayStr = new Date().toISOString().slice(0, 10);
 
       if (leadStatus === "Today's  Follow up") {
-        // Match today's date in any of the follow-up date fields
         where[Op.or] = [
           { followUpDate: todayStr },
           { firstNextFollowUpDate: todayStr },
@@ -111,10 +113,29 @@ const getAllLeads = async (req: Request, res: Response) => {
           { finalNextFollowUpDate: todayStr },
         ];
       } else if (leadStatus === "Sale done" || leadStatus === "Sale not done") {
-        // Filter by sale status
         where.saleStatus = leadStatus;
       } else {
         where.status = leadStatus;
+      }
+    }
+
+    // Add search functionality
+    if (search) {
+      const searchQuery = {
+        [Op.or]: [
+          { firstName: { [Op.like]: `%${search}%` } },
+          { lastName: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { phone: { [Op.like]: `%${search}%` } },
+        ],
+      };
+
+      // Merge with existing where clause
+      if (where[Op.or]) {
+        where[Op.and] = [where, searchQuery];
+        delete where[Op.or]; // remove the old top-level OR to prevent conflict
+      } else {
+        Object.assign(where, searchQuery);
       }
     }
 
@@ -143,6 +164,7 @@ const getAllLeads = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 // GET a single lead by ID
 const getLeadById = async (req: Request, res: Response) => {
   try {
