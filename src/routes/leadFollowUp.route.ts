@@ -8,7 +8,8 @@ import {
   updateFollowUpStage,
   updateSaleStatus,
   addNote,
-  getNotesByLeadId
+  getNotesByLeadId,
+  checkEmail
 } from "../controllers/leadFolowUp.controller";
 import protect from "../middlewares/auth.middleware";
 const router = express.Router();
@@ -22,5 +23,6 @@ router.put("/:id/follow-up/:stage", updateFollowUpStage);
 router.put("/update-sale-status/:id" ,updateSaleStatus)
 router.post("/notes/:id", addNote);
 router.get("/notes/:id", getNotesByLeadId);
+router.get("/check-email/:email", checkEmail);
 
 export default router;
