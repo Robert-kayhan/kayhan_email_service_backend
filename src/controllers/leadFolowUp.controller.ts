@@ -3,7 +3,7 @@ import LeadFolowUp from "../models/LeadFolowUp"; // Adjust path if needed
 import LeadNote from "../models/Note";
 import { DATE, Op } from "sequelize";
 import LeadSalesTracking from "../models/LeadSalesTracking";
-
+import User from "../models/User.model";
 const createLead = async (req: any, res: Response) => {
   console.log("API call: Create Lead");
 
@@ -58,6 +58,13 @@ const createLead = async (req: any, res: Response) => {
   // }
 
   try {
+    const existingLead = await LeadFolowUp.findOne({ where: { email } });
+    if (existingLead) {
+      res.status(400).json({
+        message: "Lead with this email already exists",
+      });
+      return;
+    }
     const lead = await LeadFolowUp.create({
       firstName,
       lastName,
@@ -76,7 +83,12 @@ const createLead = async (req: any, res: Response) => {
       followUpDate,
       createdBy: req.user?.email || "system",
     });
-
+    await User.create({
+     firstname: firstName,
+    lastname:  lastName,
+      phone,
+      email,
+    });
     res.status(201).json(lead);
   } catch (error: any) {
     console.error("Error creating lead:", error);
@@ -170,27 +182,28 @@ const getLeadById = async (req: Request, res: Response) => {
   try {
     const lead = await LeadFolowUp.findByPk(req.params.id);
     const leadSales = await LeadSalesTracking.findOne({
-      where: { lead_id: req.params.id }
+      where: { lead_id: req.params.id },
     });
 
     if (!lead) {
-       res.status(404).json({ message: "Lead not found" });
-       return
+      res.status(404).json({ message: "Lead not found" });
+      return;
     }
 
     // Convert Sequelize instances to plain objects
     const leadData = lead.toJSON();
     const leadSalesData = leadSales ? leadSales.toJSON() : {};
-      // console.log(leadSales)
+    // console.log(leadSales)
     // Merge into one response object
     const data = { ...leadData, ...leadSalesData };
 
     res.status(200).json(data);
   } catch (error: any) {
-    res.status(500).json({ message: "Failed to fetch lead", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch lead", error: error.message });
   }
 };
-
 
 const updateLead = async (req: Request, res: Response) => {
   try {
@@ -384,6 +397,23 @@ const getNotesByLeadId = async (req: Request, res: Response) => {
       .json({ error: "Failed to fetch notes", details: err.message });
   }
 };
+// GET /api/leads/check-email/:email
+const checkEmail = async (req: Request, res: Response) => {
+  // console.log("api call")
+  try {
+    const { email } = req.params;
+    const lead = await LeadFolowUp.findOne({ where: { email } });
+
+    if (lead) {
+       res.json({ exists: true });
+       return
+    }
+     res.json({ exists: false });
+  } catch (err: any) {
+    res.status(500).json({ message: "Error checking email", error: err.message });
+  }
+};
+
 export {
   createLead,
   getAllLeads,
@@ -394,4 +424,5 @@ export {
   updateSaleStatus,
   addNote,
   getNotesByLeadId,
+  checkEmail
 };
