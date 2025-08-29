@@ -46,7 +46,7 @@ export const sendEmail = async ({
       },
     },
     Source: from,
-     ReplyToAddresses: ["support@kayhanaudio.com"],
+     ReplyToAddresses: ["info@kayhanaudio.com.au"],
   };
 
   try {

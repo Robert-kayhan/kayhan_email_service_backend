@@ -5,14 +5,14 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 // S3 client setup
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
+  region: process.env.AWS_REGION, // e.g., "ap-south-1"
+credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY!,
     secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
   },
 });
 
-export const generateStyledFlyerPdf = async ({
+const generateSingleStyledFlyerPdf = async ({
   flyerData,
   firstProduct,
   secondProduct,
@@ -105,6 +105,8 @@ export const generateStyledFlyerPdf = async ({
   }
   .products {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 16px;
     margin: 16px 0;
   }
@@ -228,10 +230,6 @@ export const generateStyledFlyerPdf = async ({
         <img src="${firstProduct.image}" alt="${firstProduct.title}" />
         <div class="product-name">${firstProduct.title}</div>
       </div>
-      <div class="product-card" style="border-color:#fbbf24">
-        <img src="${secondProduct.image}" alt="${secondProduct.title}" />
-        <div class="product-name">${secondProduct.title}</div>
-      </div>
     </div>
 
     <!-- Comparison Table -->
@@ -241,7 +239,6 @@ export const generateStyledFlyerPdf = async ({
           <tr>
             <th>Feature</th>
             <th>${firstProduct.title}</th>
-            <th>${secondProduct.title}</th>
           </tr>
         </thead>
         <tbody>
@@ -251,7 +248,6 @@ export const generateStyledFlyerPdf = async ({
             <tr>
               <td>${s.feature}</td>
               <td>${s.p1}</td>
-              <td>${s.p2}</td>
             </tr>
           `
             )
@@ -327,7 +323,11 @@ export const generateStyledFlyerPdf = async ({
 
   // Clean up local file
   fs.unlinkSync(pdfPath);
-
+const data = {
+  pdfPath : `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`,
+  html : html
+}
   // Return public S3 URL
-  return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
+  return data;
 };
+export default generateSingleStyledFlyerPdf;

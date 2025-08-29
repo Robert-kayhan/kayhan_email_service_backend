@@ -4,6 +4,8 @@ import LeadNote from "../models/Note";
 import { DATE, Op } from "sequelize";
 import LeadSalesTracking from "../models/LeadSalesTracking";
 import User from "../models/User.model";
+import Flyer from "../models/flyer/Flyer";
+
 const createLead = async (req: any, res: Response) => {
   console.log("API call: Create Lead");
 
@@ -84,8 +86,8 @@ const createLead = async (req: any, res: Response) => {
       createdBy: req.user?.email || "system",
     });
     await User.create({
-     firstname: firstName,
-    lastname:  lastName,
+      firstname: firstName,
+      lastname: lastName,
       phone,
       email,
     });
@@ -184,18 +186,24 @@ const getLeadById = async (req: Request, res: Response) => {
     const leadSales = await LeadSalesTracking.findOne({
       where: { lead_id: req.params.id },
     });
+    const flyer = await Flyer.findOne({
+      where: {
+        CrmID: req.params.id,
+      },
+    });
 
     if (!lead) {
-      res.status(404).json({ message: "Lead not found" });
-      return;
+       res.status(404).json({ message: "Lead not found" });
+       return
     }
 
     // Convert Sequelize instances to plain objects
     const leadData = lead.toJSON();
     const leadSalesData = leadSales ? leadSales.toJSON() : {};
-    // console.log(leadSales)
+    const flyerData = flyer ? flyer.toJSON() : {};
+
     // Merge into one response object
-    const data = { ...leadData, ...leadSalesData };
+    const data = { ...leadData, ...leadSalesData, flyer: flyerData };
 
     res.status(200).json(data);
   } catch (error: any) {
@@ -405,12 +413,14 @@ const checkEmail = async (req: Request, res: Response) => {
     const lead = await LeadFolowUp.findOne({ where: { email } });
 
     if (lead) {
-       res.json({ exists: true });
-       return
+      res.json({ exists: true });
+      return;
     }
-     res.json({ exists: false });
+    res.json({ exists: false });
   } catch (err: any) {
-    res.status(500).json({ message: "Error checking email", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error checking email", error: err.message });
   }
 };
 
@@ -424,5 +434,5 @@ export {
   updateSaleStatus,
   addNote,
   getNotesByLeadId,
-  checkEmail
+  checkEmail,
 };
