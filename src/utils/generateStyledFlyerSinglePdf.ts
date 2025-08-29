@@ -323,8 +323,11 @@ const generateSingleStyledFlyerPdf = async ({
 
   // Clean up local file
   fs.unlinkSync(pdfPath);
-
+const data = {
+  pdfPath : `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`,
+  html : html
+}
   // Return public S3 URL
-  return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
+  return data;
 };
 export default generateSingleStyledFlyerPdf;

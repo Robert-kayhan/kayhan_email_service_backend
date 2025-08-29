@@ -19,6 +19,9 @@ interface FlyerAttributes {
   quotationNumber?: string;
   validationTime?: string;
   flyer_url?: string;
+  flyer_image_url?: string;
+  CrmID?: string;
+
 
   createdAt?: Date;
   updatedAt?: Date;
@@ -26,7 +29,10 @@ interface FlyerAttributes {
 
 type FlyerCreationAttributes = Optional<FlyerAttributes, "id">;
 
-class Flyer extends Model<FlyerAttributes, FlyerCreationAttributes> implements FlyerAttributes {
+class Flyer
+  extends Model<FlyerAttributes, FlyerCreationAttributes>
+  implements FlyerAttributes
+{
   public id!: number;
   public title!: string;
   public description?: string;
@@ -43,6 +49,8 @@ class Flyer extends Model<FlyerAttributes, FlyerCreationAttributes> implements F
   public quotationNumber?: string;
   public validationTime?: string;
   public flyer_url?: string;
+  public flyer_image_url?: string;
+  public CrmID?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -121,8 +129,16 @@ Flyer.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-     flyer_url: {
+    flyer_url: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    flyer_image_url: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+     CrmID: {
+      type: DataTypes.TEXT("long"),
       allowNull: true,
     },
   },
