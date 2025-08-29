@@ -53,6 +53,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
     const errors = validateFlyerData(req.body);
     if (errors.length > 0) {
       res.status(400).json({ success: false, errors });
+      return;
     }
 
     const {
@@ -72,15 +73,14 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       CrmID,
     } = req.body;
 
-    // Validate existence of product specifications
+    // Validate product specifications
     const productSpecOne: any = productSpecificationId
       ? await ProductSpecification.findByPk(productSpecificationId)
       : null;
     if (productSpecificationId && !productSpecOne) {
-      res.status(400).json({
-        success: false,
-        message: "Invalid productSpecificationIdOne",
-      });
+      res
+        .status(400)
+        .json({ success: false, message: "Invalid productSpecificationIdOne" });
       return;
     }
 
@@ -88,16 +88,13 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       ? await ProductSpecification.findByPk(productSpecificationIdtwo)
       : null;
     if (productSpecificationIdtwo && !productSpecTwo) {
-      res.status(400).json({
-        success: false,
-        message: "Invalid productSpecificationIdTwo",
-      });
+      res
+        .status(400)
+        .json({ success: false, message: "Invalid productSpecificationIdTwo" });
       return;
     }
 
-    // Prepare flyer data object to save
-
-    // Prepare specs array for PDF table by comparing keys
+    // Build specs array
     const specKeys = [
       "processor",
       "operatingSystem",
@@ -123,7 +120,6 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       "onlineVideos",
     ];
 
-    // Helper for friendly display names
     const friendlyNames: Record<string, string> = {
       processor: "Processor",
       operatingSystem: "OS",
@@ -149,14 +145,13 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       onlineVideos: "Online Videos",
     };
 
-    // Build specs array for PDF
     const specs = specKeys.map((key) => ({
       feature: friendlyNames[key] || key,
       p1: productSpecOne?.[key] || "-",
       p2: productSpecTwo?.[key] || "-",
     }));
 
-    // Call your PDF generator with real data
+    // Generate PDF and JPG
     const pdfPath = await generateStyledFlyerPdf({
       flyerData: {
         customerName,
@@ -170,7 +165,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       },
       firstProduct: {
         image: prodcutoneimageUrl,
-        title: productSpecOne.name || "Product One",
+        title: productSpecOne?.name || "Product One",
         price: installationFees,
       },
       secondProduct: {
@@ -180,8 +175,9 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       },
       specs,
     });
-const jpgfile = await convertPdfToJpg(pdfPath)
-    console.log(pdfPath);
+
+    const jpgfile = await convertPdfToJpg(pdfPath);
+
     const flyerDataToSave = {
       title,
       description,
@@ -197,17 +193,31 @@ const jpgfile = await convertPdfToJpg(pdfPath)
       quotationNumber,
       validationTime,
       flyer_url: pdfPath,
-      CrmID: CrmID ? CrmID : "",
-      flyer_image_url : jpgfile[0]
+      flyer_image_url: jpgfile[0],
+      CrmID: CrmID || "",
     };
 
-    // Save flyer to DB
-    const flyer = await Flyer.create(flyerDataToSave);
-    res.status(201).json({
-      success: true,
-      data: flyer,
-      pdf: pdfPath,
-    });
+    // Check if flyer exists for this CrmID
+    let flyer = await Flyer.findOne({ where: { CrmID } });
+    if (flyer) {
+      // Update existing flyer
+      await flyer.update(flyerDataToSave);
+      res.status(200).json({
+        success: true,
+        message: "Flyer updated successfully",
+        data: flyer,
+        pdf: pdfPath,
+      });
+    } else {
+      // Create new flyer
+      flyer = await Flyer.create(flyerDataToSave);
+      res.status(201).json({
+        success: true,
+        message: "Flyer created successfully",
+        data: flyer,
+        pdf: pdfPath,
+      });
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -302,10 +312,12 @@ const createSingleProdctFlyer = async (
   res: Response
 ): Promise<void> => {
   try {
-    console.log("this is single product api calls");
+    console.log("this is single product API call");
+
     const errors = validateFlyerData(req.body);
     if (errors.length > 0) {
       res.status(400).json({ success: false, errors });
+      return;
     }
 
     const {
@@ -348,9 +360,7 @@ const createSingleProdctFlyer = async (
       return;
     }
 
-    // Prepare flyer data object to save
-
-    // Prepare specs array for PDF table by comparing keys
+    // Prepare specs array for PDF table
     const specKeys = [
       "processor",
       "operatingSystem",
@@ -376,7 +386,6 @@ const createSingleProdctFlyer = async (
       "onlineVideos",
     ];
 
-    // Helper for friendly display names
     const friendlyNames: Record<string, string> = {
       processor: "Processor",
       operatingSystem: "OS",
@@ -402,14 +411,13 @@ const createSingleProdctFlyer = async (
       onlineVideos: "Online Videos",
     };
 
-    // Build specs array for PDF
     const specs = specKeys.map((key) => ({
       feature: friendlyNames[key] || key,
       p1: productSpecOne?.[key] || "-",
       p2: productSpecTwo?.[key] || "-",
     }));
 
-    // Call your PDF generator with real data
+    // Generate PDF
     const pdfPath = await generateSingleStyledFlyerPdf({
       flyerData: {
         customerName,
@@ -423,7 +431,7 @@ const createSingleProdctFlyer = async (
       },
       firstProduct: {
         image: prodcutoneimageUrl,
-        title: productSpecOne.name || "Product One",
+        title: productSpecOne?.name || "Product One",
         price: installationFees,
       },
       secondProduct: {
@@ -434,8 +442,8 @@ const createSingleProdctFlyer = async (
       specs,
     });
 
-    const jpgfile = await convertPdfToJpg(pdfPath.pdfPath)
-    console.log(jpgfile);
+    const jpgfile = await convertPdfToJpg(pdfPath.pdfPath);
+
     const flyerDataToSave = {
       title,
       description,
@@ -455,13 +463,27 @@ const createSingleProdctFlyer = async (
       CrmID,
     };
 
-    // Save flyer to DB
-    const flyer = await Flyer.create(flyerDataToSave);
-    res.status(201).json({
-      success: true,
-      data: flyer,
-      pdf: pdfPath,
-    });
+    // Check if flyer exists for this CrmID
+    let flyer = await Flyer.findOne({ where: { CrmID } });
+    if (flyer) {
+      // Update existing flyer
+      await flyer.update(flyerDataToSave);
+      res.status(200).json({
+        success: true,
+        message: "Flyer updated successfully",
+        data: flyer,
+        pdf: pdfPath,
+      });
+    } else {
+      // Create new flyer
+      flyer = await Flyer.create(flyerDataToSave);
+      res.status(201).json({
+        success: true,
+        message: "Flyer created successfully",
+        data: flyer,
+        pdf: pdfPath,
+      });
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -472,7 +494,7 @@ const sendFlyer = async (req: Request, res: Response) => {
 
   try {
     const result = await sendEmail({
-      subject: subject || "Kayhan Audio Flyer", 
+      subject: subject || "Kayhan Audio Flyer",
       to: userData.email,
       bodyHtml: combinedHtml,
       from: "support@mailer.kayhanaudio.com.au",
