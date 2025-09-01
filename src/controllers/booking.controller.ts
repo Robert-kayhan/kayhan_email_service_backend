@@ -9,17 +9,11 @@ import User from "../models/User.model";
 // ✅ Create a new booking (with User, vehicle, items, and mobile details)
 export const createBooking = async (req: Request, res: Response) => {
   try {
-    const {
-      userData, 
-      vehicle,
-      booking,
-      items,
-      mobileDetails,
-    } = req.body;
-    console.log(booking , "this is booking")
-    console.log(userData , "this is userdata")
-    console.log(items , "this is items")
-    console.log(mobileDetails , "this is mobile")
+    const { userData, vehicle, booking, items, mobileDetails } = req.body;
+    console.log(booking, "this is booking");
+    console.log(userData, "this is userdata");
+    console.log(items, "this is items");
+    console.log(mobileDetails, "this is mobile");
     // Create / find User
     //  console.log("Uploaded files:", req.files);
 
@@ -31,7 +25,7 @@ export const createBooking = async (req: Request, res: Response) => {
     // Create vehicle
     const vehicleRecord = await Vehicle.create({
       ...vehicle,
-     customerId : userRecord.id,
+      customerId: userRecord.id,
     });
 
     // Create booking
@@ -56,7 +50,18 @@ export const createBooking = async (req: Request, res: Response) => {
     if (booking.type === "Mobile" && mobileDetails) {
       await MobileInstallationDetail.create({
         bookingId: bookingRecord.id,
-        ...mobileDetails,
+        parkingRestrictions: mobileDetails.parking,
+        powerAccess: mobileDetails.powerAccess,
+        specialInstructions: mobileDetails.instructions,
+        pickupAddress: mobileDetails.pickup,
+        pickupLat: mobileDetails.pickupLocation.lat,
+        pickupLng: mobileDetails.pickupLocation.lng,
+        dropoffAddress: mobileDetails.drop,
+        dropoffLat: mobileDetails.dropLocation.lat,
+        dropoffLng: mobileDetails.dropLocation.lat,
+        routeDistance: mobileDetails.distance,
+        routeDuration: mobileDetails.duration,
+        routePolyline : mobileDetails.routePolyline
       });
     }
 
@@ -66,7 +71,6 @@ export const createBooking = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 // ✅ Get all bookings with related data
 export const getAllBookings = async (req: Request, res: Response) => {
@@ -118,8 +122,8 @@ export const getBookingById = async (req: Request, res: Response) => {
     });
 
     if (!booking) {
-       res.status(404).json({ success: false, message: "Booking not found" });
-       return
+      res.status(404).json({ success: false, message: "Booking not found" });
+      return;
     }
 
     res.json({ success: true, booking });
@@ -133,11 +137,11 @@ export const updateBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { booking, items, mobileDetails } = req.body;
-
+    console.log(req.body)
     const bookingRecord = await Booking.findByPk(id);
     if (!bookingRecord) {
-       res.status(404).json({ success: false, message: "Booking not found" });
-       return
+      res.status(404).json({ success: false, message: "Booking not found" });
+      return;
     }
 
     await bookingRecord.update(booking);
@@ -156,11 +160,16 @@ export const updateBooking = async (req: Request, res: Response) => {
 
     // Update mobile details
     if (booking.type === "Mobile") {
-      const detail = await MobileInstallationDetail.findOne({ where: { bookingId: id } });
+      const detail = await MobileInstallationDetail.findOne({
+        where: { bookingId: id },
+      });
       if (detail) {
         await detail.update(mobileDetails);
       } else {
-        await MobileInstallationDetail.create({ bookingId: id, ...mobileDetails });
+        await MobileInstallationDetail.create({
+          bookingId: id,
+          ...mobileDetails,
+        });
       }
     }
 
@@ -177,8 +186,8 @@ export const deleteBooking = async (req: Request, res: Response) => {
     const booking = await Booking.findByPk(id);
 
     if (!booking) {
-       res.status(404).json({ success: false, message: "Booking not found" });
-       return
+      res.status(404).json({ success: false, message: "Booking not found" });
+      return;
     }
 
     await booking.destroy();
