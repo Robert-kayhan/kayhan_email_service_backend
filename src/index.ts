@@ -18,6 +18,8 @@ import sendEmailroutes from "./routes/sendEmail.routes";
 import Specificationroutes from "./routes/Specification.routes";
 import Flyerroutes from "./routes/flyer.routes";
 import DashBoardRoutes from "./routes/dashboard.route"
+import BOOKINGROutes from "./routes/booking.routes"
+import UploadRoutes from "./routes/upload.route"
 
 const app = express();
 const PORT = process.env.PORT;
@@ -51,6 +53,9 @@ app.use("/api/send-email/", sendEmailroutes);
 app.use("/api/product-specifications", Specificationroutes);
 app.use("/api/flyer", Flyerroutes);
 app.use("/api/dashboard", DashBoardRoutes);
+app.use("/api/booking",BOOKINGROutes );
+app.use("/api/upload",UploadRoutes);
+
 
 
 

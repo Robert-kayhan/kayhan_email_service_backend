@@ -2,7 +2,7 @@ import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
+// import s3Client from "../config/S3BuketConfig";
 // S3 client setup
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
