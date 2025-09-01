@@ -5,12 +5,13 @@ import {
   getBookingById,
   updateBooking,
   deleteBooking,
-//   sendNotification,
+  //   sendNotification,
 } from "../controllers/booking.controller";
-
+import { uploadImage } from "../middlewares/Upload";
 const router = Router();
 
-router.post("/", createBooking);
+router.post("/", uploadImage.fields([{ name: "file", maxCount: 1 }, { name: "image", maxCount: 1 }]), createBooking);  
+
 router.get("/", getAllBookings);
 router.get("/:id", getBookingById);
 router.put("/:id", updateBooking);

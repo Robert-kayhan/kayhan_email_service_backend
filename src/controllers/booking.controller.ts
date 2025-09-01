@@ -21,6 +21,8 @@ export const createBooking = async (req: Request, res: Response) => {
     console.log(items , "this is items")
     console.log(mobileDetails , "this is mobile")
     // Create / find User
+    //  console.log("Uploaded files:", req.files);
+
     let userRecord = await User.findOne({ where: { phone: userData.phone } });
     if (!userRecord) {
       userRecord = await User.create(userData);
