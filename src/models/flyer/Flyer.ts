@@ -137,10 +137,10 @@ Flyer.init(
     //   type: DataTypes.STRING,
     //   allowNull: true,
     // },
-     CrmID: {
-      type: DataTypes.TEXT("long"),
-      allowNull: true,
-    },
+    //  CrmID: {
+    //   type: DataTypes.TEXT("long"),
+    //   allowNull: true,
+    // },
   },
   {
     sequelize,
