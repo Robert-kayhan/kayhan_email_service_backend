@@ -51,7 +51,7 @@ app.use("/api/lead-follow-up/", LeadFolowUp);
 app.use("/api/campaign/", campaignRoutes);
 app.use("/api/send-email/", sendEmailroutes);
 app.use("/api/product-specifications", Specificationroutes);
-app.use("/api/flyer", Flyerroutes);
+// app.use("/api/flyer", Flyerroutes);
 app.use("/api/dashboard", DashBoardRoutes);
 app.use("/api/booking",BOOKINGROutes );
 app.use("/api/upload",UploadRoutes);
