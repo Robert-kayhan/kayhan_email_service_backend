@@ -133,10 +133,10 @@ Flyer.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    flyer_image_url: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+    // flyer_image_url: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    // },
      CrmID: {
       type: DataTypes.TEXT("long"),
       allowNull: true,
