@@ -4,7 +4,7 @@ import ProductSpecification from "../models/flyer/Specification";
 import { generateStyledFlyerPdf } from "../utils/generateStyledFlyerPdf";
 import generateSingleStyledFlyerPdf from "../utils/generateStyledFlyerSinglePdf";
 import { sendEmail } from "../utils/sendEmail";
-import convertPdfToJpg from "../utils/convertPdfToJpg";
+// import convertPdfToJpg from "../utils/convertPdfToJpg";
 
 // Helper for simple validation
 function validateFlyerData(data: any) {
@@ -176,7 +176,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       specs,
     });
 
-    const jpgfile = await convertPdfToJpg(pdfPath);
+    // const jpgfile = await convertPdfToJpg(pdfPath);
 
     const flyerDataToSave = {
       title,
@@ -193,7 +193,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       quotationNumber,
       validationTime,
       flyer_url: pdfPath,
-      flyer_image_url: jpgfile[0],
+      // flyer_image_url: jpgfile[0],
       CrmID: CrmID || "",
     };
 
@@ -447,7 +447,7 @@ const createSingleProdctFlyer = async (
       specs,
     });
 
-    const jpgfile = await convertPdfToJpg(pdfPath.pdfPath);
+    // const jpgfile = await convertPdfToJpg(pdfPath.pdfPath);
 
     const flyerDataToSave = {
       title,
@@ -464,7 +464,7 @@ const createSingleProdctFlyer = async (
       quotationNumber,
       validationTime,
       flyer_url: pdfPath.pdfPath,
-      flyer_image_url: jpgfile[0],
+      // flyer_image_url: jpgfile[0],
       CrmID,
     };
 
