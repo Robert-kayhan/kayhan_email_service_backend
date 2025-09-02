@@ -1,71 +1,90 @@
-// import fs from "fs";
-// import path from "path";
-// import axios from "axios";
-// import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-// // eslint-disable-next-line @typescript-eslint/no-var-requires
-// const pdfPoppler = require("pdf-poppler");
+import { fromPath } from "pdf2pic";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import fs from "fs";
+import path from "path";
+import axios from "axios";
 
-// // S3 client
-// const s3Client = new S3Client({
-//   region: process.env.AWS_REGION,
-//   credentials: {
-//     accessKeyId: process.env.AWS_ACCESS_KEY!,
-//     secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
-//   },
-// });
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
-// const convertPdfToJpg = async (pdfUrl: string) => {
-//   // 1. Download PDF
-//   const response = await axios.get(pdfUrl, { responseType: "arraybuffer" });
-//   const pdfBuffer = Buffer.from(response.data);
+// --- Download with retry ---
+const downloadFile = async (url: string, outputPath: string) => {
+  const writer = fs.createWriteStream(outputPath);
 
-//   const tempDir = path.join(process.cwd(), "temp");
-//   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+  const response = await axios({
+    url,
+    method: "GET",
+    responseType: "stream",
+    timeout: 60000, // 60s to avoid EPIPE on slow networks
+  });
 
-//   const timestamp = Date.now();
-//   const pdfPath = path.join(tempDir, `flyer-${timestamp}.pdf`);
-//   fs.writeFileSync(pdfPath, pdfBuffer);
+  return new Promise<string>((resolve, reject) => {
+    response.data.pipe(writer);
 
-//   // 2. Convert PDF → JPG
-//   const prefix = `flyer-${timestamp}`; 
-//   const options = {
-//     format: "jpeg",
-//     jpeg: 100,
-//     out_dir: tempDir,
-//     out_prefix: prefix,
-//     page: null, // null = convert all pages
-//     scale:  2048, // resolution
-//   };
+    writer.on("finish", () => resolve(outputPath));
+    writer.on("error", (err) => {
+      writer.close();
+      reject(err);
+    });
+  });
+};
 
-//   await pdfPoppler.convert(pdfPath, options);
+const convertPdfToJpg = async (pdfUrl: string) => {
+  const tempDir = path.join(__dirname, "temp");
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+  }
 
-//   // 3. Upload generated JPG(s) to S3
-//   const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(prefix) && f.endsWith(".jpg"));
-//   const uploadedUrls: string[] = [];
+  const pdfPath = path.join(tempDir, `flyer-${Date.now()}.pdf`);
+  console.log(pdfPath)
+  
+  try {
+    // Step 1: Download
+    await downloadFile(pdfUrl, pdfPath);
 
-//   for (const file of files) {
-//     const fileBuffer = fs.readFileSync(path.join(tempDir, file));
-//     const s3Key = `flyers/images/${file}`;
+    // Step 2: Convert
+    const pdf2pic = fromPath(pdfPath, {
+      density: 150, // lower density -> less memory
+      saveFilename: "flyer",
+      savePath: tempDir,
+      format: "jpg",
+      width: 1200,
+      height: 1200,
+    });
 
-//     await s3Client.send(
-//       new PutObjectCommand({
-//         Bucket: process.env.S3_BUCKET!,
-//         Key: s3Key,
-//         Body: fileBuffer,
-//         ContentType: "image/jpeg",
-//       })
-//     );
+    const result: any = await pdf2pic(1); // convert page 1
+    if (!result.base64) throw new Error("Conversion failed");
 
-//     uploadedUrls.push(`${process.env.AWS_FILE_URL}${s3Key}`);
+    const jpgBuffer = Buffer.from(result.base64, "base64");
 
-//     // delete temp jpg
-//     fs.unlinkSync(path.join(tempDir, file));
-//   }
+    // Step 3: Upload to S3
+    const s3Key = `flyers/images/flyer-${Date.now()}.jpg`;
 
-//   // 4. Cleanup PDF file
-//   fs.unlinkSync(pdfPath);
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET!,
+        Key: s3Key,
+        Body: jpgBuffer,
+        ContentType: "image/jpeg",
+      })
+    );
 
-//   return uploadedUrls; 
-// };
+    // Step 4: Cleanup
+    await fs.promises.unlink(pdfPath).catch(() => {});
+    if (result.path && fs.existsSync(result.path)) {
+      await fs.promises.unlink(result.path).catch(() => {});
+    }
 
-// export default convertPdfToJpg;
+    return [`${process.env.AWS_FILE_URL}${s3Key}`];
+  } catch (err: any) {
+    console.error("❌ Conversion failed:", err);
+    throw err;
+  }
+};
+
+export default convertPdfToJpg;

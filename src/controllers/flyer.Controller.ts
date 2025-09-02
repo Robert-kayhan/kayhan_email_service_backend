@@ -4,7 +4,7 @@ import ProductSpecification from "../models/flyer/Specification";
 import { generateStyledFlyerPdf } from "../utils/generateStyledFlyerPdf";
 import generateSingleStyledFlyerPdf from "../utils/generateStyledFlyerSinglePdf";
 import { sendEmail } from "../utils/sendEmail";
-// import convertPdfToJpg from "../utils/convertPdfToJpg";
+import convertPdfToJpg from "../utils/convertPdfToJpg";
 
 // Helper for simple validation
 function validateFlyerData(data: any) {
@@ -198,26 +198,31 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
     };
 
     // Check if flyer exists for this CrmID
-    let flyer = await Flyer.findOne({ where: { CrmID } });
-    if (flyer) {
-      // Update existing flyer
-      await flyer.update(flyerDataToSave);
-      res.status(200).json({
-        success: true,
-        message: "Flyer updated successfully",
-        data: flyer,
-        pdf: pdfPath,
-      });
-    } else {
-      // Create new flyer
-      flyer = await Flyer.create(flyerDataToSave);
-      res.status(201).json({
-        success: true,
-        message: "Flyer created successfully",
-        data: flyer,
-        pdf: pdfPath,
-      });
+    let flyer;
+
+    if (CrmID) {
+      flyer = await Flyer.findOne({ where: { CrmID } });
+
+      if (flyer) {
+        // Update existing flyer
+        await flyer.update(flyerDataToSave);
+        res.status(200).json({
+          success: true,
+          message: "Flyer updated successfully",
+          data: flyer,
+          pdf: pdfPath,
+        });
+      }
     }
+
+    // If CrmID not provided OR flyer not found, create a new one
+    flyer = await Flyer.create(flyerDataToSave);
+    res.status(201).json({
+      success: true,
+      message: "Flyer created successfully",
+      data: flyer,
+      pdf: pdfPath,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -464,26 +469,32 @@ const createSingleProdctFlyer = async (
     };
 
     // Check if flyer exists for this CrmID
-    let flyer = await Flyer.findOne({ where: { CrmID } });
-    if (flyer) {
-      // Update existing flyer
-      await flyer.update(flyerDataToSave);
-      res.status(200).json({
-        success: true,
-        message: "Flyer updated successfully",
-        data: flyer,
-        pdf: pdfPath,
-      });
-    } else {
-      // Create new flyer
-      flyer = await Flyer.create(flyerDataToSave);
-      res.status(201).json({
-        success: true,
-        message: "Flyer created successfully",
-        data: flyer,
-        pdf: pdfPath,
-      });
+    // Check if flyer exists for this CrmID only if CrmID is provided
+    let flyer;
+
+    if (CrmID) {
+      flyer = await Flyer.findOne({ where: { CrmID } });
+
+      if (flyer) {
+        // Update existing flyer
+        await flyer.update(flyerDataToSave);
+        res.status(200).json({
+          success: true,
+          message: "Flyer updated successfully",
+          data: flyer,
+          pdf: pdfPath,
+        });
+      }
     }
+
+    // If CrmID not provided OR flyer not found, create a new one
+    flyer = await Flyer.create(flyerDataToSave);
+    res.status(201).json({
+      success: true,
+      message: "Flyer created successfully",
+      data: flyer,
+      pdf: pdfPath,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
