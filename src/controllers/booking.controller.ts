@@ -136,19 +136,48 @@ export const getBookingById = async (req: Request, res: Response) => {
 export const updateBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { booking, items, mobileDetails } = req.body;
-    console.log(req.body)
+    const { userData, vehicle, booking, items, mobileDetails } = req.body;
+    console.log(items)
+    // Find booking
     const bookingRecord = await Booking.findByPk(id);
     if (!bookingRecord) {
-      res.status(404).json({ success: false, message: "Booking not found" });
-      return;
+      return res.status(404).json({ success: false, message: "Booking not found" });
     }
 
-    await bookingRecord.update(booking);
+    // ✅ Update / create user
+    let userRecord = await User.findOne({ where: { phone: userData.phone } });
+    if (!userRecord) {
+      userRecord = await User.create(userData);
+    } else {
+      await userRecord.update(userData);
+    }
 
-    // Update booking items (simple: delete & recreate)
-    if (items) {
-      await BookingItem.destroy({ where: { bookingId: id } });
+    // ✅ Update / create vehicle
+    let vehicleRecord = await Vehicle.findOne({ where: { id: bookingRecord.vehicleId } });
+    if (vehicleRecord) {
+      await vehicleRecord.update({ ...vehicle, customerId: userRecord.id });
+    } else {
+      vehicleRecord = await Vehicle.create({
+        ...vehicle,
+        customerId: userRecord.id,
+      });
+    }
+
+    // ✅ Normalize booking payload
+    const bookingPayload = {
+      ...booking,
+      type: booking.installationType, // map frontend → backend
+      date: booking.preferredDate,    // map frontend → backend
+      customerId: userRecord.id,
+      vehicleId: vehicleRecord.id,
+    };
+
+    // ✅ Update booking
+    await bookingRecord.update(bookingPayload);
+
+    // ✅ Update booking items
+    await BookingItem.destroy({ where: { bookingId: id } });
+    if (items && items.length > 0) {
       await BookingItem.bulkCreate(
         items.map((item: any) => ({
           bookingId: id,
@@ -158,26 +187,43 @@ export const updateBooking = async (req: Request, res: Response) => {
       );
     }
 
-    // Update mobile details
-    if (booking.type === "Mobile") {
+    // ✅ Update / create mobile details
+    if (booking.installationType === "Mobile" && mobileDetails) {
       const detail = await MobileInstallationDetail.findOne({
         where: { bookingId: id },
       });
+
+      const mobilePayload :any = {
+        bookingId: id,
+        parkingRestrictions: mobileDetails.parking,
+        powerAccess: mobileDetails.powerAccess,
+        specialInstructions: mobileDetails.instructions,
+        pickupAddress: mobileDetails.pickup,
+        pickupLat: mobileDetails.pickupLocation?.lat,
+        pickupLng: mobileDetails.pickupLocation?.lng,
+        dropoffAddress: mobileDetails.drop,
+        dropoffLat: mobileDetails.dropLocation?.lat,
+        dropoffLng: mobileDetails.dropLocation?.lng,
+        routeDistance: mobileDetails.distance,
+        routeDuration: mobileDetails.duration,
+        routePolyline: mobileDetails.routePolyline,
+      };
+
       if (detail) {
-        await detail.update(mobileDetails);
+        await detail.update(mobilePayload);
       } else {
-        await MobileInstallationDetail.create({
-          bookingId: id,
-          ...mobileDetails,
-        });
+        await MobileInstallationDetail.create(mobilePayload);
       }
     }
 
     res.json({ success: true, booking: bookingRecord });
   } catch (error: any) {
+    console.error(error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
 
 // ✅ Delete booking
 export const deleteBooking = async (req: Request, res: Response) => {
