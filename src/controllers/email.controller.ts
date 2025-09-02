@@ -86,7 +86,7 @@ const sendEmails = async (req: Request, res: Response) => {
           subject,
           bodyHtml: html,
           bodyText: text,
-          from: "support@mailer.kayhanaudio.com.au", // verified domain
+          from: "newsletter@mailer.kayhanaudio.com.au", // verified domain
         });
 
         console.log("✅ Email sent:", result);

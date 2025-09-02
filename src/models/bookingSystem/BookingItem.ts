@@ -15,17 +15,7 @@ BookingItem.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     bookingId: { type: DataTypes.INTEGER, allowNull: false },
     itemType: {
-      type: DataTypes.ENUM(
-        "Head Unit",
-        "Reversing Camera",
-        "Speakers",
-        "Subwoofer",
-        "Amplifier",
-        "Navigation System",
-        "CarPlay/AndroidAuto",
-        "Steering Control",
-        "Accessory"
-      ),
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     otherItemText: { type: DataTypes.STRING(255), allowNull: true },
