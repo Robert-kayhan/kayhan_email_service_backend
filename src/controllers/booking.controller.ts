@@ -141,7 +141,8 @@ export const updateBooking = async (req: Request, res: Response) => {
     // Find booking
     const bookingRecord = await Booking.findByPk(id);
     if (!bookingRecord) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
+       res.status(404).json({ success: false, message: "Booking not found" });
+       return
     }
 
     // ✅ Update / create user
