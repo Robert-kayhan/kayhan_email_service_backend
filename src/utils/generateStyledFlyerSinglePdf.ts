@@ -15,7 +15,7 @@ credentials: {
 const generateSingleStyledFlyerPdf = async ({
   flyerData,
   firstProduct,
-  secondProduct,
+  // secondProduct,
   specs,
 }: {
   flyerData: {
