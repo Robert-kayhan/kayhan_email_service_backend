@@ -16,7 +16,7 @@ export const sendEmail = async ({
   subject,
   bodyHtml,
   bodyText = "",
-  from = "kayhanaudio@gmail.com", 
+  from = "newsletter@mailer.kayhanaudio.com.au", 
 }: {
   to: string;
   subject: string;

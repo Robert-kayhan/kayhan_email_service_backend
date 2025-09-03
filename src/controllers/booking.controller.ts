@@ -40,8 +40,8 @@ export const createBooking = async (req: Request, res: Response) => {
       await BookingItem.bulkCreate(
         items.map((item: any) => ({
           bookingId: bookingRecord.id,
-          itemType: item.itemType,
-          otherItemText: item.otherItemText,
+          itemType: item,
+          // otherItemText: item.otherItemText,
         }))
       );
     }
@@ -182,8 +182,8 @@ export const updateBooking = async (req: Request, res: Response) => {
       await BookingItem.bulkCreate(
         items.map((item: any) => ({
           bookingId: id,
-          itemType: item.itemType,
-          otherItemText: item.otherItemText,
+          itemType: item,
+          // otherItemText: item.otherItemText,
         }))
       );
     }
