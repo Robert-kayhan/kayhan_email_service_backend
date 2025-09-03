@@ -19,7 +19,7 @@ const sendEmails = async (req: Request, res: Response) => {
         { model: EmailLog, as: "EmailLogs" },
       ],
     });
-
+    // console.log(campaign)
     if (!campaign) {
        res.status(404).json({ message: "Campaign not found" });
        return
@@ -81,12 +81,13 @@ const sendEmails = async (req: Request, res: Response) => {
         console.log("📧 Sending to:", user.email);
 
         // 4. Send the email
+        // console.log(campaign.fromEmail , "check this")
         const result = await sendEmail({
           to: user.email,
           subject,
           bodyHtml: html,
           bodyText: text,
-          from: "newsletter@mailer.kayhanaudio.com.au", // verified domain
+          from: campaign.fromEmail, 
         });
 
         console.log("✅ Email sent:", result);
