@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Template from "../models/Template";
+import { Op } from "sequelize";
 
 // 🔹 Create a new template
 const createTemplate = async (req: Request, res: Response) => {
@@ -39,10 +40,25 @@ const getAllTemplates = async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
 
+    // 👇 Search query param
+    const search = (req.query.search as string) || "";
+
+    // 👇 Build where condition
+    const whereCondition = search
+      ? {
+          [Op.or]: [
+            { name: { [Op.like]: `%${search}%` } },
+            { description: { [Op.like]: `%${search}%` } },
+          ],
+        }
+      : {};
+
+    // 👇 Fetch with search + pagination
     const { count, rows: templates } = await Template.findAndCountAll({
+      where: whereCondition,
       limit,
       offset,
-      order: [["createdAt", "DESC"]], // optional: latest first
+      order: [["createdAt", "DESC"]],
     });
 
     const totalPages = Math.ceil(count / limit);
@@ -61,6 +77,7 @@ const getAllTemplates = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // 🔹 Get template by ID
 const getTemplateById = async (req: Request, res: Response) => {
