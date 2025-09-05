@@ -272,20 +272,20 @@ export const generateStyledFlyerPdf = async ({
 </body>
 </html>
 `;
-    console.log("html ")
+    // console.log("html ")
 
   // Launch Puppeteer
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-    console.log("first fun is calls pdf ")
+    // console.log("first fun is calls pdf ")
   
   const page = await browser.newPage();
-    console.log("sec fun is calls pdf ")
+    // console.log("sec fun is calls pdf ")
   
   await page.setContent(html, { waitUntil: "networkidle0" });
-    console.log("third fun is calls pdf ")
+    // console.log("third fun is calls pdf ")
 
   // Ensure all images are loaded before PDF creation
   await page.evaluate(() => {
