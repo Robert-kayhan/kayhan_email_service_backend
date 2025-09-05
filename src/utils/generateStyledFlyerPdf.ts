@@ -279,51 +279,52 @@ export const generateStyledFlyerPdf = async ({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-  // console.log("first fun is calls pdf ")
-
-  const page = await browser.newPage();
-  // console.log("sec fun is calls pdf ")
-
-  await page.setContent(html, { waitUntil: "networkidle0" });
-  // console.log("third fun is calls pdf ")
-
-  // Ensure all images are loaded before PDF creation
-  await page.evaluate(() => {
-    const imgs = Array.from(document.images);
-    return Promise.all(
-      imgs.map((img) =>
-        img.complete
-          ? Promise.resolve()
-          : new Promise((res) => {
-              img.onload = res;
-              img.onerror = res;
-            })
-      )
-    );
-  });
-
-  // Local temp path for PDF
-  const pdfDir = path.join(process.cwd(), "pdfs");
-  if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
-  console.log("five fun is calls pdf ");
-
-  const pdfFileName = `email-compagin${Date.now()}.pdf`;
-  const pdfPath = path.join(pdfDir, pdfFileName);
-  console.log("📄 Generating PDF at:", pdfPath);
-
-  await page.pdf({
-    path: pdfPath,
-    format: "A4",
-    printBackground: true,
-    margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
-    preferCSSPageSize: true,
-  });
-
-  console.log("✅ PDF generated successfully");
 
   try {
+    // console.log("first fun is calls pdf ")
+
+    const page = await browser.newPage();
+    // console.log("sec fun is calls pdf ")
+
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    // console.log("third fun is calls pdf ")
+
+    // Ensure all images are loaded before PDF creation
+    await page.evaluate(() => {
+      const imgs = Array.from(document.images);
+      return Promise.all(
+        imgs.map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise((res) => {
+                img.onload = res;
+                img.onerror = res;
+              })
+        )
+      );
+    });
+
+    // Local temp path for PDF
+    const pdfDir = path.join(process.cwd(), "pdfs");
+    if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+    console.log("five fun is calls pdf ");
+
+    const pdfFileName = `email-compagin${Date.now()}.pdf`;
+    const pdfPath = path.join(pdfDir, pdfFileName);
+    console.log("📄 Generating PDF at:", pdfPath);
+
+    await page.pdf({
+      path: pdfPath,
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
+      preferCSSPageSize: true,
+    });
+
+    console.log("✅ PDF generated successfully");
+    console.log(pdfDir)
     const fileBuffer = fs.readFileSync(pdfPath);
-    // console.log("sdsd fun is calls pdf ");
+
 
     // Upload to S3
     const bucketName = process.env.S3_BUCKET!;
