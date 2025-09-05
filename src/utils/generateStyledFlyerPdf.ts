@@ -273,11 +273,7 @@ export const generateStyledFlyerPdf = async ({
 </html>
 `;
   console.log("🚀 Starting flyer PDF generation");
-  console.log({
-     accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
-    regions: process.env.AWS_REGION,
-  })
+ 
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -333,6 +329,11 @@ export const generateStyledFlyerPdf = async ({
       region: process.env.AWS_REGION,
       key,
     });
+     console.log({
+     accessKeyId: process.env.AWS_ACCESS_KEY!,
+    secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
+    regions: process.env.AWS_REGION,
+  },"this")
 
     try {
       const response = await s3Client.send(
