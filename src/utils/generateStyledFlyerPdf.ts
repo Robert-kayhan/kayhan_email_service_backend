@@ -323,7 +323,7 @@ export const generateStyledFlyerPdf = async ({
 
   try {
     const fileBuffer = fs.readFileSync(pdfPath);
-    console.log("sdsd fun is calls pdf ");
+    // console.log("sdsd fun is calls pdf ");
 
     // Upload to S3
     const bucketName = process.env.S3_BUCKET!;
@@ -335,7 +335,7 @@ export const generateStyledFlyerPdf = async ({
         ContentType: "application/pdf",
       })
     );
-    console.log("sixss fun is calls pdf ");
+    // console.log("sixss fun is calls pdf ");
 
     // Clean up local file
     fs.unlinkSync(pdfPath);
