@@ -2,15 +2,16 @@ import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {s3Client} from "../config/S3BuketConfig"
 // import s3Client from "../config/S3BuketConfig";
 // S3 client setup
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
-  },
-});
+// const s3Client = new S3Client({
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+//   },
+// });
 
 export const generateStyledFlyerPdf = async ({
   flyerData,
@@ -273,7 +274,7 @@ export const generateStyledFlyerPdf = async ({
 </html>
 `;
   console.log("🚀 Starting flyer PDF generation");
- 
+
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -329,13 +330,9 @@ export const generateStyledFlyerPdf = async ({
       region: process.env.AWS_REGION,
       key,
     });
-     console.log({
-     accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
-    regions: process.env.AWS_REGION,
-  },"this")
 
     try {
+      console.log(key , fileBuffer)
       const response = await s3Client.send(
         new PutObjectCommand({
           Bucket: bucketName,
