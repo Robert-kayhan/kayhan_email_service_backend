@@ -2,15 +2,16 @@ import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {s3Client} from "../config/S3BuketConfig"
 // import s3Client from "../config/S3BuketConfig";
 // S3 client setup
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
-  },
-});
+// const s3Client = new S3Client({
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+//   },
+// });
 
 export const generateStyledFlyerPdf = async ({
   flyerData,
@@ -328,13 +329,14 @@ export const generateStyledFlyerPdf = async ({
     // Upload to S3
     const bucketName = process.env.S3_BUCKET!;
     const key = `flyers/${pdfFileName}`;
-    console.log("📡 Preparing upload:", {
-      bucketName,
-      region: process.env.AWS_REGION,
-      key,
-    });
+    // console.log("📡 Preparing upload:", {
+    //   bucketName,
+    //   region: process.env.AWS_REGION,
+    //   key,
+    // });
 
     try {
+      console.log(key , fileBuffer)
       const response = await s3Client.send(
         new PutObjectCommand({
           Bucket: bucketName,
