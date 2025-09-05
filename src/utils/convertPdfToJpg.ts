@@ -324,7 +324,7 @@ const generateStyledFlyerImage = async ({
 
   // Clean up local file
   fs.unlinkSync(imgPath);
-
+  console.log(`${process.env.AWS_FILE_URL}flyers/images/${imgFileName} this api is working `)
   // Return public S3 URL
   return `${process.env.AWS_FILE_URL}flyers/images/${imgFileName}`;
 };
@@ -637,7 +637,7 @@ const generateStyledSingleFlyerImage = async ({
 
   // Clean up local file
   fs.unlinkSync(imgPath);
-  console.log("its work")
+  console.log(`${process.env.AWS_FILE_URL}flyers/images/${imgFileName}   This is image api `)
   // Return public S3 URL
   return `${process.env.AWS_FILE_URL}flyers/images/${imgFileName}`;
 };
