@@ -41,7 +41,7 @@ export const generateStyledFlyerPdf = async ({
   specs: Array<{ feature: string; p1: string; p2: string }>;
 }) => {
     console.log("this is calls pdf ")
-  console.log(flyerData , firstProduct , secondProduct)
+  // console.log(flyerData , firstProduct , secondProduct)
   const html = `
 <html>
 <head>
@@ -272,14 +272,20 @@ export const generateStyledFlyerPdf = async ({
 </body>
 </html>
 `;
+    console.log("html ")
 
   // Launch Puppeteer
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
+    console.log("first fun is calls pdf ")
+  
   const page = await browser.newPage();
+    console.log("sec fun is calls pdf ")
+  
   await page.setContent(html, { waitUntil: "networkidle0" });
+    console.log("third fun is calls pdf ")
 
   // Ensure all images are loaded before PDF creation
   await page.evaluate(() => {
@@ -295,14 +301,17 @@ export const generateStyledFlyerPdf = async ({
       )
     );
   });
+    console.log("fouth fun is calls pdf ")
 
   // Local temp path for PDF
   const pdfDir = path.join(process.cwd(), "pdfs");
   if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+    console.log("five fun is calls pdf ")
 
   const pdfFileName = `email-compagin${Date.now()}.pdf`;
   const pdfPath = path.join(pdfDir, pdfFileName);
-
+    console.log("six fun is calls pdf ")
+    console.log(pdfPath)
   await page.pdf({
     path: pdfPath,
     format: "A4",
@@ -310,11 +319,14 @@ export const generateStyledFlyerPdf = async ({
     margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
     preferCSSPageSize: true,
   });
+    console.log("sevem ")
 
   await browser.close();
+    console.log("sixss fun is calls pdf ")
 
   // Read PDF as buffer
   const fileBuffer = fs.readFileSync(pdfPath);
+    console.log("sdsd fun is calls pdf ")
 
   // Upload to S3
   const bucketName = process.env.S3_BUCKET!;
@@ -326,6 +338,7 @@ export const generateStyledFlyerPdf = async ({
       ContentType: "application/pdf",
     })
   );
+    console.log("sixss fun is calls pdf ")
 
   // Clean up local file
   fs.unlinkSync(pdfPath);
