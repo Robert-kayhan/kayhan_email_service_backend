@@ -40,6 +40,8 @@ export const generateStyledFlyerPdf = async ({
   };
   specs: Array<{ feature: string; p1: string; p2: string }>;
 }) => {
+    console.log("this is calls pdf ")
+  console.log(flyerData , firstProduct , secondProduct)
   const html = `
 <html>
 <head>
