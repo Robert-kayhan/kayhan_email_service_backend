@@ -73,7 +73,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       validationTime,
       CrmID,
     } = req.body;
-
+      console.log(req.body)
     // Validate product specifications
     const productSpecOne: any = productSpecificationId
       ? await ProductSpecification.findByPk(productSpecificationId)
@@ -94,7 +94,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
         .json({ success: false, message: "Invalid productSpecificationIdTwo" });
       return;
     }
-
+    console.log("there are any error ")
     // Build specs array
     const specKeys = [
       "processor",
@@ -151,7 +151,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       p1: productSpecOne?.[key] || "-",
       p2: productSpecTwo?.[key] || "-",
     }));
-
+    console.log("specs")
     // Generate PDF and JPG
     const pdfPath = await generateStyledFlyerPdf({
       flyerData: {
