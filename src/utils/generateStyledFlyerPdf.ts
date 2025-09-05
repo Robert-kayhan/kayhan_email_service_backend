@@ -274,11 +274,7 @@ export const generateStyledFlyerPdf = async ({
 </html>
 `;
   console.log("🚀 Starting flyer PDF generation");
-  console.log({
-     accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
-    regions: process.env.AWS_REGION,
-  })
+
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -329,11 +325,11 @@ export const generateStyledFlyerPdf = async ({
     // Upload to S3
     const bucketName = process.env.S3_BUCKET!;
     const key = `flyers/${pdfFileName}`;
-    // console.log("📡 Preparing upload:", {
-    //   bucketName,
-    //   region: process.env.AWS_REGION,
-    //   key,
-    // });
+    console.log("📡 Preparing upload:", {
+      bucketName,
+      region: process.env.AWS_REGION,
+      key,
+    });
 
     try {
       console.log(key , fileBuffer)
