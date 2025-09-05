@@ -329,5 +329,6 @@ export const generateStyledFlyerPdf = async ({
   fs.unlinkSync(pdfPath);
 
   // Return public S3 URL
+  console.log("this function res")
   return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
 };

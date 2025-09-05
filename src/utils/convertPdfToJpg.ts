@@ -637,7 +637,7 @@ const generateStyledSingleFlyerImage = async ({
 
   // Clean up local file
   fs.unlinkSync(imgPath);
-
+  console.log("its work")
   // Return public S3 URL
   return `${process.env.AWS_FILE_URL}flyers/images/${imgFileName}`;
 };
