@@ -40,7 +40,7 @@ export const generateStyledFlyerPdf = async ({
   };
   specs: Array<{ feature: string; p1: string; p2: string }>;
 }) => {
-    console.log("this is calls pdf ")
+  console.log("this is calls pdf ");
   // console.log(flyerData , firstProduct , secondProduct)
   const html = `
 <html>
@@ -272,20 +272,20 @@ export const generateStyledFlyerPdf = async ({
 </body>
 </html>
 `;
-    // console.log("html ")
+  // console.log("html ")
 
   // Launch Puppeteer
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-    // console.log("first fun is calls pdf ")
-  
+  // console.log("first fun is calls pdf ")
+
   const page = await browser.newPage();
-    // console.log("sec fun is calls pdf ")
-  
+  // console.log("sec fun is calls pdf ")
+
   await page.setContent(html, { waitUntil: "networkidle0" });
-    // console.log("third fun is calls pdf ")
+  // console.log("third fun is calls pdf ")
 
   // Ensure all images are loaded before PDF creation
   await page.evaluate(() => {
@@ -305,46 +305,49 @@ export const generateStyledFlyerPdf = async ({
   // Local temp path for PDF
   const pdfDir = path.join(process.cwd(), "pdfs");
   if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
-    console.log("five fun is calls pdf ")
+  console.log("five fun is calls pdf ");
 
   const pdfFileName = `email-compagin${Date.now()}.pdf`;
   const pdfPath = path.join(pdfDir, pdfFileName);
   console.log("📄 Generating PDF at:", pdfPath);
 
-await page.pdf({
-  path: pdfPath,
-  format: "A4",
-  printBackground: true,
-  margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
-  preferCSSPageSize: true,
-});
+  await page.pdf({
+    path: pdfPath,
+    format: "A4",
+    printBackground: true,
+    margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
+    preferCSSPageSize: true,
+  });
 
-console.log("✅ PDF generated successfully");
+  console.log("✅ PDF generated successfully");
 
+  try {
+    const fileBuffer = fs.readFileSync(pdfPath);
+    console.log("sdsd fun is calls pdf ");
 
-  await browser.close();
-    console.log("sixss fun is calls pdf ")
+    // Upload to S3
+    const bucketName = process.env.S3_BUCKET!;
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: bucketName,
+        Key: `flyers/${pdfFileName}`,
+        Body: fileBuffer,
+        ContentType: "application/pdf",
+      })
+    );
+    console.log("sixss fun is calls pdf ");
 
-  // Read PDF as buffer
-  const fileBuffer = fs.readFileSync(pdfPath);
-    console.log("sdsd fun is calls pdf ")
+    // Clean up local file
+    fs.unlinkSync(pdfPath);
 
-  // Upload to S3
-  const bucketName = process.env.S3_BUCKET!;
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: bucketName,
-      Key: `flyers/${pdfFileName}`,
-      Body: fileBuffer,
-      ContentType: "application/pdf",
-    })
-  );
-    console.log("sixss fun is calls pdf ")
-
-  // Clean up local file
-  fs.unlinkSync(pdfPath);
-
-  // Return public S3 URL
-  console.log("this function res")
-  return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
+    // Return public S3 URL
+    console.log("this function res");
+    return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
+  } catch (error) {
+    console.log(error);
+    throw new Error("this is pdf error");
+  } finally {
+    await browser.close();
+    console.log("sixss fun is calls pdf ");
+  }
 };
