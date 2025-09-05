@@ -225,8 +225,9 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
 
     if (CrmID) {
       flyer = await Flyer.findOne({ where: { CrmID } });
-
+      console.log("there are crm console")
       if (flyer) {
+        console.log("flyer update console")
         // Update existing flyer
         await flyer.update(flyerDataToSave);
         res.status(200).json({
@@ -235,16 +236,18 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
           data: flyer,
           pdf: pdfPath,
         });
+        return
       }
     }
-
+    console.log("create console ")
     // If CrmID not provided OR flyer not found, create a new one
     flyer = await Flyer.create(flyerDataToSave);
+    console.log("its all working ")
     res.status(201).json({
       success: true,
       message: "Flyer created successfully",
-      data: flyer,
-      pdf: pdfPath,
+      // data: flyer,
+      // pdf: pdfPath,
     });
   } catch (error: any) {
     console.log(error)
