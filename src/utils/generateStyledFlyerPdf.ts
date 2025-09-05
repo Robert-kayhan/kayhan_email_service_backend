@@ -301,7 +301,6 @@ export const generateStyledFlyerPdf = async ({
       )
     );
   });
-    console.log("fouth fun is calls pdf ")
 
   // Local temp path for PDF
   const pdfDir = path.join(process.cwd(), "pdfs");
@@ -310,16 +309,18 @@ export const generateStyledFlyerPdf = async ({
 
   const pdfFileName = `email-compagin${Date.now()}.pdf`;
   const pdfPath = path.join(pdfDir, pdfFileName);
-    console.log("six fun is calls pdf ")
-    console.log(pdfPath)
-  await page.pdf({
-    path: pdfPath,
-    format: "A4",
-    printBackground: true,
-    margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
-    preferCSSPageSize: true,
-  });
-    console.log("sevem ")
+  console.log("📄 Generating PDF at:", pdfPath);
+
+await page.pdf({
+  path: pdfPath,
+  format: "A4",
+  printBackground: true,
+  margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
+  preferCSSPageSize: true,
+});
+
+console.log("✅ PDF generated successfully");
+
 
   await browser.close();
     console.log("sixss fun is calls pdf ")
