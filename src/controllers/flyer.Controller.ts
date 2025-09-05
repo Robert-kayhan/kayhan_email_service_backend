@@ -246,6 +246,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       pdf: pdfPath,
     });
   } catch (error: any) {
+    console.log(error)
     res.status(500).json({ success: false, message: error.message });
   }
 };
