@@ -49,13 +49,14 @@ function validateFlyerData(data: any) {
   return errors;
 }
 const createsFlyer = async (req: Request, res: Response): Promise<void> => {
+  console.log("flyer api calls")
   try {
     const errors = validateFlyerData(req.body);
     if (errors.length > 0) {
       res.status(400).json({ success: false, errors });
       return;
     }
-
+    console.log(req.body.prodcutoneimageUrl)
     const {
       title,
       description,
