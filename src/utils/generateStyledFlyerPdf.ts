@@ -272,24 +272,19 @@ export const generateStyledFlyerPdf = async ({
 </body>
 </html>
 `;
-  // console.log("html ")
+ console.log("🚀 Starting flyer PDF generation");
 
-  // Launch Puppeteer
+
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   try {
-    // console.log("first fun is calls pdf ")
-
     const page = await browser.newPage();
-    // console.log("sec fun is calls pdf ")
-
     await page.setContent(html, { waitUntil: "networkidle0" });
-    // console.log("third fun is calls pdf ")
 
-    // Ensure all images are loaded before PDF creation
+    // Wait for images to load
     await page.evaluate(() => {
       const imgs = Array.from(document.images);
       return Promise.all(
@@ -304,10 +299,10 @@ export const generateStyledFlyerPdf = async ({
       );
     });
 
-    // Local temp path for PDF
+    // Local temp path
     const pdfDir = path.join(process.cwd(), "pdfs");
     if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
-    console.log("five fun is calls pdf ");
+    console.log("📂 PDF directory ready:", pdfDir);
 
     const pdfFileName = `email-compagin${Date.now()}.pdf`;
     const pdfPath = path.join(pdfDir, pdfFileName);
@@ -322,33 +317,44 @@ export const generateStyledFlyerPdf = async ({
     });
 
     console.log("✅ PDF generated successfully");
-    console.log(pdfDir)
+
+    // Read file buffer
     const fileBuffer = fs.readFileSync(pdfPath);
-    console.log(fileBuffer);
+    console.log("📏 PDF size (bytes):", fileBuffer.length);
 
     // Upload to S3
     const bucketName = process.env.S3_BUCKET!;
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: bucketName,
-        Key: `flyers/${pdfFileName}`,
-        Body: fileBuffer,
-        ContentType: "application/pdf",
-      })
-    );
-    console.log("sixss fun is calls pdf ");
+    const key = `flyers/${pdfFileName}`;
+    console.log("📡 Preparing upload:", { bucketName, region: process.env.AWS_REGION, key });
+
+    try {
+      const response = await s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: key,
+          Body: fileBuffer,
+          ContentType: "application/pdf",
+          ContentLength: fileBuffer.length,
+        })
+      );
+      console.log("✅ S3 upload success:", response);
+    } catch (s3Error: any) {
+      console.error("❌ S3 upload failed:", s3Error);
+      throw s3Error;
+    }
 
     // Clean up local file
     fs.unlinkSync(pdfPath);
 
-    // Return public S3 URL
-    console.log("this function res");
-    return `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
+    // Return public URL
+    const fileUrl = `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`;
+    console.log("🌍 File available at:", fileUrl);
+    return fileUrl;
   } catch (error) {
-    console.log(error);
-    throw new Error("this is pdf error");
+    console.error("❌ PDF generation/upload error:", error);
+    throw new Error("PDF generation failed");
   } finally {
     await browser.close();
-    console.log("sixss fun is calls pdf ");
+    console.log("🛑 Browser closed");
   }
 };
