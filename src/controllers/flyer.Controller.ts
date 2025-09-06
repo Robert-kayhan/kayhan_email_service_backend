@@ -153,29 +153,29 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
     }));
     console.log("specs")
     // Generate PDF and JPG
-    // const pdfPath = await generateStyledFlyerPdf({
-    //   flyerData: {
-    //     customerName,
-    //     customerPhone,
-    //     customerEmail,
-    //     installationFees,
-    //     deliveryFees,
-    //     quotationNumber,
-    //     validationTime,
-    //     logoUrl: "/logo.jpg",
-    //   },
-    //   firstProduct: {
-    //     image: prodcutoneimageUrl,
-    //     title: productSpecOne?.name || "Product One",
-    //     price: installationFees,
-    //   },
-    //   secondProduct: {
-    //     image: prodcutwoimageUrl,
-    //     title: productSpecTwo?.name || "Product Two",
-    //     price: deliveryFees,
-    //   },
-    //   specs,
-    // });
+    const pdfPath = await generateStyledFlyerPdf({
+      flyerData: {
+        customerName,
+        customerPhone,
+        customerEmail,
+        installationFees,
+        deliveryFees,
+        quotationNumber,
+        validationTime,
+        logoUrl: "/logo.jpg",
+      },
+      firstProduct: {
+        image: prodcutoneimageUrl,
+        title: productSpecOne?.name || "Product One",
+        price: installationFees,
+      },
+      secondProduct: {
+        image: prodcutwoimageUrl,
+        title: productSpecTwo?.name || "Product Two",
+        price: deliveryFees,
+      },
+      specs,
+    });
 
     const jpgfile = await generateStyledFlyerImage({
       flyerData: {
@@ -215,7 +215,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       deliveryFees,
       quotationNumber,
       validationTime,
-      // flyer_url: pdfPath,
+      flyer_url: pdfPath,
       flyer_image_url: jpgfile,
       CrmID: CrmID || "",
     };
