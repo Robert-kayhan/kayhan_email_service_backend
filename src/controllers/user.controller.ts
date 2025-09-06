@@ -232,9 +232,9 @@ const deleteUser = async (req: Request, res: Response): Promise<void> => {
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id; // You may use `email` instead of `id` if that's how you identify users
-    const { firstname, lastname, phone, address, role, email } = req.body;
+    const { firstname, lastname, phone, address, role, email ,isSubscribed } = req.body;
 
-    const user = await User.findOne({ where: { email: userId } }); // You can use `id` here if needed
+    const user = await User.findOne({ where: { email: email } }); // You can use `id` here if needed
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -243,7 +243,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     user.firstname = firstname ?? user.firstname;
     user.lastname = lastname ?? user.lastname;
     user.phone = phone ?? user.phone;
-    // user.address = address ?? user.address;
+    user.isSubscribed = isSubscribed ?? user.isSubscribed;
     user.role = role ?? user.role;
     user.email = email ?? user.email;
 
