@@ -18,6 +18,7 @@ export const generateStyledFlyerPdf = async ({
     quotationNumber: string;
     validationTime: string;
     logoUrl?: string;
+    productOnePrice?: any;
   };
   firstProduct: { image: string; price?: number | string; title: string };
   secondProduct: { image: string; price?: number | string; title: string };
@@ -222,16 +223,20 @@ export const generateStyledFlyerPdf = async ({
     </div>
 
     <!-- Products -->
-    <div class="products">
-      <div class="product-card" style="border-color:#7c3aed">
-        <img src="${firstProduct.image}" alt="${firstProduct.title}" />
-        <div class="product-name">${firstProduct.title}</div>
-      </div>
-      <div class="product-card" style="border-color:#fbbf24">
-        <img src="${secondProduct.image}" alt="${secondProduct.title}" />
-        <div class="product-name">${secondProduct.title}</div>
-      </div>
-    </div>
+   <div class="products">
+  <div class="product-card" style="border-color:#7c3aed">
+    <img src="${firstProduct.image}" alt="${firstProduct.title}" />
+    <div class="product-name">${firstProduct.title}</div>
+    <div class="product-price">$${firstProduct.price}</div>
+  </div>
+
+  <div class="product-card" style="border-color:#fbbf24">
+    <img src="${secondProduct.image}" alt="${secondProduct.title}" />
+    <div class="product-name">${secondProduct.title}</div>
+    <div class="product-price">$${secondProduct.price}</div>
+  </div>
+</div>
+
 
     <!-- Comparison Table -->
     <div class="table-container">

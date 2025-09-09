@@ -230,6 +230,8 @@ const generateSingleStyledFlyerPdf = async ({
       <div class="product-card" style="border-color:#7c3aed">
         <img src="${firstProduct.image}" alt="${firstProduct.title}" />
         <div class="product-name">${firstProduct.title}</div>
+    <div class="product-price">$${firstProduct.price}</div>
+
       </div>
     </div>
 

@@ -4,7 +4,10 @@ import ProductSpecification from "../models/flyer/Specification";
 import { generateStyledFlyerPdf } from "../utils/generateStyledFlyerPdf";
 import generateSingleStyledFlyerPdf from "../utils/generateStyledFlyerSinglePdf";
 import { sendEmail } from "../utils/sendEmail";
-import {generateStyledFlyerImage, generateStyledSingleFlyerImage } from "../utils/convertPdfToJpg";
+import {
+  generateStyledFlyerImage,
+  generateStyledSingleFlyerImage,
+} from "../utils/convertPdfToJpg";
 
 // Helper for simple validation
 function validateFlyerData(data: any) {
@@ -49,18 +52,20 @@ function validateFlyerData(data: any) {
   return errors;
 }
 const createsFlyer = async (req: Request, res: Response): Promise<void> => {
-  console.log("flyer api calls")
+  console.log("flyer api calls");
   try {
     const errors = validateFlyerData(req.body);
     if (errors.length > 0) {
       res.status(400).json({ success: false, errors });
       return;
     }
-    console.log(req.body.prodcutoneimageUrl)
+    console.log(req.body.prodcutoneimageUrl);
     const {
       title,
       description,
       prodcutoneimageUrl,
+      productOnePrice,
+      productTwoPrice,
       prodcutwoimageUrl,
       productSpecificationId,
       productSpecificationIdtwo,
@@ -73,7 +78,8 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       validationTime,
       CrmID,
     } = req.body;
-      console.log(req.body)
+
+    console.log(productTwoPrice, productOnePrice);
     // Validate product specifications
     const productSpecOne: any = productSpecificationId
       ? await ProductSpecification.findByPk(productSpecificationId)
@@ -94,7 +100,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
         .json({ success: false, message: "Invalid productSpecificationIdTwo" });
       return;
     }
-    console.log("there are any error ")
+    console.log("there are any error ");
     // Build specs array
     const specKeys = [
       "processor",
@@ -151,7 +157,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       p1: productSpecOne?.[key] || "-",
       p2: productSpecTwo?.[key] || "-",
     }));
-    console.log("specs")
+    console.log("specs");
     // Generate PDF and JPG
     const pdfPath = await generateStyledFlyerPdf({
       flyerData: {
@@ -167,12 +173,12 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       firstProduct: {
         image: prodcutoneimageUrl,
         title: productSpecOne?.name || "Product One",
-        price: installationFees,
+        price: productOnePrice,
       },
       secondProduct: {
         image: prodcutwoimageUrl,
         title: productSpecTwo?.name || "Product Two",
-        price: deliveryFees,
+        price: productTwoPrice,
       },
       specs,
     });
@@ -191,12 +197,12 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       firstProduct: {
         image: prodcutoneimageUrl,
         title: productSpecOne?.name || "Product One",
-        price: installationFees,
+        price: productOnePrice,
       },
       secondProduct: {
         image: prodcutwoimageUrl,
         title: productSpecTwo?.name || "Product Two",
-        price: deliveryFees,
+        price: productTwoPrice,
       },
       specs,
     });
@@ -225,9 +231,9 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
 
     if (CrmID) {
       flyer = await Flyer.findOne({ where: { CrmID } });
-      console.log("there are crm console")
+      console.log("there are crm console");
       if (flyer) {
-        console.log("flyer update console")
+        console.log("flyer update console");
         // Update existing flyer
         await flyer.update(flyerDataToSave);
         res.status(200).json({
@@ -236,13 +242,13 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
           data: flyer,
           // pdf: pdfPath,
         });
-        return
+        return;
       }
     }
-    console.log("create console ")
+    console.log("create console ");
     // If CrmID not provided OR flyer not found, create a new one
     flyer = await Flyer.create(flyerDataToSave);
-    console.log("its all working ")
+    console.log("its all working ");
     res.status(201).json({
       success: true,
       message: "Flyer created successfully",
@@ -250,7 +256,7 @@ const createsFlyer = async (req: Request, res: Response): Promise<void> => {
       // pdf: pdfPath,
     });
   } catch (error: any) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -367,6 +373,8 @@ const createSingleProdctFlyer = async (
       quotationNumber,
       validationTime,
       CrmID,
+      productOnePrice,
+      productTwoPrice,
     } = req.body;
 
     // Validate existence of product specifications
@@ -464,12 +472,12 @@ const createSingleProdctFlyer = async (
       firstProduct: {
         image: prodcutoneimageUrl,
         title: productSpecOne?.name || "Product One",
-        price: installationFees,
+        price: productOnePrice,
       },
       secondProduct: {
         image: prodcutwoimageUrl,
         title: productSpecTwo?.name || "Product Two",
-        price: deliveryFees,
+        price: productTwoPrice,
       },
       specs,
     });
@@ -488,12 +496,12 @@ const createSingleProdctFlyer = async (
       firstProduct: {
         image: prodcutoneimageUrl,
         title: productSpecOne?.name || "Product One",
-        price: installationFees,
+        price: productOnePrice,
       },
       secondProduct: {
         image: prodcutwoimageUrl,
         title: productSpecTwo?.name || "Product Two",
-        price: deliveryFees,
+        price: productOnePrice,
       },
       specs,
     });
