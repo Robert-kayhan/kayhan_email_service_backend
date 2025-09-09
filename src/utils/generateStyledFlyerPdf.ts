@@ -104,8 +104,6 @@ export const generateStyledFlyerPdf = async ({
   }
   .products {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: 16px;
     margin: 16px 0;
   }
@@ -229,6 +227,10 @@ export const generateStyledFlyerPdf = async ({
         <img src="${firstProduct.image}" alt="${firstProduct.title}" />
         <div class="product-name">${firstProduct.title}</div>
       </div>
+      <div class="product-card" style="border-color:#fbbf24">
+        <img src="${secondProduct.image}" alt="${secondProduct.title}" />
+        <div class="product-name">${secondProduct.title}</div>
+      </div>
     </div>
 
     <!-- Comparison Table -->
@@ -238,6 +240,7 @@ export const generateStyledFlyerPdf = async ({
           <tr>
             <th>Feature</th>
             <th>${firstProduct.title}</th>
+            <th>${secondProduct.title}</th>
           </tr>
         </thead>
         <tbody>
@@ -247,6 +250,7 @@ export const generateStyledFlyerPdf = async ({
             <tr>
               <td>${s.feature}</td>
               <td>${s.p1}</td>
+              <td>${s.p2}</td>
             </tr>
           `
             )

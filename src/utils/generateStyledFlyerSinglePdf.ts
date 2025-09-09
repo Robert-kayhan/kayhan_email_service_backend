@@ -2,11 +2,12 @@ import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { uploadToS3 } from "../config/S3BuketConfig";
 
 // S3 client setup
 const s3Client = new S3Client({
   region: process.env.AWS_REGION, // e.g., "ap-south-1"
-credentials: {
+  credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY!,
     secretAccessKey: process.env.AWSZ_SECRET_ACCESS_KEY!,
   },
@@ -312,22 +313,28 @@ const generateSingleStyledFlyerPdf = async ({
 
   // Upload to S3
   const bucketName = process.env.S3_BUCKET!;
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: bucketName,
-      Key: `flyers/${pdfFileName}`,
-      Body: fileBuffer,
-      ContentType: "application/pdf",
-    })
-  );
+   const fileUrl = await uploadToS3(
+        fileBuffer,
+        pdfFileName,
+        "application/pdf"
+        // "flyers"
+      );
+  // await s3Client.send(
+  //   new PutObjectCommand({
+  //     Bucket: bucketName,
+  //     Key: `flyers/${pdfFileName}`,
+  //     Body: fileBuffer,
+  //     ContentType: "application/pdf",
+  //   })
+  // );
 
   // Clean up local file
   fs.unlinkSync(pdfPath);
-const data = {
-  pdfPath : `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`,
-  html : html
-}
+  const data = {
+    pdfPath: `${process.env.AWS_FILE_URL}flyers/${pdfFileName}`,
+    html: html,
+  };
   // Return public S3 URL
-  return data;
+  return fileUrl;
 };
 export default generateSingleStyledFlyerPdf;
