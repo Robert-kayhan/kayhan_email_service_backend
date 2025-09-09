@@ -39,7 +39,7 @@ export const generateStyledFlyerPdf = async ({
     const page = await browser.newPage();
 
     // 🔽 Build your HTML (same as before)...
-     const html = `
+    const html = `
 <html>
 <head>
 <meta charset="utf-8" />
@@ -309,8 +309,8 @@ export const generateStyledFlyerPdf = async ({
     const fileUrl = await uploadToS3(
       fileBuffer,
       pdfFileName,
-      "application/pdf",
-      // "flyers" 
+      "application/pdf"
+      // "flyers"
     );
 
     console.log("🌍 Uploaded to S3:", fileUrl);
