@@ -2,7 +2,7 @@ import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import {s3Client} from "../config/S3BuketConfig"
+import { s3Client, uploadToS3 } from "../config/S3BuketConfig";
 
 // const s3Client = new S3Client({
 //   region: process.env.AWS_REGION,
@@ -314,20 +314,28 @@ const generateStyledFlyerImage = async ({
 
   // Upload to S3
   const fileBuffer = fs.readFileSync(imgPath);
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET!,
-      Key: `flyers/images/${imgFileName}`,
-      Body: fileBuffer,
-      ContentType: "image/jpeg",
-    })
+   const fileUrl = await uploadToS3(
+    fileBuffer,
+    imgFileName,
+    "image/jpeg"
+    // "flyers"
   );
+  // await s3Client.send(
+  //   new PutObjectCommand({
+  //     Bucket: process.env.S3_BUCKET!,
+  //     Key: `flyers/images/${imgFileName}`,
+  //     Body: fileBuffer,
+  //     ContentType: "image/jpeg",
+  //   })
+  // );
 
   // Clean up local file
   fs.unlinkSync(imgPath);
-  console.log(`${process.env.AWS_FILE_URL}flyers/images/${imgFileName} this api is working `)
+  console.log(
+    `${process.env.AWS_FILE_URL}flyers/images/${imgFileName} this api is working `
+  );
   // Return public S3 URL
-  return `${process.env.AWS_FILE_URL}flyers/images/${imgFileName}`;
+  return fileUrl;
 };
 const generateStyledSingleFlyerImage = async ({
   flyerData,
@@ -627,19 +635,27 @@ const generateStyledSingleFlyerImage = async ({
 
   // Upload to S3
   const fileBuffer = fs.readFileSync(imgPath);
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET!,
-      Key: `flyers/images/${imgFileName}`,
-      Body: fileBuffer,
-      ContentType: "image/jpeg",
-    })
+  const fileUrl = await uploadToS3(
+    fileBuffer,
+    imgFileName,
+    "image/jpeg"
+    // "flyers"
   );
+  // await s3Client.send(
+  //   new PutObjectCommand({
+  //     Bucket: process.env.S3_BUCKET!,
+  //     Key: `flyers/images/${imgFileName}`,
+  //     Body: fileBuffer,
+  //     ContentType: "image/jpeg",
+  //   })
+  // );
 
   // Clean up local file
   fs.unlinkSync(imgPath);
-  console.log(`${process.env.AWS_FILE_URL}flyers/images/${imgFileName}   This is image api `)
+  console.log(
+    `${process.env.AWS_FILE_URL}flyers/images/${imgFileName}   This is image api `
+  );
   // Return public S3 URL
-  return `${process.env.AWS_FILE_URL}flyers/images/${imgFileName}`;
+  return fileUrl;
 };
 export { generateStyledFlyerImage, generateStyledSingleFlyerImage };

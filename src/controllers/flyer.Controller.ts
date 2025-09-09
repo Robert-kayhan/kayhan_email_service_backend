@@ -513,7 +513,7 @@ const createSingleProdctFlyer = async (
       deliveryFees,
       quotationNumber,
       validationTime,
-      flyer_url: pdfPath.pdfPath,
+      flyer_url: pdfPath,
       flyer_image_url: jpgfile,
       CrmID,
     };
