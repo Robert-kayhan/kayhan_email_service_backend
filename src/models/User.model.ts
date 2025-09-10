@@ -32,10 +32,12 @@ User.init(
     firstname: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      defaultValue : "UNKNOWN USER"
     },
     lastname: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      defaultValue : "UNKNOWN USER"
     },
     email: {
       type: DataTypes.STRING(100),
