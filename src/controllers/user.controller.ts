@@ -16,10 +16,10 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
     street,
     postcode,
   } = req.body;
-
+  console.log("api call",req.body)
   try {
     const existingUser = await User.findOne({
-      where: { [Op.or]: [{ email }, { phone }] },
+      where: { [Op.or]: [{ email }] },
     });
 
     if (existingUser) {
@@ -42,9 +42,9 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
       city,
       state,
       postcode,
-      country,
+      // country,
     });
-
+    console.log("its working")
     res.status(201).json({ message: "User created successfully." });
   } catch (error) {
     console.error("Error creating user:", error);
