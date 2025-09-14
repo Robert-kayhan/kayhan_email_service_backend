@@ -5,20 +5,36 @@ class BookingItem extends Model<any> {
   public id!: number;
   public bookingId!: number;
   public itemType!: string;
-  public otherItemText!: string;
+  public otherItemText!: string | null;
+  public charge!: number; // new field for installation/item charge
 
   public readonly createdAt!: Date;
 }
 
 BookingItem.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    bookingId: { type: DataTypes.INTEGER, allowNull: false },
+    id: { 
+      type: DataTypes.INTEGER, 
+      autoIncrement: true, 
+      primaryKey: true 
+    },
+    bookingId: { 
+      type: DataTypes.INTEGER, 
+      allowNull: false 
+    },
     itemType: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    otherItemText: { type: DataTypes.STRING(255), allowNull: true },
+    otherItemText: { 
+      type: DataTypes.STRING(255), 
+      allowNull: true 
+    },
+    charge: {
+      type: DataTypes.DECIMAL(10, 2), // stores monetary value with precision
+      allowNull: false,
+      defaultValue: 0.0,
+    },
   },
   {
     sequelize,

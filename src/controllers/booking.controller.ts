@@ -6,14 +6,27 @@ import BookingItem from "../models/bookingSystem/BookingItem";
 import MobileInstallationDetail from "../models/bookingSystem/MobileInstallationDetail";
 // import Notification from "../models/Notification";
 import User from "../models/User.model";
+import Payment from "../models/bookingSystem/Payment";
+import { generatePremiumInvoicePdf } from "../utils/booking/generateInvoicePdf";
 // ✅ Create a new booking (with User, vehicle, items, and mobile details)
 export const createBooking = async (req: Request, res: Response) => {
   try {
-    const { userData, vehicle, booking, items, mobileDetails } = req.body;
-    console.log(booking, "this is booking");
-    console.log(userData, "this is userdata");
-    console.log(items, "this is items");
-    console.log(mobileDetails, "this is mobile");
+    const {
+      userData,
+      vehicle,
+      booking,
+      items,
+      mobileDetails,
+      paymentDetails,
+      totalAmount,
+    } = req.body;
+    console.log(req.body);
+    // console.log(booking, "this is booking");
+    // console.log(userData, "this is userdata");
+    // console.log(items, "this is items");
+    // console.log(mobileDetails, "this is mobile");
+    // console.log(items , "this is items")
+
     // Create / find User
     //  console.log("Uploaded files:", req.files);
 
@@ -24,7 +37,12 @@ export const createBooking = async (req: Request, res: Response) => {
 
     // Create vehicle
     const vehicleRecord = await Vehicle.create({
-      ...vehicle,
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      vinNumber: vehicle.vin,
+      currentStereo: vehicle.currentStereo,
+      dashPhotosUrl: vehicle.dashPhotosUrl,
       customerId: userRecord.id,
     });
 
@@ -40,7 +58,8 @@ export const createBooking = async (req: Request, res: Response) => {
       await BookingItem.bulkCreate(
         items.map((item: any) => ({
           bookingId: bookingRecord.id,
-          itemType: item,
+          itemType: item.name,
+          charge: item.charge,
           // otherItemText: item.otherItemText,
         }))
       );
@@ -61,10 +80,40 @@ export const createBooking = async (req: Request, res: Response) => {
         dropoffLng: mobileDetails.dropLocation.lat,
         routeDistance: mobileDetails.distance,
         routeDuration: mobileDetails.duration,
-        routePolyline : mobileDetails.routePolyline
+        routePolyline: mobileDetails.routePolyline,
       });
     }
+    if (paymentDetails && totalAmount) {
+      await Payment.create({
+        bookingId: bookingRecord.id,
+        category: paymentDetails.category,
+        methods: paymentDetails.methods || [],
+        type: paymentDetails.type,
+        partialAmount: paymentDetails.partialAmount || null,
+        totalAmount: totalAmount.totalAmount || 0,
+        discountType: totalAmount.discountType,
+        discountValue: totalAmount.discountValue,
+        discountAmount: totalAmount.discountAmount,
+        paidAmount: 0,
+      });
+    }
+    const fullBooking = await Booking.findOne({
+      where: { id: bookingRecord.id },
+      include: [
+        { model: User },
+        { model: Vehicle },
+        { model: BookingItem },
+        { model: MobileInstallationDetail },
+        { model: Payment, as: "payment" },
+      ],
+    });
 
+    // 8️⃣ Generate Invoice PDF
+    let invoiceUrl = null;
+    if (fullBooking) {
+      invoiceUrl = await generatePremiumInvoicePdf({ booking: fullBooking });
+    }
+    console.log(invoiceUrl , "this is invoice url")
     res.status(201).json({ success: true, booking: bookingRecord });
   } catch (error: any) {
     console.error(error);
@@ -113,11 +162,11 @@ export const getBookingById = async (req: Request, res: Response) => {
   try {
     const booking = await Booking.findByPk(req.params.id, {
       include: [
-        { model: User },
+        { model: User }, // add alias if used in association
         { model: Vehicle },
         { model: BookingItem },
         { model: MobileInstallationDetail },
-        // { model: Notification },
+        { model: Payment, as: "payment" },
       ],
     });
 
@@ -128,6 +177,7 @@ export const getBookingById = async (req: Request, res: Response) => {
 
     res.json({ success: true, booking });
   } catch (error: any) {
+    console.error("Error fetching booking:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -137,12 +187,12 @@ export const updateBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { userData, vehicle, booking, items, mobileDetails } = req.body;
-    console.log(items)
+    console.log(items, "this is items");
     // Find booking
     const bookingRecord = await Booking.findByPk(id);
     if (!bookingRecord) {
-       res.status(404).json({ success: false, message: "Booking not found" });
-       return
+      res.status(404).json({ success: false, message: "Booking not found" });
+      return;
     }
 
     // ✅ Update / create user
@@ -154,7 +204,9 @@ export const updateBooking = async (req: Request, res: Response) => {
     }
 
     // ✅ Update / create vehicle
-    let vehicleRecord = await Vehicle.findOne({ where: { id: bookingRecord.vehicleId } });
+    let vehicleRecord = await Vehicle.findOne({
+      where: { id: bookingRecord.vehicleId },
+    });
     if (vehicleRecord) {
       await vehicleRecord.update({ ...vehicle, customerId: userRecord.id });
     } else {
@@ -168,7 +220,7 @@ export const updateBooking = async (req: Request, res: Response) => {
     const bookingPayload = {
       ...booking,
       type: booking.installationType, // map frontend → backend
-      date: booking.preferredDate,    // map frontend → backend
+      date: booking.preferredDate, // map frontend → backend
       customerId: userRecord.id,
       vehicleId: vehicleRecord.id,
     };
@@ -182,7 +234,8 @@ export const updateBooking = async (req: Request, res: Response) => {
       await BookingItem.bulkCreate(
         items.map((item: any) => ({
           bookingId: id,
-          itemType: item,
+          itemType: item.itemType,
+          charge: item.charge,
           // otherItemText: item.otherItemText,
         }))
       );
@@ -194,7 +247,7 @@ export const updateBooking = async (req: Request, res: Response) => {
         where: { bookingId: id },
       });
 
-      const mobilePayload :any = {
+      const mobilePayload: any = {
         bookingId: id,
         parkingRestrictions: mobileDetails.parking,
         powerAccess: mobileDetails.powerAccess,
@@ -223,8 +276,6 @@ export const updateBooking = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-
 
 // ✅ Delete booking
 export const deleteBooking = async (req: Request, res: Response) => {

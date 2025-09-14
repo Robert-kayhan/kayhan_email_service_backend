@@ -9,27 +9,46 @@ interface MulterRequest extends Request {
 }
 
 // POST /api/vehicle-photo
-router.post("/", uploadImage.single("photo"), async (req, res: Response) => {
-  try {
-    if (!req.file) {
-       res.status(400).json({ success: false, message: "No file uploaded" });
-       return
+// import { Router, Response } from "express";
+// import { uploadToS3 } from "../../utils/s3"; // your helper function
+// import uploadImage from "../../middlewares/multer"; // multer config
+
+// const router = Router();
+
+router.post("/",
+  uploadImage.array("photos", 10), // allow up to 10 files, field name: "photos"
+  async (req, res: Response) => {
+    try {
+      console.log("api call")
+      if (!req.files || !(req.files instanceof Array) || req.files.length === 0) {
+         res.status(400).json({ success: false, message: "No files uploaded" });
+         return
+      }
+
+      const files = req.files as Express.Multer.File[];
+
+      // Upload each file to S3
+      const uploadPromises = files.map((file) =>
+        uploadToS3(file.buffer, file.originalname, file.mimetype)
+      );
+
+      const urls = await Promise.all(uploadPromises);
+      console.log(urls , "this is urls")
+      res.json({
+        success: true,
+        message: "Photos uploaded successfully",
+        urls,
+      });
+    } catch (err: unknown) {
+      console.error(err);
+      res.status(500).json({
+        success: false,
+        message: (err as Error).message || "Server error",
+      });
     }
-
-    const file = req.file;
-
-    // Upload to S3
-    const s3Url = await uploadToS3(file.buffer, file.originalname, file.mimetype);
-
-    res.json({
-      success: true,
-      message: "Photo uploaded successfully",
-      url: s3Url,
-    });
-  } catch (err: unknown) {
-    console.error(err);
-    res.status(500).json({ success: false, message: (err as Error).message || "Server error" });
   }
-});
+);
 
 export default router;
+
+
