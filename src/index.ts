@@ -12,15 +12,15 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import templateRoutes from "./routes/template.route";
 import LeadGroupRoutes from "./routes/leadGroup.route";
-import LeadFolowUp from "./routes/leadFollowUp.route"
+import LeadFolowUp from "./routes/leadFollowUp.route";
 import campaignRoutes from "./routes/Campaign.route";
 import sendEmailroutes from "./routes/sendEmail.routes";
 import Specificationroutes from "./routes/Specification.routes";
 import Flyerroutes from "./routes/flyer.routes";
-import DashBoardRoutes from "./routes/dashboard.route"
-import BOOKINGROutes from "./routes/booking.routes"
-import UploadRoutes from "./routes/upload.route"
-
+import DashBoardRoutes from "./routes/dashboard.route";
+import BOOKINGROutes from "./routes/booking-rotues/booking.routes";
+import UploadRoutes from "./routes/upload.route";
+import JobReportRoutes from "./routes/booking-rotues/jobReport.routes";
 const app = express();
 const PORT = process.env.PORT;
 
@@ -33,7 +33,7 @@ app.use(
       "http://localhost:3000",
       "http://89.116.134.75:3000",
       "https://cravebuy.com",
-      "https://mailer.kayhanaudio.com.au"
+      "https://mailer.kayhanaudio.com.au",
     ],
     credentials: true,
   })
@@ -53,15 +53,12 @@ app.use("/api/send-email/", sendEmailroutes);
 app.use("/api/product-specifications", Specificationroutes);
 app.use("/api/flyer", Flyerroutes);
 app.use("/api/dashboard", DashBoardRoutes);
-app.use("/api/booking",BOOKINGROutes );
-app.use("/api/upload",UploadRoutes);
-
-
-
+app.use("/api/booking", BOOKINGROutes);
+app.use("/api/upload", UploadRoutes);
+app.use("/api/job-report", JobReportRoutes);
 
 connectDb();
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });
-  

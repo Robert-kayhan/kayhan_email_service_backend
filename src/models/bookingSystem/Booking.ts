@@ -29,7 +29,7 @@ Booking.init(
     date: { type: DataTypes.DATEONLY, allowNull: true },
     time: { type: DataTypes.TIME, allowNull: true },
     status: {
-      type: DataTypes.ENUM("Pending", "Confirmed", "Completed", "Cancelled"),
+      type: DataTypes.ENUM("Pending", "Confirmed", "Completed", "Cancelled" , "Rescheduled"),
       defaultValue: "Pending",
     },
     notes: { type: DataTypes.TEXT, allowNull: true },

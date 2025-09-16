@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 // import User from "../models/User";
-import Vehicle from "../models/bookingSystem/Vehicle";
-import Booking from "../models/bookingSystem/Booking";
-import BookingItem from "../models/bookingSystem/BookingItem";
-import MobileInstallationDetail from "../models/bookingSystem/MobileInstallationDetail";
+import Vehicle from "../../models/bookingSystem/Vehicle";
+import Booking from "../../models/bookingSystem/Booking";
+import BookingItem from "../../models/bookingSystem/BookingItem";
+import MobileInstallationDetail from "../../models/bookingSystem/MobileInstallationDetail";
 // import Notification from "../models/Notification";
-import User from "../models/User.model";
-import Payment from "../models/bookingSystem/Payment";
-import { generatePremiumInvoicePdf } from "../utils/booking/generateInvoicePdf";
+import User from "../../models/User.model";
+import Payment from "../../models/bookingSystem/Payment";
+import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";
+import { Op } from "sequelize";
+
 // ✅ Create a new booking (with User, vehicle, items, and mobile details)
 export const createBooking = async (req: Request, res: Response) => {
   try {
@@ -113,7 +115,7 @@ export const createBooking = async (req: Request, res: Response) => {
     if (fullBooking) {
       invoiceUrl = await generatePremiumInvoicePdf({ booking: fullBooking });
     }
-    console.log(invoiceUrl , "this is invoice url")
+    console.log(invoiceUrl, "this is invoice url");
     res.status(201).json({ success: true, booking: bookingRecord });
   } catch (error: any) {
     console.error(error);
@@ -122,24 +124,86 @@ export const createBooking = async (req: Request, res: Response) => {
 };
 
 // ✅ Get all bookings with related data
+
 export const getAllBookings = async (req: Request, res: Response) => {
   try {
-    // 🔹 Get page & limit from query, fallback defaults
+    // pagination
     const page = parseInt((req.query.page as string) || "1", 10);
     const limit = parseInt((req.query.limit as string) || "10", 10);
     const offset = (page - 1) * limit;
 
+    // filters
+    const search = (req.query.search as string) || "";
+    const status = (req.query.status as string) || "";
+    const type = (req.query.type as string) || "";
+    const paymentStatus = (req.query.paymentStatus as string) || "";
+
+    // date filters (DATEONLY)
+    const startDate = req.query.startDate as string; // YYYY-MM-DD
+    const endDate = req.query.endDate as string; // YYYY-MM-DD
+
+    // dynamic where clause
+    const where: any = {};
+
+    if (status) where.status = status;
+    if (type) where.type = type;
+    if (paymentStatus) where.paymentStatus = paymentStatus; // only if you have this column
+
+    // search invoiceNumber/notes
+    if (search) {
+      where[Op.or] = [
+        { invoiceNumber: { [Op.like]: `%${search}%` } },
+        { notes: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    // ✅ date filter (use `date` column, not createdAt)
+    if (startDate && endDate) {
+      where.date = {
+        [Op.between]: [startDate, endDate],
+      };
+    } else if (startDate) {
+      where.date = {
+        [Op.gte]: startDate,
+      };
+    } else if (endDate) {
+      where.date = {
+        [Op.lte]: endDate,
+      };
+    }
+
+    // include relations
+    const include = [
+      {
+        model: User,
+        where: search
+          ? {
+              [Op.or]: [
+                { firstname: { [Op.like]: `%${search}%` } },
+                { lastname: { [Op.like]: `%${search}%` } },
+                { email: { [Op.like]: `%${search}%` } },
+              ],
+            }
+          : undefined,
+        required: false,
+      },
+      { model: Vehicle },
+      { model: BookingItem },
+      { model: MobileInstallationDetail },
+      { model: Payment, as: "payment" },
+    ];
+
+    // query
     const { count, rows: bookings } = await Booking.findAndCountAll({
-      include: [
-        { model: User },
-        { model: Vehicle },
-        { model: BookingItem },
-        { model: MobileInstallationDetail },
-        // { model: Notification },
+      where,
+      include,
+      order: [
+        ["date", "DESC"],
+        ["time", "DESC"],
       ],
-      order: [["createdAt", "DESC"]],
       limit,
       offset,
+      distinct: true,
     });
 
     res.json({
@@ -153,6 +217,7 @@ export const getAllBookings = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    console.error(error);
     res.status(500).json({ success: false, error: error.message });
   }
 };

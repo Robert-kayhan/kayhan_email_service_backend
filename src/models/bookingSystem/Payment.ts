@@ -35,11 +35,15 @@ Payment.init(
       references: { model: "bookings", key: "id" },
       onDelete: "CASCADE",
     },
-    
+
     category: {
       type: DataTypes.ENUM("Instant", "Later"),
       allowNull: false,
       defaultValue: "Instant",
+    },
+    status: {
+      type: DataTypes.ENUM("Pending", "Completed", "Cancelled"),
+      defaultValue: "Pending",
     },
     methods: {
       type: DataTypes.JSON, // array of selected payment methods
