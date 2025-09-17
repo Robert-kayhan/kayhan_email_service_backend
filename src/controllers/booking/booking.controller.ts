@@ -28,7 +28,7 @@ export const createBooking = async (req: Request, res: Response) => {
     // console.log(items, "this is items");
     // console.log(mobileDetails, "this is mobile");
     // console.log(items , "this is items")
-
+    console.log(paymentDetails);
     // Create / find User
     //  console.log("Uploaded files:", req.files);
 
@@ -86,6 +86,21 @@ export const createBooking = async (req: Request, res: Response) => {
       });
     }
     if (paymentDetails && totalAmount) {
+      // Determine the initial status
+      let status: "Pending" | "Completed" | "Cancelled" = "Pending";
+
+      // If type is full payment, mark as Completed
+      if (paymentDetails.type === "Full") {
+        status = "Completed";
+      }
+
+      // If paidAmount equals totalAmount, mark as Completed
+      // Here paidAmount is 0 initially, so you might want to check after payment
+      const paidAmount = 0; // initial
+      if (paidAmount === (totalAmount.totalAmount || 0)) {
+        status = "Completed";
+      }
+
       await Payment.create({
         bookingId: bookingRecord.id,
         category: paymentDetails.category,
@@ -96,9 +111,11 @@ export const createBooking = async (req: Request, res: Response) => {
         discountType: totalAmount.discountType,
         discountValue: totalAmount.discountValue,
         discountAmount: totalAmount.discountAmount,
-        paidAmount: 0,
+        paidAmount: paidAmount,
+        status, // dynamically set status
       });
     }
+
     const fullBooking = await Booking.findOne({
       where: { id: bookingRecord.id },
       include: [

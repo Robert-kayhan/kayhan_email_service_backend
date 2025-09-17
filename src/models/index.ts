@@ -1,5 +1,6 @@
 import Booking from "./bookingSystem/Booking";
 import BookingItem from "./bookingSystem/BookingItem";
+import { Invoice } from "./bookingSystem/Invoice";
 import MobileInstallationDetail from "./bookingSystem/MobileInstallationDetail";
 import Vehicle from "./bookingSystem/Vehicle";
 import Campaign from "./Campaign";
@@ -86,3 +87,7 @@ BookingItem.belongsTo(Booking, { foreignKey: "bookingId" });
 
 Booking.hasOne(MobileInstallationDetail, { foreignKey: "bookingId" });
 MobileInstallationDetail.belongsTo(Booking, { foreignKey: "bookingId" });
+
+
+Invoice.belongsTo(User, { foreignKey: "userId", as: "User" });
+User.hasMany(Invoice, { foreignKey: "userId", as: "Invoices" });

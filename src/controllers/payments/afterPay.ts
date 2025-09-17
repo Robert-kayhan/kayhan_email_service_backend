@@ -1,5 +1,13 @@
 import { Request, Response } from "express";
 import { afterpayClient } from "../../config/afterpay";
+import Payment from "../../models/bookingSystem/Payment";
+
+const AFTERPAY_CLIENT_ID = process.env.AFTERPAY_CLIENT_ID;
+const AFTERPAY_CLIENT_SECRET = process.env.AFTERPAY_CLIENT_SECRET;
+const authToken = Buffer.from(
+  `${AFTERPAY_CLIENT_ID}:${AFTERPAY_CLIENT_SECRET}`
+).toString("base64");
+
 
 export const createAfterpayOrder = async (req: Request, res: Response) => {
   try {
@@ -12,10 +20,7 @@ export const createAfterpayOrder = async (req: Request, res: Response) => {
     const amount = booking.payment.partialAmount || booking.payment.totalAmount;
 
     const payload = {
-      amount: {
-        amount: amount,
-        currency: "AUD", // change to your store currency
-      },
+      amount: { amount, currency: "AUD" },
       merchantReference: `BOOKING-${booking.id}`,
       consumer: {
         givenNames: booking.User.firstname,
@@ -41,10 +46,7 @@ export const createAfterpayOrder = async (req: Request, res: Response) => {
       },
       items: booking.BookingItems.map((item: any) => ({
         name: item.itemType,
-        price: {
-          amount: item.charge,
-          currency: "AUD",
-        },
+        price: { amount: item.charge, currency: "AUD" },
         quantity: 1,
         sku: `ITEM-${item.id}`,
       })),
@@ -66,21 +68,34 @@ export const createAfterpayOrder = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const confirmAfterpayOrder = async (req: Request, res: Response) => {
   try {
     const { token, bookingId } = req.body;
 
-    const response = await afterpayClient.post(`/v2/payments/capture`, {
-      token,
-    });
+    // Capture the payment via Afterpay
+    const response = await afterpayClient.post(`/v2/payments/capture`, { token });
 
-    // TODO: Update your DB `payment` record here
-    // Mark booking.payment.paidAmount = amount
-    // Set status = "Paid"
+    // Get payment amount from Afterpay response
+    const paidAmount = parseFloat(response.data.amount?.amount || "0");
+
+    // Update Payment record in DB
+    const paymentRecord = await Payment.findOne({ where: { bookingId } });
+
+    if (!paymentRecord) {
+      return res.status(404).json({ error: "Payment record not found" });
+    }
+
+    // Update paidAmount and status
+    await paymentRecord.update({
+      paidAmount: paymentRecord.paidAmount + paidAmount,
+      status: paymentRecord.paidAmount + paidAmount >= paymentRecord.totalAmount ? "Completed" : "Pending",
+    });
 
     res.json({
       success: true,
-      payment: response.data,
+      payment: paymentRecord,
+      afterpayResponse: response.data,
     });
   } catch (error: any) {
     console.error("Afterpay Capture Error:", error.response?.data || error.message);
@@ -89,3 +104,6 @@ export const confirmAfterpayOrder = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+

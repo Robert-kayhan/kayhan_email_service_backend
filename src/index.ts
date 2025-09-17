@@ -21,6 +21,7 @@ import DashBoardRoutes from "./routes/dashboard.route";
 import BOOKINGROutes from "./routes/booking-rotues/booking.routes";
 import UploadRoutes from "./routes/upload.route";
 import JobReportRoutes from "./routes/booking-rotues/jobReport.routes";
+import invoiceRouter from "./routes/booking-rotues/Invoice.route";
 const app = express();
 const PORT = process.env.PORT;
 
@@ -56,9 +57,10 @@ app.use("/api/dashboard", DashBoardRoutes);
 app.use("/api/booking", BOOKINGROutes);
 app.use("/api/upload", UploadRoutes);
 app.use("/api/job-report", JobReportRoutes);
-
+app.use("/api/invoices", invoiceRouter);
 connectDb();
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });
+  

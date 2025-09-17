@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import QRCode from "qrcode";
 import { uploadToS3 } from "../../config/S3BuketConfig";
-
+import { Invoice } from "../../models/bookingSystem/Invoice";
 export const generatePremiumInvoicePdf = async ({
   booking,
 }: {
@@ -203,7 +203,7 @@ body {
           <p>${booking.Vehicle.make} ${booking.Vehicle.model} (${
       booking.Vehicle.year
     })</p>
-          <p>VIN: ${booking.Vehicle.vinNumber}</p>
+          <p>Registration Plate: ${booking.Vehicle.vinNumber}</p>
         </div>
       </div>
     </div>
@@ -290,7 +290,12 @@ body {
       pdfFileName,
       "application/pdf"
     );
-
+    await Invoice.create({
+      userId: booking.userId || booking.User?.id,
+      bookingId: booking.id,
+      invoiceUrl: fileUrl,
+      bookingStatus: booking.status,
+    });
     fs.unlinkSync(pdfPath);
     return fileUrl;
   } catch (err) {

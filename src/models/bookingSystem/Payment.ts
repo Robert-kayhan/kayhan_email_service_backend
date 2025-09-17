@@ -46,7 +46,7 @@ Payment.init(
       defaultValue: "Pending",
     },
     methods: {
-      type: DataTypes.JSON, // array of selected payment methods
+      type: DataTypes.JSON,
       allowNull: false,
       defaultValue: [],
     },
