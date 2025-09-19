@@ -5,6 +5,7 @@ import {
   getBookingById,
   updateBooking,
   deleteBooking,
+  updatePayment
   //   sendNotification,
 } from "../../controllers/booking/booking.controller";
 import {createJobReport , rescheduleJob , cancelJob} from "../../controllers/booking/JobReport.controller"
@@ -23,5 +24,7 @@ router.post("/job-report",createJobReport);
 router.put("/job-report/:id",rescheduleJob);
 router.put("/job-report/:id",cancelJob);
 
+//payment update
+router.put("/payment-update/:bookingId",updatePayment)
 
 export default router;

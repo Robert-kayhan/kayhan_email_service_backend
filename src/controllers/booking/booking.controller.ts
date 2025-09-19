@@ -7,6 +7,7 @@ import MobileInstallationDetail from "../../models/bookingSystem/MobileInstallat
 // import Notification from "../models/Notification";
 import User from "../../models/User.model";
 import Payment from "../../models/bookingSystem/Payment";
+import JobReport from "../../models/bookingSystem/JobReport";
 import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";
 import { Op } from "sequelize";
 
@@ -88,17 +89,20 @@ export const createBooking = async (req: Request, res: Response) => {
     if (paymentDetails && totalAmount) {
       // Determine the initial status
       let status: "Pending" | "Completed" | "Cancelled" = "Pending";
+      let paidAmount = 0; // initial
 
-      // If type is full payment, mark as Completed
-      if (paymentDetails.type === "Full") {
+      // If already fully paid
+      if (paidAmount === (totalAmount.totalAmount || 0)) {
         status = "Completed";
       }
 
-      // If paidAmount equals totalAmount, mark as Completed
-      // Here paidAmount is 0 initially, so you might want to check after payment
-      const paidAmount = 0; // initial
-      if (paidAmount === (totalAmount.totalAmount || 0)) {
+      // If payment type is Full, mark fully paid
+      if (paymentDetails.type === "Full") {
+        paidAmount = totalAmount.totalAmount || 0;
         status = "Completed";
+      }
+      if(paymentDetails.type === "Partial"){
+        paidAmount = paymentDetails.partialAmount
       }
 
       await Payment.create({
@@ -111,7 +115,7 @@ export const createBooking = async (req: Request, res: Response) => {
         discountType: totalAmount.discountType,
         discountValue: totalAmount.discountValue,
         discountAmount: totalAmount.discountAmount,
-        paidAmount: paidAmount,
+        paidAmount,
         status, // dynamically set status
       });
     }
@@ -247,8 +251,10 @@ export const getBookingById = async (req: Request, res: Response) => {
         { model: User }, // add alias if used in association
         { model: Vehicle },
         { model: BookingItem },
+        // { model: JobReport },
         { model: MobileInstallationDetail },
         { model: Payment, as: "payment" },
+         { model: JobReport, as: "reports" },
       ],
     });
 
@@ -351,7 +357,22 @@ export const updateBooking = async (req: Request, res: Response) => {
         await MobileInstallationDetail.create(mobilePayload);
       }
     }
+    const fullBooking = await Booking.findOne({
+      where: { id: bookingRecord.id },
+      include: [
+        { model: User },
+        { model: Vehicle },
+        { model: BookingItem },
+        { model: MobileInstallationDetail },
+        { model: Payment, as: "payment" },
+      ],
+    });
 
+    // 8️⃣ Generate Invoice PDF
+    let invoiceUrl = null;
+    if (fullBooking) {
+      invoiceUrl = await generatePremiumInvoicePdf({ booking: fullBooking });
+    }
     res.json({ success: true, booking: bookingRecord });
   } catch (error: any) {
     console.error(error);
@@ -377,21 +398,51 @@ export const deleteBooking = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Send notification (for email/SMS)
-// export const sendNotification = async (req: Request, res: Response) => {
-//   try {
-//     const { bookingId, channel, message } = req.body;
+export const updatePayment = async (req: Request, res: Response) => {
+  const { bookingId } = req.params;
+  const { methods, paidAmount } = req.body;
 
-//     const notification = await Notification.create({
-//       bookingId,
-//       channel,
-//       message,
-//       sentAt: new Date(),
-//       status: "Sent",
-//     });
+  try {
+    // Find existing payment
+    const payment = await Payment.findOne({ where: { bookingId } });
+    if (!payment) {
+      res.status(404).json({ error: "Payment not found" });
+      return
+    }
 
-//     res.json({ success: true, notification });
-//   } catch (error: any) {
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// };
+    // Convert amounts to numbers
+    const previousPaid = parseFloat(payment.paidAmount.toString()) || 0;
+    const newPaid = parseFloat(paidAmount) || 0;
+    const totalAmount = parseFloat(payment.totalAmount.toString());
+
+    // Prevent overpayment
+    if (previousPaid + newPaid > totalAmount) {
+     res.status(400).json({
+        error: `Payment exceeds total amount. Remaining: ${(
+          totalAmount - previousPaid
+        ).toFixed(2)}`,
+      });
+    }
+
+    const updatedPaidAmount = previousPaid + newPaid;
+
+    // Determine payment status
+    const status = updatedPaidAmount >= totalAmount ? "Completed" : "Pending";
+
+    // Update payment
+    await payment.update({
+      methods, // update method(s)
+      paidAmount: updatedPaidAmount,
+      status,
+    });
+
+    res.status(200).json({
+      message: "Payment updated successfully",
+      payment,
+    });
+  } catch (error) {
+    console.error(error);
+     res.status(500).json({ error: "Failed to update payment" });
+  }
+};
+

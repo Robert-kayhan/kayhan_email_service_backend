@@ -9,10 +9,10 @@ const createJobReport = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       bookingId,
-      techId,
+      // techId,
       techName,
       beforePhotos,
-      afterPhotos,
+      // afterPhotos,
       notes,
       tips,
       difficulty,
@@ -25,29 +25,19 @@ const createJobReport = async (req: Request, res: Response): Promise<void> => {
     console.log(req.body, "this is body");
     const existingReport = await JobReport.findOne({ where: { bookingId } });
     if (existingReport) {
-       res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "A job report already exists for this booking",
       });
     }
     const report = await JobReport.create({
       bookingId,
-      techId,
       techName,
       beforePhotos,
-      afterPhotos,
-      notes,
-      tips,
-      difficulty,
-      customerRating,
-      arrivalTime,
-      startTime,
-      completionTime,
-      totalDurationMins,
-      status: "Completed",
+      status : "In Progress"
     });
-    
-    res.status(201).json({ success: true, report });
+    console.log(report, "this is working budy");
+    res.status(201).json({ success: true, message: "Job start successfully" });
   } catch (error) {
     console.error(error);
     res
@@ -58,18 +48,16 @@ const createJobReport = async (req: Request, res: Response): Promise<void> => {
 
 // 🔹 Get Job Report by ID
 const getJobReportById = async (req: Request, res: Response) => {
-  console.log("apicall")
+  console.log("apicall");
   try {
     const { id } = req.params;
     const report = await JobReport.findOne({
-      where : {
-        bookingId : id
-      }
+      where: {
+        bookingId: id,
+      },
     });
     if (!report) {
-       res
-        .status(404)
-        .json({ success: false, message: "Job report not found" });
+      res.status(404).json({ success: false, message: "Job report not found" });
     }
     res.json({ success: true, report });
   } catch (error) {
@@ -134,13 +122,13 @@ const rescheduleJob = async (req: Request, res: Response) => {
     await JobReport.update(
       {
         status: "Rescheduled",
-        rescheduleTime, 
+        rescheduleTime,
       },
       {
         where: { bookingId: id }, // field name must match your model
       }
     );
-    await report.update(  { date: rescheduleTime,status : "Rescheduled" });
+    await report.update({ date: rescheduleTime, status: "Rescheduled" });
     res.json({ success: true, report });
   } catch (error) {
     console.error(error);
@@ -149,4 +137,75 @@ const rescheduleJob = async (req: Request, res: Response) => {
       .json({ success: false, message: "Failed to reschedule job" });
   }
 };
-export { createJobReport, rescheduleJob, cancelJob ,getJobReportById};
+
+const updateJobReport = async (req: Request, res: Response) => {
+  console.log(req.body , req.params)
+  try {
+    const { id } = req.params;
+    const {
+      techName,
+      beforePhotos,
+      afterPhotos,
+      notes,
+      tips,
+      difficulty,
+      customerRating,
+      arrivalTime,
+      startTime,
+      completionTime,
+      totalDurationMins,
+      status,
+      cancelReason,
+      rescheduleTime,
+    } = req.body;
+
+    // Find the existing report
+    const jobReport = await JobReport.findOne({
+      where : {
+        bookingId : id
+      }
+    });
+    if (!jobReport) {
+      res.status(404).json({ message: "Job report not found" });
+      return 
+    }
+
+    // Update fields if provided
+    // if (techId !== undefined) jobReport.techId = techId;
+    if (techName !== undefined) jobReport.techName = techName;
+    if (beforePhotos !== undefined) jobReport.beforePhotos = beforePhotos;
+    if (afterPhotos !== undefined) jobReport.afterPhotos = afterPhotos;
+    if (notes !== undefined) jobReport.notes = notes;
+    if (tips !== undefined) jobReport.tips = tips;
+    if (difficulty !== undefined) jobReport.difficulty = difficulty;
+    if (customerRating !== undefined) jobReport.customerRating = customerRating;
+    if (arrivalTime !== undefined) jobReport.arrivalTime = arrivalTime;
+    if (startTime !== undefined) jobReport.startTime = startTime;
+    if (completionTime !== undefined) jobReport.completionTime = completionTime;
+    if (totalDurationMins !== undefined)
+      jobReport.totalDurationMins = totalDurationMins;
+    if (status !== undefined) jobReport.status = status;
+    if (cancelReason !== undefined) jobReport.cancelReason = cancelReason;
+    if (rescheduleTime !== undefined) jobReport.rescheduleTime = rescheduleTime;
+
+    await jobReport.save();
+
+     res
+      .status(200)
+      .json({ message: "Job report updated successfully", jobReport });
+  } catch (error: any) {
+    console.error("Error updating job report:", error);
+     res.status(500).json({
+      message: "Failed to update job report",
+      error: error.message || error,
+    });
+  }
+};
+
+export {
+  createJobReport,
+  rescheduleJob,
+  cancelJob,
+  getJobReportById,
+  updateJobReport,
+};

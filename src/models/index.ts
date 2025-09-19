@@ -1,6 +1,7 @@
 import Booking from "./bookingSystem/Booking";
 import BookingItem from "./bookingSystem/BookingItem";
 import { Invoice } from "./bookingSystem/Invoice";
+import JobReport from "./bookingSystem/JobReport";
 import MobileInstallationDetail from "./bookingSystem/MobileInstallationDetail";
 import Vehicle from "./bookingSystem/Vehicle";
 import Campaign from "./Campaign";
@@ -91,3 +92,6 @@ MobileInstallationDetail.belongsTo(Booking, { foreignKey: "bookingId" });
 
 Invoice.belongsTo(User, { foreignKey: "userId", as: "User" });
 User.hasMany(Invoice, { foreignKey: "userId", as: "Invoices" });
+
+Booking.hasMany(JobReport, { foreignKey: 'bookingId', as: 'reports' });
+JobReport.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });

@@ -22,6 +22,11 @@ import BOOKINGROutes from "./routes/booking-rotues/booking.routes";
 import UploadRoutes from "./routes/upload.route";
 import JobReportRoutes from "./routes/booking-rotues/jobReport.routes";
 import invoiceRouter from "./routes/booking-rotues/Invoice.route";
+
+//payments
+import PaypalRouter from "./routes/payments/Paypal.route";
+import ZipPayroutes from "./routes/payments/ZipPay.route";
+import AfterPayRoutes from "./routes/payments/afterpay.route";
 const app = express();
 const PORT = process.env.PORT;
 
@@ -58,9 +63,14 @@ app.use("/api/booking", BOOKINGROutes);
 app.use("/api/upload", UploadRoutes);
 app.use("/api/job-report", JobReportRoutes);
 app.use("/api/invoices", invoiceRouter);
+
+//payments
+app.use("/api/paypal", PaypalRouter);
+app.use("/api/zip-pay", ZipPayroutes);
+app.use("/api/after-pay", AfterPayRoutes);
+
 connectDb();
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
 });
-  

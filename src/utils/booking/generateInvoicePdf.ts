@@ -290,12 +290,25 @@ body {
       pdfFileName,
       "application/pdf"
     );
-    await Invoice.create({
-      userId: booking.userId || booking.User?.id,
-      bookingId: booking.id,
-      invoiceUrl: fileUrl,
-      bookingStatus: booking.status,
+    const existingInvoice = await Invoice.findOne({
+      where: { bookingId: booking.id },
     });
+
+    if (existingInvoice) {
+      await existingInvoice.update({
+        userId: booking.userId || booking.User?.id,
+        invoiceUrl: fileUrl,
+        bookingStatus: booking.status,
+      });
+    } else {
+      await Invoice.create({
+        userId: booking.userId || booking.User?.id,
+        bookingId: booking.id,
+        invoiceUrl: fileUrl,
+        bookingStatus: booking.status,
+      });
+    }
+
     fs.unlinkSync(pdfPath);
     return fileUrl;
   } catch (err) {
