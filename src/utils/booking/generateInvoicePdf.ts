@@ -235,7 +235,14 @@ body {
     <div class="section payment-details">
       <h3>Payment</h3>
       <p><strong>Category:</strong> ${booking.payment.category}</p>
-      <p><strong>Method:</strong> ${booking.payment.methods.join(", ")}</p>
+      <p>
+  <strong>Method:</strong> ${
+    Array.isArray(booking.payment.methods)
+      ? booking.payment.methods.join(", ")
+      : booking.payment.methods || "N/A"
+  }
+</p>
+
       <p><strong>Discount:</strong> $${booking.payment.discountAmount}</p>
       <p><strong>Total:</strong> $${booking.payment.totalAmount}</p>
       <p><strong>Paid:</strong> $${booking.payment.paidAmount}</p>

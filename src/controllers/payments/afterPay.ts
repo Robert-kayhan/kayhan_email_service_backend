@@ -2,17 +2,21 @@ import { Request, Response } from "express";
 import { afterpayClient } from "../../config/afterpay";
 import Payment from "../../models/bookingSystem/Payment";
 
+/**
+ * Create Afterpay checkout session and return redirect URL to client
+ */
 export const createAfterpayOrder = async (req: Request, res: Response) => {
   try {
     const { booking } = req.body;
 
     if (!booking || !booking.payment) {
        res.status(400).json({ error: "Missing booking/payment data" });
+       return
     }
 
     const amount = booking.payment.partialAmount || booking.payment.totalAmount;
 
-    // ✅ Build payload without billing & shipping
+    // build Afterpay checkout payload
     const payload: any = {
       amount: { amount, currency: "AUD" },
       merchantReference: `BOOKING-${booking.id}`,
@@ -28,8 +32,8 @@ export const createAfterpayOrder = async (req: Request, res: Response) => {
         quantity: 1,
         sku: `ITEM-${item.id}`,
       })),
-      returnUrl: `${process.env.CLIENT_URL}/afterpay/confirmation?bookingId=${booking.id}`,
-      cancelUrl: `${process.env.CLIENT_URL}/afterpay/cancel?bookingId=${booking.id}`,
+      returnUrl: `${process.env.FRONTEND_URL}/afterpay/confirmation?bookingId=${booking.id}`,
+      cancelUrl: `${process.env.FRONTEND_URL}/afterpay/cancel?bookingId=${booking.id}`,
     };
 
     const response = await afterpayClient.post("/v2/checkouts", payload);
@@ -47,30 +51,34 @@ export const createAfterpayOrder = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Confirm Afterpay payment (capture funds) once customer returns
+ */
 export const confirmAfterpayOrder = async (req: Request, res: Response) => {
   try {
     const { token, bookingId } = req.body;
 
-    // ✅ Capture the payment via Afterpay
-    const response = await afterpayClient.post(`/v2/payments/capture`, {
+    // Capture the payment using the token from Afterpay redirect
+    const response = await afterpayClient.post(`/v2/payments/auth`, {
       token,
     });
 
     const paidAmount = parseFloat(response.data.amount?.amount || "0");
 
-    // ✅ Update Payment record in DB
+    // update your local Payment record
     const paymentRecord = await Payment.findOne({ where: { bookingId } });
-
     if (!paymentRecord) {
-      return res.status(404).json({ error: "Payment record not found" });
+       res.status(404).json({ error: "Payment record not found" });
+       return
     }
-    const currentPaidAmount = Number(paymentRecord.paidAmount); // string → number
+
+    const currentPaidAmount = Number(paymentRecord.paidAmount);
     const totalAmount = Number(paymentRecord.totalAmount);
     const newPaidAmount = currentPaidAmount + paidAmount;
+
     await paymentRecord.update({
       paidAmount: newPaidAmount,
-      status:
-        newPaidAmount >=  totalAmount ? "Completed" : "Pending",
+      status: newPaidAmount >= totalAmount ? "Completed" : "Pending",
     });
 
     res.json({

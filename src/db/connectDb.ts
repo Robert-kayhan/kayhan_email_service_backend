@@ -7,7 +7,7 @@ const connectDb = async () => {
     await sequelize.authenticate();
     console.log("✅ Database connected successfully.");
     setupAssociations();
-    sequelize.sync()
+    sequelize.sync({alter : true})
   .then(() => {
     console.log("✅ DB altered successfully");
   })
@@ -21,3 +21,4 @@ const connectDb = async () => {
 };
 
 export default connectDb;
+

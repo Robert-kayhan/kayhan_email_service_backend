@@ -37,12 +37,14 @@ Invoice.init(
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
     bookingId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+       references: { model: "bookings", key: "id" },
+      onDelete: "CASCADE",
     },
     invoiceUrl: {
       type: DataTypes.STRING,
