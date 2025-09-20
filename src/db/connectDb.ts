@@ -7,7 +7,7 @@ const connectDb = async () => {
     await sequelize.authenticate();
     console.log("✅ Database connected successfully.");
     setupAssociations();
-    sequelize.sync({alter : true})
+    sequelize.sync()
   .then(() => {
     console.log("✅ DB altered successfully");
   })
