@@ -51,7 +51,7 @@ Payment.init(
       defaultValue: [],
     },
     type: {
-      type: DataTypes.ENUM("Full", "Partial"),
+      type: DataTypes.ENUM("Full", "Partial" , "Already Paid"),
       allowNull: false,
       defaultValue: "Full",
     },

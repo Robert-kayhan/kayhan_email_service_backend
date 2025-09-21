@@ -4,14 +4,13 @@ import Vehicle from "../../models/bookingSystem/Vehicle";
 import Booking from "../../models/bookingSystem/Booking";
 import BookingItem from "../../models/bookingSystem/BookingItem";
 import MobileInstallationDetail from "../../models/bookingSystem/MobileInstallationDetail";
-// import Notification from "../models/Notification";
 import User from "../../models/User.model";
 import Payment from "../../models/bookingSystem/Payment";
 import JobReport from "../../models/bookingSystem/JobReport";
 import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";
 import { Op } from "sequelize";
+import { sendPaymentEmailForBooking } from "../../utils/booking/sendPaymentEmailForBooking";
 
-// ✅ Create a new booking (with User, vehicle, items, and mobile details)
 export const createBooking = async (req: Request, res: Response) => {
   try {
     const {
@@ -23,15 +22,12 @@ export const createBooking = async (req: Request, res: Response) => {
       paymentDetails,
       totalAmount,
     } = req.body;
-    console.log(req.body);
-    // console.log(booking, "this is booking");
-    // console.log(userData, "this is userdata");
-    // console.log(items, "this is items");
-    // console.log(mobileDetails, "this is mobile");
-    // console.log(items , "this is items")
-    console.log(paymentDetails);
-    // Create / find User
-    //  console.log("Uploaded files:", req.files);
+
+    if(totalAmount >= paymentDetails.partialAmount){
+      res.status(400).json({
+        message : "You can't more then total value"
+      })
+    }
 
     let userRecord = await User.findOne({ where: { phone: userData.phone } });
     if (!userRecord) {
@@ -97,14 +93,27 @@ export const createBooking = async (req: Request, res: Response) => {
       }
 
       // If payment type is Full, mark fully paid
-      if (paymentDetails.type === "Full") {
+      if (
+        paymentDetails.type === "Full" &&
+        paymentDetails.category !== "Later"
+      ) {
         paidAmount = totalAmount.totalAmount || 0;
         status = "Completed";
       }
-      if(paymentDetails.type === "Partial"){
-        paidAmount = paymentDetails.partialAmount
+      if (paymentDetails.type === "Partial" ||paymentDetails.type === "Already Paid" ) {
+        paidAmount = paymentDetails.partialAmount;
       }
-
+      console.log(paymentDetails.category , "check this ")
+      if (paymentDetails.category == "Later") {
+        console.log("this is working ")
+        sendPaymentEmailForBooking({
+          customerEmail: userData.email,
+          customerName: userData.firstname,
+          bookingId: bookingRecord.id,
+          amount:totalAmount.totalAmount ,
+          paymentLink: `https://kayhanaudio.com.au/booking-checkout/${bookingRecord.id}`,
+        });
+      }
       await Payment.create({
         bookingId: bookingRecord.id,
         category: paymentDetails.category,
@@ -136,6 +145,7 @@ export const createBooking = async (req: Request, res: Response) => {
     if (fullBooking) {
       invoiceUrl = await generatePremiumInvoicePdf({ booking: fullBooking });
     }
+
     console.log(invoiceUrl, "this is invoice url");
     res.status(201).json({ success: true, booking: bookingRecord });
   } catch (error: any) {
@@ -254,7 +264,7 @@ export const getBookingById = async (req: Request, res: Response) => {
         // { model: JobReport },
         { model: MobileInstallationDetail },
         { model: Payment, as: "payment" },
-         { model: JobReport, as: "reports" },
+        { model: JobReport, as: "reports" },
       ],
     });
 
@@ -401,13 +411,13 @@ export const deleteBooking = async (req: Request, res: Response) => {
 export const updatePayment = async (req: Request, res: Response) => {
   const { bookingId } = req.params;
   const { methods, paidAmount } = req.body;
-
+  console.log(req.body , req)
   try {
     // Find existing payment
     const payment = await Payment.findOne({ where: { bookingId } });
     if (!payment) {
       res.status(404).json({ error: "Payment not found" });
-      return
+      return;
     }
 
     // Convert amounts to numbers
@@ -417,7 +427,7 @@ export const updatePayment = async (req: Request, res: Response) => {
 
     // Prevent overpayment
     if (previousPaid + newPaid > totalAmount) {
-     res.status(400).json({
+      res.status(400).json({
         error: `Payment exceeds total amount. Remaining: ${(
           totalAmount - previousPaid
         ).toFixed(2)}`,
@@ -442,7 +452,6 @@ export const updatePayment = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-     res.status(500).json({ error: "Failed to update payment" });
+    res.status(500).json({ error: "Failed to update payment" });
   }
 };
-

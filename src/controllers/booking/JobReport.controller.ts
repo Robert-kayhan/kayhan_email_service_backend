@@ -82,13 +82,12 @@ const cancelJob = async (req: Request, res: Response) => {
     return;
   }
   console.log("this is second");
-  try {
-    const report = await JobReport.findOne({
+     const report = await JobReport.findOne({
       where: {
         bookingId: id,
       },
     });
-
+  try {
     console.log(report, "this is repodr");
     await Booking.update({ status: "Cancelled" }, { where: { id } });
 
