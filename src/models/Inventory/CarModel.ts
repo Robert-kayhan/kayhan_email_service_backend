@@ -1,46 +1,74 @@
-// models/CarModel.ts
-import { DataTypes, Model, Optional } from "sequelize";
+import { DataTypes, Model } from "sequelize";
 import sequelize from "../../config/database";
-import Series from "./Series";
-
-interface CarModelAttributes {
-  id: number;
-  name: string;
-  seriesId: number; // foreign key to Series
-  year: number;
-  description?: string;
-}
-
-interface CarModelCreationAttributes extends Optional<CarModelAttributes, "id"> {}
-
-class CarModel extends Model<CarModelAttributes, CarModelCreationAttributes>
-  implements CarModelAttributes {
+ 
+class CarModel extends Model {
   public id!: number;
+  public parent_id?: number; 
   public name!: string;
-  public seriesId!: number;
-  public year!: number;
+  public slug!: string;
+  public title?: string;
   public description?: string;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public status!: number;
+  public created_at!: Date;
+  public updated_at!: Date;
+  public deleted_at?: Date;
 }
 
 CarModel.init(
   {
-    id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
-    name: { type: DataTypes.STRING(100), allowNull: false },
-    seriesId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-    year: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-    description: { type: DataTypes.TEXT, allowNull: true },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    parent_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Parent ID can be null for root models
+    },
+    company_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,  
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.STRING,
+    },
+
+    created_by: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    edit_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    status: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1, 
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize,
     tableName: "car_models",
     timestamps: true,
+    paranoid: true,
+    underscored: true,
   }
 );
-
-// Relations
-Series.hasMany(CarModel, { foreignKey: "seriesId", as: "models" });
-CarModel.belongsTo(Series, { foreignKey: "seriesId", as: "series" });
 
 export default CarModel;

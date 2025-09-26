@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import cors from "cors";
 
-dotenv.config(); // ✅ Load env first
+dotenv.config(); 
 
 //routes
 //user
@@ -35,7 +35,8 @@ import AfterPayRoutes from "./routes/payments/afterpay.route";
 //inventory
 import ChannelRoutes from "./routes/Inventory/Channel.route";
 import Departmentroutes from "./routes/Inventory/department.route";
-import ComapnyRoutes from "./routes/Inventory/Company.route"
+import ComapnyRoutes from "./routes/Inventory/Company.route";
+import CarModelRoutes from "./routes/Inventory/carModel.route";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -47,8 +48,6 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "http://89.116.134.75:3000",
-      "https://cravebuy.com",
       "https://mailer.kayhanaudio.com.au",
     ],
     credentials: true,
@@ -89,7 +88,7 @@ app.use("/api/after-pay", AfterPayRoutes);
 app.use("/api/channel", ChannelRoutes);
 app.use("/api/department", Departmentroutes);
 app.use("/api/comapany", ComapnyRoutes);
-
+app.use("/api/car-model", CarModelRoutes);
 
 connectDb();
 

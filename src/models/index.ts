@@ -6,6 +6,7 @@ import MobileInstallationDetail from "./bookingSystem/MobileInstallationDetail";
 import Vehicle from "./bookingSystem/Vehicle";
 import Campaign from "./Campaign";
 import EmailLog from "./EmailLog";
+import CarModel from "./Inventory/CarModel";
 import LeadFollowUp from "./LeadFolowUp";
 import LeadGroup from "./LeadGroup";
 import LeadGroupAssignment from "./LeadGroupAssignment";
@@ -62,21 +63,20 @@ export const setupAssociations = () => {
   });
 };
 
-
 LeadFollowUp.hasMany(LeadNote, {
-    foreignKey: "leadFollowUpId",
-    as: "Notes",
-    onDelete: "CASCADE",
-    constraints: false,
-  });
+  foreignKey: "leadFollowUpId",
+  as: "Notes",
+  onDelete: "CASCADE",
+  constraints: false,
+});
 
-  LeadNote.belongsTo(LeadFollowUp, {
-    foreignKey: "leadFollowUpId",
-    as: "LeadFollowUp",
-    constraints: false,
-  });
+LeadNote.belongsTo(LeadFollowUp, {
+  foreignKey: "leadFollowUpId",
+  as: "LeadFollowUp",
+  constraints: false,
+});
 
-  // booking.model.ts
+// booking.model.ts
 Booking.belongsTo(User, { foreignKey: "customerId" });
 User.hasMany(Booking, { foreignKey: "customerId" });
 
@@ -89,9 +89,11 @@ BookingItem.belongsTo(Booking, { foreignKey: "bookingId" });
 Booking.hasOne(MobileInstallationDetail, { foreignKey: "bookingId" });
 MobileInstallationDetail.belongsTo(Booking, { foreignKey: "bookingId" });
 
-
 Invoice.belongsTo(User, { foreignKey: "userId", as: "User" });
 User.hasMany(Invoice, { foreignKey: "userId", as: "Invoices" });
 
-Booking.hasMany(JobReport, { foreignKey: 'bookingId', as: 'reports' });
-JobReport.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+Booking.hasMany(JobReport, { foreignKey: "bookingId", as: "reports" });
+JobReport.belongsTo(Booking, { foreignKey: "bookingId", as: "booking" });
+
+CarModel.hasMany(CarModel, { as: "children", foreignKey: "parent_id" });
+CarModel.belongsTo(CarModel, { as: "parent", foreignKey: "parent_id" });
