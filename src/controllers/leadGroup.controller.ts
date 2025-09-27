@@ -36,28 +36,46 @@ const getAllLeadGroupsWithUsers = async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 25;
     const offset = (page - 1) * limit;
 
+    const type = req.query.type as "Retail" | "wholeSale" | undefined;
+
     // 1. Count total groups
     const totalItems = await LeadGroup.count();
 
-    // 2. Fetch paginated groups with user count
+    // 2. Fetch paginated groups with associated users
     const groups = await LeadGroup.findAll({
       offset,
       limit,
       order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: LeadGroupAssignment,
+          as: "LeadGroupAssignments",
+          include: [{ model: User, as: "User" }],
+        },
+      ],
     });
 
-    // 3. Map total users per group
-    const groupData = groups.map((group) => {
-      const assignments = (group as any).LeadGroupAssignments || [];
-      const users = assignments.map((a: any) => a.User);
-      return {
-        id: group.id,
-        groupName: group.groupName,
-        createdAt: group.createdAt,
-        totalLeads: users.length,
-        users,
-      };
-    });
+    // 3. Filter users based on type
+    const groupData = groups
+      .map((group) => {
+        const assignments = (group as any).LeadGroupAssignments || [];
+        let filteredUsers = assignments.map((a: any) => a.User);
+
+        if (type === "wholeSale") {
+          filteredUsers = filteredUsers.filter((u: any) => u.role === 3);
+        } else if (type === "Retail") {
+          filteredUsers = filteredUsers.filter((u: any) => u.role !== 3);
+        }
+
+        return {
+          id: group.id,
+          groupName: group.groupName,
+          createdAt: group.createdAt,
+          totalLeads: filteredUsers.length,
+          users: filteredUsers,
+        };
+      })
+      .filter((g) => g.users.length > 0); // only include groups with users after filter
 
     const totalPages = Math.ceil(totalItems / limit);
 
@@ -75,6 +93,7 @@ const getAllLeadGroupsWithUsers = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 const getAllLeadGroupsWithID = async (req: Request, res: Response) => {
   try {

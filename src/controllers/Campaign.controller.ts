@@ -54,24 +54,33 @@ const createCampaign = async (req: Request, res: Response) => {
 // GET all campaigns
 const getAllCampaigns = async (req: Request, res: Response) => {
   try {
-    // Parse query params
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 25;
     const offset = (page - 1) * limit;
 
-    // Fetch campaigns with pagination and associated models
+    // Optional filter by template type
+    const templateType = req.query.templateType as "Retail" | "wholeSale" | undefined;
+
     const { rows: campaigns, count: total } = await Campaign.findAndCountAll({
-      // include: [
-      //   { model: Template, as: "Template" },
-      //   { model: LeadGroup, as: "LeadGroup" },
-      // ],
+      include: [
+        {
+          model: Template,
+          as: "Template",
+          required: !!templateType, // make inner join if filter exists
+          where: templateType ? { type: templateType } : undefined,
+        },
+        {
+          model: LeadGroup,
+          as: "LeadGroup",
+        },
+      ],
       order: [["createdAt", "DESC"]],
       limit,
       offset,
     });
 
     res.json({
-      campaigns: campaigns,
+      campaigns,
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -81,6 +90,7 @@ const getAllCampaigns = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 
 // GET single campaign by ID

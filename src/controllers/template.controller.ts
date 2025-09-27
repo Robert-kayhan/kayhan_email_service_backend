@@ -5,8 +5,8 @@ import { Op } from "sequelize";
 // 🔹 Create a new template
 const createTemplate = async (req: Request, res: Response) => {
   try {
-    const { name, design, html } = req.body;
-
+    const { name, design, html , type } = req.body;
+    console.log(req.body , "this is req body")
     if (!name || !design || !html) {
        res.status(400).json({ message: "name, design, and html are required" });
        return
@@ -20,7 +20,7 @@ const createTemplate = async (req: Request, res: Response) => {
     }
 
     // ✅ Create new template
-    const template = await Template.create({ name, design, html });
+    const template = await Template.create({ name, design, html , type });
 
      res.status(201).json({
       message: "Template created successfully",
@@ -32,7 +32,7 @@ const createTemplate = async (req: Request, res: Response) => {
   }
 };
 
-// 🔹 Get all templates
+
 const getAllTemplates = async (req: Request, res: Response) => {
   try {
     // 👇 Get page and limit from query, with defaults
@@ -43,15 +43,22 @@ const getAllTemplates = async (req: Request, res: Response) => {
     // 👇 Search query param
     const search = (req.query.search as string) || "";
 
+    // 👇 Type filter query param
+    const type = (req.query.type as string) || ""; // e.g., "Retail" or "wholeSale"
+
     // 👇 Build where condition
-    const whereCondition = search
-      ? {
-          [Op.or]: [
-            { name: { [Op.like]: `%${search}%` } },
-            { description: { [Op.like]: `%${search}%` } },
-          ],
-        }
-      : {};
+    const whereCondition: any = {};
+
+    if (search) {
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    if (type) {
+      whereCondition.type = type; // exact match for type
+    }
 
     // 👇 Fetch with search + pagination
     const { count, rows: templates } = await Template.findAndCountAll({
@@ -79,6 +86,8 @@ const getAllTemplates = async (req: Request, res: Response) => {
 };
 
 
+
+
 // 🔹 Get template by ID
 const getTemplateById = async (req: Request, res: Response) => {
   try {
@@ -100,7 +109,7 @@ const getTemplateById = async (req: Request, res: Response) => {
 const updateTemplate = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, design, html } = req.body;
+    const { name, design, html ,type } = req.body;
 
     const template = await Template.findByPk(id);
     if (!template) {
@@ -108,7 +117,7 @@ const updateTemplate = async (req: Request, res: Response) => {
       return;
     }
 
-    await template.update({ name, design, html });
+    await template.update({ name, design, html ,type });
 
     res.status(200).json({
       message: "Template updated successfully",

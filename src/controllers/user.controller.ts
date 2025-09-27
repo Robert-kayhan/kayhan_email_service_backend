@@ -16,7 +16,7 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
     street,
     postcode,
   } = req.body;
-  console.log("api call",req.body)
+  console.log("api call", req.body);
   try {
     const existingUser = await User.findOne({
       where: { [Op.or]: [{ email }] },
@@ -44,7 +44,7 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
       postcode,
       // country,
     });
-    console.log("its working")
+    console.log("its working");
     res.status(201).json({ message: "User created successfully." });
   } catch (error) {
     console.error("Error creating user:", error);
@@ -145,25 +145,29 @@ const createMultipleUser = async (
   }
 };
 
-
 const getALLUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string)?.trim() || "";
+    const role = req.query.role ? Number(req.query.role) : null; // role filter
     const offset = (page - 1) * limit;
 
     // Build where clause
-    const whereClause = search
-      ? {
-          [Op.or]: [
-            { firstname: { [Op.like]: `%${search}%` } },
-            { lastname: { [Op.like]: `%${search}%` } },
-            { email: { [Op.like]: `%${search}%` } },
-            { phone: { [Op.like]: `%${search}%` } },
-          ],
-        }
-      : {};
+    const whereClause: any = {};
+
+    if (search) {
+      whereClause[Op.or] = [
+        { firstname: { [Op.like]: `%${search}%` } },
+        { lastname: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { phone: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    if (role !== null) {
+      whereClause.role = role; // Add role filter
+    }
 
     const { count, rows: users } = await User.findAndCountAll({
       attributes: [
@@ -232,7 +236,8 @@ const deleteUser = async (req: Request, res: Response): Promise<void> => {
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id; // You may use `email` instead of `id` if that's how you identify users
-    const { firstname, lastname, phone, address, role, email ,isSubscribed } = req.body;
+    const { firstname, lastname, phone, address, role, email, isSubscribed } =
+      req.body;
 
     const user = await User.findOne({ where: { email: email } }); // You can use `id` here if needed
     if (!user) {
@@ -269,7 +274,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
       "https://api.kayhanaudio.com.au/v1/users/all"
     );
     const externalUsers = externalResponse.data;
-    console.log(Array.isArray(externalUsers) , "this is lenght")
+    console.log(Array.isArray(externalUsers), "this is lenght");
     if (!Array.isArray(externalUsers)) {
       res.status(400).json({ message: "Invalid external users format" });
       return;
@@ -293,7 +298,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
       where: { email: { [Op.in]: emails } },
       attributes: ["email"],
     });
-    console.log(leads.length , "this is leadth")
+    console.log(leads.length, "this is leadth");
     const leadEmailSet = new Set(leads.map((l) => l.email));
 
     // 4. Attach hasLead
@@ -304,7 +309,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
 
     // 5. Apply hasLeadOnly filter if requested
     let finalUsers = combinedUsers;
-    console.log(finalUsers.length ,   )
+    console.log(finalUsers.length);
     if (hasLeadOnly) {
       finalUsers = combinedUsers.filter((u: any) => u.hasLead);
     }
@@ -355,6 +360,89 @@ const unsubscribeUser = async (req: Request, res: Response) => {
   }
 };
 
+const normalizeStringField = (val: any): string | null => {
+  if (!val) return null;
+  if (typeof val === "string") return val;
+  if (Array.isArray(val)) return val.join(", "); // join array into string
+  if (typeof val === "object") return JSON.stringify(val); // fallback for object
+  return val.toString();
+};
+
+const createAllWholesaleUsers = async (req: Request, res: Response) => {
+  console.log("api call")
+  try {
+    // 1️⃣ Fetch all wholesale users from external API
+    const apiUrl = "https://api.kayhanaudio.com.au/v1/users?role=3&limit=1000000";
+    const response = await axios.get(apiUrl);
+
+    const externalUsers = response.data?.data?.result;
+    if (!externalUsers || externalUsers.length === 0) {
+      res
+        .status(404)
+        .json({ message: "No wholesale users found in external system" });
+      return;
+    }
+
+    // 2️⃣ Extract emails to check which already exist locally
+    const emails = externalUsers.map((u: any) => u.email.toLowerCase());
+
+    const existingUsers = await User.findAll({
+      where: { email: { [Op.in]: emails } },
+      attributes: ["email"],
+    });
+
+    const existingEmailSet = new Set(
+      existingUsers.map((u) => u.email.toLowerCase())
+    );
+
+    // 3️⃣ Filter only new users that don't exist locally and normalize fields
+    const newUsers = externalUsers
+      .filter(
+        (u: any) => u.email && !existingEmailSet.has(u.email.toLowerCase())
+      )
+      .map((u: any) => ({
+        firstname: normalizeStringField(u.name) || "UNKNOWN",
+        lastname: normalizeStringField(u.last_name) || "UNKNOWN",
+        email: normalizeStringField(u.email),
+        phone: normalizeStringField(u.phone),
+        country: normalizeStringField(u.country),
+        state: normalizeStringField(u.state),
+        city: normalizeStringField(u.city),
+        street: normalizeStringField(u.street),
+        postcode: normalizeStringField(u.postcode),
+        role: u.role ?? 3,
+        isSubscribed: u.isSubscribed ?? true,
+      }));
+
+    if (newUsers.length === 0) {
+      res
+        .status(200)
+        .json({ message: "All wholesale users already exist locally" });
+      return;
+    }
+
+    // 4️⃣ Bulk create all new users in batches (optional for large data)
+    const BATCH_SIZE = 500;
+    let createdUsers: any[] = [];
+
+    for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
+      const batch = newUsers.slice(i, i + BATCH_SIZE);
+      const batchCreated = await User.bulkCreate(batch, { validate: true });
+      createdUsers = createdUsers.concat(batchCreated);
+    }
+
+    res.status(201).json({
+      message: `Created ${createdUsers.length} new wholesale users successfully`,
+      data: createdUsers,
+    });
+  } catch (error: any) {
+    console.error("Error creating wholesale users:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+};
+
 export {
   createOneUser,
   createMultipleUser,
@@ -363,4 +451,5 @@ export {
   updateUser,
   getUsersWithLeadStatus,
   unsubscribeUser,
+  createAllWholesaleUsers,
 };

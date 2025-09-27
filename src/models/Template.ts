@@ -4,6 +4,7 @@ import sequelize from "../config/database";
 class Template extends Model {
   public id!: number;
   public name!: string;
+  public type!: "Retail" | "wholeSale";
   public design!: object;  // stores Unlayer JSON
   public html!: string;    // stores rendered email HTML
   public readonly createdAt!: Date;
@@ -21,20 +22,26 @@ Template.init(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    type: {
+      type: DataTypes.ENUM("Retail", "wholeSale"),
+      defaultValue: "Retail",
+    },
     design: {
-      type: DataTypes.JSON,     // store full JSON design object
+      type: DataTypes.JSON,
       allowNull: false,
     },
     html: {
-      type: DataTypes.TEXT,     // long HTML string
+      type: DataTypes.TEXT,
       allowNull: false,
     },
+
   },
   {
     sequelize,
     modelName: "Template",
     tableName: "templates",
-    timestamps: true, // createdAt and updatedAt
+    timestamps: true,
+    indexes: [{ fields: ["type"] }],
   }
 );
 
