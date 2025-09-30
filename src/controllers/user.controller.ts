@@ -420,7 +420,7 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
         .json({ message: "All wholesale users already exist locally" });
       return;
     }
-
+    console.log("its working ")
     // 4️⃣ Bulk create all new users in batches (optional for large data)
     const BATCH_SIZE = 500;
     let createdUsers: any[] = [];

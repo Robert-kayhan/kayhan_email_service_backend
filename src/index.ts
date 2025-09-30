@@ -37,6 +37,9 @@ import ChannelRoutes from "./routes/Inventory/Channel.route";
 import Departmentroutes from "./routes/Inventory/department.route";
 import ComapnyRoutes from "./routes/Inventory/Company.route";
 import CarModelRoutes from "./routes/Inventory/carModel.route";
+//repaid
+import RepairRoutes from "./routes/repair-return/repair.route"
+
 
 const app = express();
 const PORT = process.env.PORT;
@@ -89,6 +92,10 @@ app.use("/api/channel", ChannelRoutes);
 app.use("/api/department", Departmentroutes);
 app.use("/api/comapany", ComapnyRoutes);
 app.use("/api/car-model", CarModelRoutes);
+
+//repair and return
+
+app.use("/api/repair-return",RepairRoutes)
 
 connectDb();
 
