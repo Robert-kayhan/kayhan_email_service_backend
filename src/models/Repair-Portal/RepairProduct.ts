@@ -12,7 +12,7 @@ interface OrderProductAttributes {
   billing_address?: object;
   shipping_address?: object;
 
-  products: object[]; // array of product objects { id, name, price, quantity }
+  products: object[];
 
   user_tracking_number?: string;
   user_post_method?: string;
@@ -20,7 +20,10 @@ interface OrderProductAttributes {
   admin_tracking_number?: string;
   admin_post_method?: string;
 
-  order_date?: Date; // used for warranty calculation
+  user_received_productImages?: string[];
+  product_send_productImages?: string[];
+
+  order_date?: Date;
 
   status?: "Not Reviewed" | "Reviewed" | "Not Received" | "Received";
 
@@ -49,6 +52,9 @@ class OrderProduct
   public admin_tracking_number?: string;
   public admin_post_method?: string;
 
+  public user_received_productImages?: string[];
+  public product_send_productImages?: string[];
+
   public order_date?: Date;
 
   public status?: "Not Reviewed" | "Reviewed" | "Not Received" | "Received";
@@ -62,8 +68,8 @@ class OrderProduct
 OrderProduct.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    order_id: { type: DataTypes.STRING, allowNull: false, unique: true },
-    // customer_id: { type: DataTypes.INTEGER, allowNull: true },
+    order_id: { type: DataTypes.STRING, allowNull: false, defaultValue: "N/A" },
+
     customer_name: { type: DataTypes.STRING, allowNull: true },
     customer_email: { type: DataTypes.STRING, allowNull: true },
     customer_phone: { type: DataTypes.STRING, allowNull: true },
@@ -78,6 +84,9 @@ OrderProduct.init(
 
     admin_tracking_number: { type: DataTypes.STRING, allowNull: true },
     admin_post_method: { type: DataTypes.STRING, allowNull: true },
+
+    user_received_productImages: { type: DataTypes.JSON, allowNull: true, defaultValue: [] },
+    product_send_productImages: { type: DataTypes.JSON, allowNull: true, defaultValue: [] },
 
     order_date: { type: DataTypes.DATE, allowNull: true },
 

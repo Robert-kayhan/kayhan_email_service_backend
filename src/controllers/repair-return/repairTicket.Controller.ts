@@ -27,13 +27,13 @@ export const createOrder = async (req: Request, res: Response) => {
       shipping_address,
       products,
       user_tracking_number,
-      user_post_method, 
+      user_post_method,
     });
-    console.log(req.body)
-     res.status(201).json({ success: true,});
+    console.log(req.body);
+    res.status(201).json({ success: true });
   } catch (error: any) {
     console.error(error);
-     res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -58,7 +58,7 @@ export const getOrders = async (req: Request, res: Response) => {
       order: [["createdAt", "DESC"]],
     });
 
-     res.json({
+    res.json({
       success: true,
       data: {
         total: count,
@@ -69,29 +69,32 @@ export const getOrders = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error(error);
-     res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // -------------------- GET ORDER DETAILS --------------------
 export const getOrderDetail = async (req: Request, res: Response) => {
+  console.log("api call");
   try {
     const orderId = req.params.id;
+    console.log(orderId);
     const order = await OrderProduct.findOne({ where: { id: orderId } });
 
     if (!order) {
-     res.status(404).json({ success: false, message: "Order not found" });
+      res.status(404).json({ success: false, message: "Order not found" });
     }
 
-     res.json({ success: true, data: { result: order } });
+    res.json({ success: true, data: { result: order } });
   } catch (error: any) {
     console.error(error);
-     res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // -------------------- UPDATE ORDER --------------------
 export const updateOrder = async (req: Request, res: Response) => {
+  console.log("api callsss");
   try {
     const orderId = req.params.id;
     const updateData = req.body;
@@ -99,28 +102,29 @@ export const updateOrder = async (req: Request, res: Response) => {
     const order = await OrderProduct.findOne({ where: { id: orderId } });
     if (!order) {
       res.status(404).json({ success: false, message: "Order not found" });
-       return
+      return;
     }
 
     await order.update(updateData);
 
-     res.json({ success: true, data: order });
+    res.json({ success: true, data: order });
   } catch (error: any) {
     console.error(error);
-     res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // -------------------- ADD NOTE --------------------
 export const addNote = async (req: Request, res: Response) => {
+  console.log("api function call", req.body);
   try {
     const orderId = req.params.id;
     const { text, by } = req.body;
 
     const order = await OrderProduct.findOne({ where: { id: orderId } });
     if (!order) {
-       res.status(404).json({ success: false, message: "Order not found" });
-       return
+      res.status(404).json({ success: false, message: "Order not found" });
+      return;
     }
 
     const newNote = { text, createdAt: new Date(), by };
@@ -131,6 +135,23 @@ export const addNote = async (req: Request, res: Response) => {
     res.json({ success: true, data: order });
   } catch (error: any) {
     console.error(error);
-     res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const deleted = await OrderProduct.destroy({
+      where: { id: req.params.id },
+    });
+
+    if (!deleted) {
+       res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Order deleted successfully" });
+  } catch (error: any) {
+    console.error("Failed to delete order:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -3,12 +3,13 @@ import {  createOrder,
   getOrders,
   getOrderDetail,
   updateOrder,
-  addNote, } from "../../controllers/repair-return/repairTicket.Controller"
+  addNote,  deleteOrder} from "../../controllers/repair-return/repairTicket.Controller"
 const router = express.Router()
 router.post("/", createOrder);
-router.get("/list", getOrders);
-router.get("/detail/:id", getOrderDetail);
-router.put("/update/:id", updateOrder);
+router.get("/", getOrders);
+router.get("/:id", getOrderDetail);
+router.put("/:id", updateOrder);
 router.post("/note/:id", addNote);
+router.delete("/:id",deleteOrder)
 
 export default router
