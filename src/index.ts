@@ -37,6 +37,7 @@ import ChannelRoutes from "./routes/Inventory/Channel.route";
 import Departmentroutes from "./routes/Inventory/department.route";
 import ComapnyRoutes from "./routes/Inventory/Company.route";
 import CarModelRoutes from "./routes/Inventory/carModel.route";
+import ProductRoutes from "./routes/Inventory/product.route"
 //repaid
 import RepairRoutes from "./routes/repair-return/repair.route"
 
@@ -92,6 +93,7 @@ app.use("/api/channel", ChannelRoutes);
 app.use("/api/department", Departmentroutes);
 app.use("/api/comapany", ComapnyRoutes);
 app.use("/api/car-model", CarModelRoutes);
+app.use("/api/product", ProductRoutes);
 
 //repair and return
 
