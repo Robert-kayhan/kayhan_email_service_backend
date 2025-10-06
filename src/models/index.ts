@@ -4,15 +4,15 @@ import { Invoice } from "./bookingSystem/Invoice";
 import JobReport from "./bookingSystem/JobReport";
 import MobileInstallationDetail from "./bookingSystem/MobileInstallationDetail";
 import Vehicle from "./bookingSystem/Vehicle";
-import Campaign from "./Campaign";
-import EmailLog from "./EmailLog";
 import CarModel from "./Inventory/CarModel";
-import LeadFollowUp from "./LeadFolowUp";
-import LeadGroup from "./LeadGroup";
-import LeadGroupAssignment from "./LeadGroupAssignment";
-import LeadNote from "./Note";
-import Template from "./Template";
-import User from "./User.model";
+import LeadGroupAssignment from "./crm/LeadGroupAssignment";
+import Template from "./compagin/Template";
+import LeadGroup from "./compagin/LeadGroup";
+import User from "./user/User.model";
+import Campaign from "./compagin/Campaign";
+import EmailLog from "./compagin/EmailLog";
+import LeadFollowUp from "./crm/LeadFolowUp";
+import LeadNote from "./crm/Note";
 
 export const setupAssociations = () => {
   // LeadGroup → LeadGroupAssignment

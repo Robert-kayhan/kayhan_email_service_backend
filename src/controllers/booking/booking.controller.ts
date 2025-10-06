@@ -4,7 +4,7 @@ import Vehicle from "../../models/bookingSystem/Vehicle";
 import Booking from "../../models/bookingSystem/Booking";
 import BookingItem from "../../models/bookingSystem/BookingItem";
 import MobileInstallationDetail from "../../models/bookingSystem/MobileInstallationDetail";
-import User from "../../models/User.model";
+import User from "../../models/user/User.model";
 import Payment from "../../models/bookingSystem/Payment";
 import JobReport from "../../models/bookingSystem/JobReport";
 import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";

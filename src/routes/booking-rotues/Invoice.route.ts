@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { Op } from "sequelize";
 import { Invoice } from "../../models/bookingSystem/Invoice";
-import User from "../../models/User.model";
+import User from "../../models/user/User.model";
 
 const router = express.Router();
 

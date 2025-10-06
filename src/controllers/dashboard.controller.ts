@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import LeadFollowUp from "../models/LeadFolowUp";
-import LeadSalesTracking from "../models/LeadSalesTracking";
+
 import { Op, fn, col } from "sequelize";
+import LeadFollowUp from "../models/crm/LeadFolowUp";
+import LeadSalesTracking from "../models/crm/LeadSalesTracking";
 
 const getLeadsDashboardStats = async (req: Request, res: Response) => {
   try {

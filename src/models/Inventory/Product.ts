@@ -14,16 +14,25 @@ interface ProductAttributes {
   price: number;
   stock: number;
 
-  car_model_id?: number; 
+  // New fields
+  images?: object | string[];
+  sku_number?: string;
+  factory_price?: number;
+  retail_price?: number;
+  wholesale_price?: number;
+  weight?: number;
+  height?: number;
+  width?: number;
+
+  car_model_id?: number;
   company_id?: number;
-  channel_id?: number;   
+  channel_id?: number;
   department_id?: number;
 
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// For creation
 interface ProductCreationAttributes
   extends Optional<ProductAttributes, "id"> {}
 
@@ -36,6 +45,15 @@ class Product
   public description?: string;
   public price!: number;
   public stock!: number;
+
+  public images?: object | string[];
+  public sku_number?: string;
+  public factory_price?: number;
+  public retail_price?: number;
+  public wholesale_price?: number;
+  public weight?: number;
+  public height?: number;
+  public width?: number;
 
   public car_model_id?: number;
   public company_id?: number;
@@ -71,6 +89,48 @@ Product.init(
       allowNull: false,
       defaultValue: 0,
     },
+
+    // New fields
+    images: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
+    sku_number: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      unique: true,
+    },
+    factory_price: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    retail_price: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    wholesale_price: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    weight: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    height: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    width: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+
     car_model_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
@@ -105,7 +165,6 @@ Company.hasMany(Product, { foreignKey: "company_id", as: "Products" });
 Product.belongsTo(Channel, { foreignKey: "channel_id", as: "Channel" });
 Channel.hasMany(Product, { foreignKey: "channel_id", as: "Products" });
 
-// Optional: Direct link to Department too
 Product.belongsTo(Department, { foreignKey: "department_id", as: "Department" });
 Department.hasMany(Product, { foreignKey: "department_id", as: "Products" });
 

@@ -9,17 +9,17 @@ dotenv.config();
 
 //routes
 //user
-import authRoutes from "./routes/auth.routes";
-import userRoutes from "./routes/user.routes";
+import authRoutes from "./routes/User/auth.routes";
+import userRoutes from "./routes/User/user.routes";
 //mailer
-import templateRoutes from "./routes/template.route";
-import LeadGroupRoutes from "./routes/leadGroup.route";
-import LeadFolowUp from "./routes/leadFollowUp.route";
-import campaignRoutes from "./routes/Campaign.route";
-import sendEmailroutes from "./routes/sendEmail.routes";
+import templateRoutes from "./routes/compagin/template.route";
+import LeadGroupRoutes from "./routes/compagin/leadGroup.route";
+import LeadFolowUp from "./routes/crm/leadFollowUp.route";
+import campaignRoutes from "./routes/compagin/Campaign.route";
+import sendEmailroutes from "./routes/compagin/sendEmail.routes";
 //flyer
-import Specificationroutes from "./routes/Specification.routes";
-import Flyerroutes from "./routes/flyer.routes";
+import Specificationroutes from "./routes/flyer/Specification.routes";
+import Flyerroutes from "./routes/flyer/flyer.routes";
 import DashBoardRoutes from "./routes/dashboard.route";
 //booking routes
 import BOOKINGROutes from "./routes/booking-rotues/booking.routes";
@@ -38,6 +38,8 @@ import Departmentroutes from "./routes/Inventory/department.route";
 import ComapnyRoutes from "./routes/Inventory/Company.route";
 import CarModelRoutes from "./routes/Inventory/carModel.route";
 import ProductRoutes from "./routes/Inventory/product.route"
+import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
+import cron from "node-cron";
 //repaid
 import RepairRoutes from "./routes/repair-return/repair.route"
 
@@ -100,6 +102,11 @@ app.use("/api/product", ProductRoutes);
 app.use("/api/repair-return",RepairRoutes)
 
 connectDb();
+
+cron.schedule("0 0 */12 * * *", () => {
+  console.log("⏰ Running product sync every 12 hours...");
+  getProductFromCarAudioandKayhanAudio();
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);

@@ -1,13 +1,14 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../../config/database";
- 
+
 class CarModel extends Model {
   public id!: number;
-  public parent_id?: number; 
+  public parent_id?: number;
+  public company_id!: number;
   public name!: string;
-  public slug!: string;
-  public title?: string;
   public description?: string;
+  public created_by!: number;
+  public edit_by?: number;
   public status!: number;
   public created_at!: Date;
   public updated_at!: Date;
@@ -17,17 +18,23 @@ class CarModel extends Model {
 CarModel.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,   // ✅ UNSIGNED ID
       autoIncrement: true,
       primaryKey: true,
     },
     parent_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true, // Parent ID can be null for root models
+      type: DataTypes.INTEGER.UNSIGNED,   // ✅ must also be UNSIGNED
+      allowNull: true,
+      references: {
+        model: "car_models",
+        key: "id",
+      },
+      onUpdate: "CASCADE",
+      onDelete: "SET NULL",
     },
     company_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,  
+      type: DataTypes.INTEGER.UNSIGNED,   // keep consistency for FKs
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING,
@@ -36,18 +43,17 @@ CarModel.init(
     description: {
       type: DataTypes.STRING,
     },
-
     created_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
     edit_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
     status: {
       type: DataTypes.INTEGER,
-      defaultValue: 1, 
+      defaultValue: 1,
     },
     created_at: {
       type: DataTypes.DATE,
