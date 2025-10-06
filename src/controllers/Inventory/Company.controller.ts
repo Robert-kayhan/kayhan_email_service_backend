@@ -19,13 +19,13 @@ const getAllCompanies = async (req: Request, res: Response) => {
         : undefined,
       offset,
       limit,
-      include: [
-        {
-          model: Department,
-          as: "Department",
-          attributes: ["id", "name"], // only fetch what you need
-        },
-      ],
+      // include: [
+      //   {
+      //     model: Department,
+      //     as: "Department",
+      //     attributes: ["id", "name"], // only fetch what you need
+      //   },
+      // ],
       order: [["createdAt", "DESC"]],
     });
 

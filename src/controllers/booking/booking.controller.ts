@@ -10,7 +10,7 @@ import JobReport from "../../models/bookingSystem/JobReport";
 import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";
 import { Op } from "sequelize";
 import { sendPaymentEmailForBooking } from "../../utils/booking/sendPaymentEmailForBooking";
-
+import { sendInstallationConfirmationEmail } from "../../utils/booking/sendInstallationConfirmationEmail";
 export const createBooking = async (req: Request, res: Response) => {
     console.log(req.body , "this is data")
 
@@ -24,17 +24,19 @@ export const createBooking = async (req: Request, res: Response) => {
       paymentDetails,
       totalAmount,
     } = req.body;
-    if(  paymentDetails.type !== "Full" || totalAmount >= Number(paymentDetails.partialAmount)){
-      res.status(400).json({
-        message : "You can't more then total value"
-      })
-    }
+    console.log(totalAmount , "this is total amount")
+    // if(  paymentDetails.type !== "Full" || totalAmount >= Number(paymentDetails.partialAmount)){
+    //   console.log("its call")
+    //   res.status(400).json({
+    //     message : "You can't more then total value"
+    //   })
+    // }
 
     let userRecord = await User.findOne({ where: { phone: userData.phone } });
     if (!userRecord) {
       userRecord = await User.create(userData);
     }
-
+    
     // Create vehicle
     const vehicleRecord = await Vehicle.create({
       make: vehicle.make,
@@ -89,7 +91,7 @@ export const createBooking = async (req: Request, res: Response) => {
       let paidAmount = 0; // initial
 
       // If already fully paid
-      if (paidAmount === (totalAmount.totalAmount || 0)) {
+      if (paidAmount === (totalAmount || 0)) {
         status = "Completed";
       }
 
@@ -98,7 +100,7 @@ export const createBooking = async (req: Request, res: Response) => {
         paymentDetails.type === "Full" &&
         paymentDetails.category !== "Later"
       ) {
-        paidAmount = totalAmount.totalAmount || 0;
+        paidAmount = totalAmount || 0;
         status = "Completed";
       }
       if (paymentDetails.type === "Partial" ||paymentDetails.type === "Already Paid" ) {
@@ -111,7 +113,7 @@ export const createBooking = async (req: Request, res: Response) => {
           customerEmail: userData.email,
           customerName: userData.firstname,
           bookingId: bookingRecord.id,
-          amount:totalAmount.totalAmount ,
+          amount:totalAmount ,
           paymentLink: `https://kayhanaudio.com.au/booking-checkout/${bookingRecord.id}`,
         });
       }
@@ -121,10 +123,10 @@ export const createBooking = async (req: Request, res: Response) => {
         methods: paymentDetails.methods || [],
         type: paymentDetails.type,
         partialAmount: paymentDetails.partialAmount || null,
-        totalAmount: totalAmount.totalAmount || 0,
-        discountType: totalAmount.discountType,
-        discountValue: totalAmount.discountValue,
-        discountAmount: totalAmount.discountAmount,
+        totalAmount: totalAmount || 0,
+        discountType: paymentDetails.discountType,
+        discountValue: paymentDetails.discountValue,
+        discountAmount: paymentDetails.discountAmount,
         paidAmount,
         status, // dynamically set status
       });
@@ -145,8 +147,14 @@ export const createBooking = async (req: Request, res: Response) => {
     let invoiceUrl = null;
     if (fullBooking) {
       invoiceUrl = await generatePremiumInvoicePdf({ booking: fullBooking });
+      console.log(userData , booking )
     }
-
+    await  sendInstallationConfirmationEmail({
+      customerName : userData.firstname,
+  customerEmail : userData.email,
+  installationDate : booking.date,
+  installationTime :booking.time,
+    })
     console.log(invoiceUrl, "this is invoice url");
     res.status(201).json({ success: true, booking: bookingRecord });
   } catch (error: any) {
