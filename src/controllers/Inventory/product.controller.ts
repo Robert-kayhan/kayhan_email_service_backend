@@ -186,7 +186,7 @@ const normalizeProduct = (product: any, platform: string) => {
     console.log("Fetching products from CarAudio...");
     const [ kayhanAudioRes] = await Promise.all([
       // axios.get(CAR_AUDIO_API as string),
-      axios.get(KAYHAN_AUDIO_API as string),
+      axios.get(`${KAYHAN_AUDIO_API}/v1/product/fast-list`),
     ]);
 
     // const carAudioProducts = carAudioRes.data?.products || [];

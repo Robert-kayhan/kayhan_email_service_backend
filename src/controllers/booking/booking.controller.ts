@@ -12,6 +12,8 @@ import { Op } from "sequelize";
 import { sendPaymentEmailForBooking } from "../../utils/booking/sendPaymentEmailForBooking";
 
 export const createBooking = async (req: Request, res: Response) => {
+    console.log(req.body , "this is data")
+
   try {
     const {
       userData,
@@ -22,8 +24,7 @@ export const createBooking = async (req: Request, res: Response) => {
       paymentDetails,
       totalAmount,
     } = req.body;
-
-    if(totalAmount >= paymentDetails.partialAmount){
+    if(  paymentDetails.type !== "Full" || totalAmount >= Number(paymentDetails.partialAmount)){
       res.status(400).json({
         message : "You can't more then total value"
       })

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Department from "../../models/Inventory/Department";
+import axios from "axios";
 
 // Create a new Department
 const createDepartment = async (req: Request, res: Response) => {
@@ -109,10 +110,65 @@ const deleteDepartment = async (req: Request, res: Response) => {
   }
 };
 
+const normalizeDepartment = (dept: any, platform: string) => {
+  return {
+    name: dept.name || "Unnamed Department",
+    description: dept.description || "",
+    // channel_id: platform === "carAudio" ? 1 : 2, // optional if you plan to link it
+  };
+};
+
+const CAR_AUDIO_API = process.env.CAR_AUDIO_API;
+const KAYHAN_AUDIO_API = process.env.KAYHAN_AUDIO_API;
+
+// Main function to fetch & store
+const getDepartmentFromCarAudioandKayhanAudio = async () => {
+  try {
+    console.log("📦 Fetching departments from Kayhan Audio...");
+
+    const [kayhanAudioRes , carAudioRes ,carAudioResWithoutcarproduct] = await Promise.all([
+      axios.get(`${KAYHAN_AUDIO_API}/v1/department/list`),
+      axios.get(`${CAR_AUDIO_API}/v1/department/list`), 
+      axios.get(`${CAR_AUDIO_API}/v1/department/list?is_car_product=false`), 
+    ]);
+
+    const kayhanDepartments = kayhanAudioRes.data?.data?.result || [];
+    const carAudioDepartments = carAudioRes.data?.data?.result
+    const carAudioDepartmentsWithoutCarProdct = carAudioResWithoutcarproduct.data?.data?.result
+    console.log(
+      `✅ Fetched ${kayhanDepartments.length} departments from Kayhan Audio`
+    );
+
+    const allDepartments = [
+      ...kayhanDepartments.map((d: any) =>
+        normalizeDepartment(d, "kayhanAudio")
+      ),
+      ...carAudioDepartments.map((d: any) =>
+        normalizeDepartment(d, "kayhanAudio")
+      ),
+    ];
+    console.log(allDepartments)
+    for (const dept of allDepartments) {
+      const [record, created] = await Department.findOrCreate({
+        where: { name: dept.name },
+        defaults: dept,
+      });
+      if (!created) {
+        await record.update(dept);
+      }
+    }
+
+    console.log("🎯 Department sync completed successfully.");
+  } catch (error: any) {
+    console.error("❌ Department sync failed:", error.message);
+  }
+};
+
 export {
   createDepartment,
   updateDepartment,
   deleteDepartment,
   getDepartment,
   getDepartments,
+  getDepartmentFromCarAudioandKayhanAudio,
 };

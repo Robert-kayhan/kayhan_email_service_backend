@@ -1,12 +1,11 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../../config/database"; // your sequelize instance
-import Department from "./Department";
 
 interface CompanyAttributes {
   id: number;
   name: string;
   description?: string;
-  department_id ?: number;
+  department_id?: number[]; // renamed to make it clear it's multiple
 }
 
 interface CompanyCreationAttributes extends Optional<CompanyAttributes, "id"> {}
@@ -16,8 +15,7 @@ class Company extends Model<CompanyAttributes, CompanyCreationAttributes>
   public id!: number;
   public name!: string;
   public description?: string;
-  public department_id ?: number;
-
+  public department_id?: number[];
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -35,15 +33,15 @@ Company.init(
       allowNull: false,
       unique: true,
     },
-    department_id : {
-         type: DataTypes.INTEGER, 
-      allowNull: false 
-    },
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    
+    department_id: {
+      type: DataTypes.JSON, // store multiple department IDs
+      allowNull: true,
+      defaultValue: [],
+    },
   },
   {
     sequelize,
@@ -51,6 +49,9 @@ Company.init(
     timestamps: true,
   }
 );
-Company.belongsTo(Department, { foreignKey: "department_id", as: "Department" });
-Department.hasMany(Company, { foreignKey: "department_id", as: "Companies" });
+
+// ❌ Remove associations because JSON column cannot be used with belongsTo / hasMany
+// Company.belongsTo(Department, { foreignKey: "department_id", as: "Department" });
+// Department.hasMany(Company, { foreignKey: "department_id", as: "Companies" });
+
 export default Company;

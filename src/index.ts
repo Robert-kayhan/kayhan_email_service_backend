@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import cors from "cors";
 
-dotenv.config(); 
+dotenv.config();
 
 //routes
 //user
@@ -37,12 +37,15 @@ import ChannelRoutes from "./routes/Inventory/Channel.route";
 import Departmentroutes from "./routes/Inventory/department.route";
 import ComapnyRoutes from "./routes/Inventory/Company.route";
 import CarModelRoutes from "./routes/Inventory/carModel.route";
-import ProductRoutes from "./routes/Inventory/product.route"
+import ProductRoutes from "./routes/Inventory/product.route";
+//automate
 import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
+import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
 import cron from "node-cron";
 //repaid
-import RepairRoutes from "./routes/repair-return/repair.route"
-
+import RepairRoutes from "./routes/repair-return/repair.route";
+import { companyFromCarAudioandKayhanAudio } from "./controllers/Inventory/Company.controller";
+import { syncCarModelsWithLocalCompanies } from "./controllers/Inventory/CarModel.controller";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -52,10 +55,7 @@ app.set("trust proxy", 1);
 // ✅ Middleware order matters!
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://mailer.kayhanaudio.com.au",
-    ],
+    origin: ["http://localhost:3000", "https://mailer.kayhanaudio.com.au"],
     credentials: true,
   })
 );
@@ -99,14 +99,18 @@ app.use("/api/product", ProductRoutes);
 
 //repair and return
 
-app.use("/api/repair-return",RepairRoutes)
+app.use("/api/repair-return", RepairRoutes);
 
 connectDb();
 
-cron.schedule("0 0 */12 * * *", () => {
-  console.log("⏰ Running product sync every 12 hours...");
-  getProductFromCarAudioandKayhanAudio();
-});
+// ⏰ Run every 5 seconds
+// cron.schedule("*/5 * * * * *", async () => {
+//   console.log("⏰ Running product sync every 12 hours...");
+//   getProductFromCarAudioandKayhanAudio();
+//   getDepartmentFromCarAudioandKayhanAudio();
+//   companyFromCarAudioandKayhanAudio();
+//   syncCarModelsWithLocalCompanies()
+// });
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Company from "../../models/Inventory/Company";
 import Department from "../../models/Inventory/Department";
 import { Op } from "sequelize";
+import axios from "axios";
 
 // Get all companies
 const getAllCompanies = async (req: Request, res: Response) => {
@@ -64,11 +65,9 @@ const createCompany = async (req: Request, res: Response) => {
     console.log("api call");
     // --- Basic Validations ---
     if (!name || typeof name !== "string" || name.trim().length < 2) {
-      res
-        .status(400)
-        .json({
-          message: "Name is required and must be at least 2 characters long",
-        });
+      res.status(400).json({
+        message: "Name is required and must be at least 2 characters long",
+      });
     }
 
     if (!department_id || isNaN(Number(department_id))) {
@@ -77,8 +76,8 @@ const createCompany = async (req: Request, res: Response) => {
 
     const existing = await Company.findOne({ where: { name: req.body.name } });
     if (existing) {
-       res.status(400).json({ message: "Company name must be unique" });
-       return
+      res.status(400).json({ message: "Company name must be unique" });
+      return;
     }
 
     if (description && description.length > 500) {
@@ -89,10 +88,13 @@ const createCompany = async (req: Request, res: Response) => {
 
     // --- Create Company ---
     const newCompany = await Company.create({
-      name: name.trim(),
-      description,
-      department_id: Number(department_id),
-    });
+  name: name.trim(),
+  description,
+  department_id: Array.isArray(department_id)
+    ? department_id.map(Number) // ensure all are numbers
+    : [Number(department_id)],  // if a single ID is provided
+});
+
 
     res.status(201).json(newCompany);
   } catch (error: any) {
@@ -142,6 +144,106 @@ const deleteCompany = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to delete company" });
+  }
+};
+
+
+const KAYHAN_AUDIO_API = process.env.KAYHAN_AUDIO_API;
+
+let apiDeptIdToNameMap: Map<number, string> = new Map(); // API dept ID -> name
+
+// 1️⃣ Map API department names -> local department IDs
+const getDepartmentNameMap = async (): Promise<Map<string, number>> => {
+  const res = await axios.get(`${KAYHAN_AUDIO_API}/v1/department/list`);
+  const apiDepartments = res.data?.data?.result || [];
+
+  const localDepartments = await Department.findAll();
+
+  const departmentMap = new Map<string, number>();
+
+  // Build API ID -> Name map
+  apiDepartments.forEach((apiDept: any) => {
+    apiDeptIdToNameMap.set(apiDept.id, apiDept.name); // store ID -> name
+    const matched = localDepartments.find(
+      (localDept) => localDept.name.toLowerCase() === apiDept.name.toLowerCase()
+    );
+    if (matched) {
+      departmentMap.set(apiDept.name, matched.id); // name -> local ID
+    }
+  });
+
+  return departmentMap;
+};
+
+// 2️⃣ Replace API department_ids with local department IDs
+const replaceApiDeptIdsWithLocalIds = (company: any, departmentMap: Map<string, number>) => {
+  const localDeptIds: number[] = [];
+
+  if (company.department_ids?.length) {
+    company.department_ids.forEach((apiDeptId: number) => {
+      const apiDeptName = apiDeptIdToNameMap.get(apiDeptId); // get name from API ID
+      if (apiDeptName && departmentMap.has(apiDeptName)) {
+        localDeptIds.push(departmentMap.get(apiDeptName)!); // push local ID
+      }
+    });
+  }
+
+  return {
+    ...company,
+    department_ids: localDeptIds, // replace API IDs with local IDs
+  };
+};
+
+// 3️⃣ Sync companies
+export const companyFromCarAudioandKayhanAudio = async () => {
+  try {
+    console.log("📦 Fetching companies from API...");
+
+    const departmentMap = await getDepartmentNameMap();
+
+    const res = await axios.get(`${KAYHAN_AUDIO_API}/v1/category/list`);
+    const companies = res.data?.data?.result || [];
+    console.log(`✅ Fetched ${companies.length} companies`);
+
+    const result: any[] = [];
+
+    for (const company of companies) {
+      // Replace API department IDs with local IDs
+      const normalized = replaceApiDeptIdsWithLocalIds(company, departmentMap);
+
+      // Check if company already exists
+      const existing = await Company.findOne({ where: { name: normalized.name } });
+
+      if (existing) {
+        // Update existing company
+        await existing.update({
+          description: normalized.description,
+          department_id: normalized.department_ids,
+        });
+        result.push(existing);
+      } else {
+        // Create new company
+        const newCompany = await Company.create({
+          name: normalized.name,
+          description: normalized.description,
+          department_id: normalized.department_ids,
+        });
+        result.push(newCompany);
+      }
+    }
+
+    return {
+      success: true,
+      message: "Records got successfully",
+      data: { result },
+    };
+  } catch (error: any) {
+    console.error("❌ Company sync failed:", error.message);
+    return {
+      success: false,
+      message: "Company sync failed",
+      error: error.message,
+    };
   }
 };
 
