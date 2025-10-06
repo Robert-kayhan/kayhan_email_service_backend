@@ -154,72 +154,85 @@ const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
-// controllers/productSyncController.ts
-
-// Example platform API URLs
 const CAR_AUDIO_API = process.env.CAR_AUDIO_API;
 const KAYHAN_AUDIO_API = process.env.KAYHAN_AUDIO_API;
 
-// Utility function to normalize product data from different platforms
-const normalizeProduct = (product: any, platform: string) => {
+
+const normalizeProduct = async (product: any, platform: string) => {
+  // Find Department
+  const department = await Department.findOne({
+    where: { name: product.department_name },
+  });
+
+  // Find Company
+  const company = await Company.findOne({
+    where: { name: product.category_name },
+  });
+
+  // Validate car_model_id
+  let carModelId: number | null = null;
+  if (product.car_model_id && !isNaN(Number(product.car_model_id))) {
+    const existingModel = await CarModel.findByPk(Number(product.car_model_id));
+    if (existingModel) {
+      carModelId = existingModel.id;
+    } else {
+      console.warn(
+        `⚠️ Skipping invalid car_model_id: ${product.car_model_id} for product ${product.sku_number}`
+      );
+    }
+  }
+
   return {
+    sku_number: product.sku || product.sku_number || null,
     name: product.name || product.title || "Unnamed Product",
     description: product.description || "",
-    price: parseFloat(product.price) || 0,
-    stock: product.stock ?? 0,
-    images: product.images || [],
-    sku_number: product.sku || product.sku_number || null,
-    factory_price: product.factory_price || 0,
-    retail_price: product.retail_price || 0,
-    wholesale_price: product.wholesale_price || 0,
+    retail_price: parseFloat(product.retail_price) || 0,
+    factory_price: parseFloat(product.factory_price) || 0,
+    wholesale_price: parseFloat(product.wholesale_price) || 0,
+    // stock: 3   ,
     weight: product.weight || 0,
     height: product.height || 0,
     width: product.width || 0,
-    
-    channel_id: platform === "carAudio" ? 1 : 2, // Example: 1=CarAudio, 2=KayhanAudio
+    images: Array.isArray(product.images)
+      ? product.images.map((img: any) => img.image)
+      : [],
+    department_id: department ? department.id : null,
+    company_id: company ? company.id : null,
+    car_model_id: carModelId, // ✅ now guaranteed to be valid or null
+    channel_id: platform === "carAudio" ? 1 : 2, // 1 = CarAudio, 2 = KayhanAudio
   };
 };
-
-// Main function to fetch & store
- const getProductFromCarAudioandKayhanAudio = async () => {
+// Main sync function
+const getProductFromCarAudioandKayhanAudio = async () => {
   try {
-    console.log("Fetching products from CarAudio...");
-    const [ kayhanAudioRes] = await Promise.all([
-      // axios.get(CAR_AUDIO_API as string),
-      axios.get(`${KAYHAN_AUDIO_API}/v1/product/fast-list`),
-    ]);
+    console.log("📦 Fetching products from APIs...");
 
-    // const carAudioProducts = carAudioRes.data?.products || [];
+    // Fetch KayhanAudio (and optionally CarAudio)
+    const kayhanAudioRes = await axios.get(`${KAYHAN_AUDIO_API}/v1/product/fast-list`);
     const kayhanAudioProducts = kayhanAudioRes.data?.data || [];
 
-    // console.log(
-    //   `Fetched ${carAudioProducts.length} from CarAudio, ${kayhanAudioProducts.length} from KayhanAudio`
-    // );
+    // Log how many fetched
+    console.log(`✅ Fetched ${kayhanAudioProducts.length} products from KayhanAudio`);
 
-    // Combine all products
-    const allProducts = [
-      // ...carAudioProducts.map((p:any) => normalizeProduct(p, "carAudio")),
-      ...kayhanAudioProducts.map((p:any) => normalizeProduct(p, "kayhanAudio")),
-    ];
+    // Normalize all products
+    const normalizedProducts = await Promise.all(
+      kayhanAudioProducts.map((p: any) => normalizeProduct(p, "kayhanAudio"))
+    );
 
-    // Store/update in DB
-    for (const productData of allProducts) {
-      await Product.upsert(
-        {
-          ...productData,
-        },
-        {
-          conflictFields: ["sku_number"], // update existing if same SKU
-        }
-      );
+    console.log("🧩 Saving products into database...");
+
+    // Bulk upsert (faster than one-by-one)
+    for (const productData of normalizedProducts) {
+      await Product.upsert(productData, {
+        conflictFields: ["sku_number"],
+      });
     }
 
-    console.log("✅ Product sync completed successfully.");
-  } catch (error:any) {
+    console.log("🎉 Product sync completed successfully.");
+  } catch (error: any) {
     console.error("❌ Product sync failed:", error.message);
   }
 };
-
 
 export {
  createProduct,

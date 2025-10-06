@@ -55,7 +55,7 @@ app.set("trust proxy", 1);
 // ✅ Middleware order matters!
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://mailer.kayhanaudio.com.au"],
+    origin: ["http://localhost:3000", "https://mailer.kayhanaudio.com.au" , "https://kayhanaudio.com.au"],
     credentials: true,
   })
 );
