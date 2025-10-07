@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import JobReport from "../../models/bookingSystem/JobReport";
 import Booking from "../../models/bookingSystem/Booking";
 import { where } from "sequelize";
+
 // 🔹 Create / Save Job Report
 const createJobReport = async (req: Request, res: Response): Promise<void> => {
   console.log("job api call");
@@ -157,7 +158,7 @@ const updateJobReport = async (req: Request, res: Response) => {
       cancelReason,
       rescheduleTime,
     } = req.body;
-
+    console.log(status)
     // Find the existing report
     const jobReport = await JobReport.findOne({
       where : {
@@ -188,6 +189,10 @@ const updateJobReport = async (req: Request, res: Response) => {
     if (rescheduleTime !== undefined) jobReport.rescheduleTime = rescheduleTime;
 
     await jobReport.save();
+   await Booking.update(
+  { status: status }, // values to update
+  { where: { id: id } } // condition
+);
 
      res
       .status(200)

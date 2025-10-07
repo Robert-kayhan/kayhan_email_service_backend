@@ -12,7 +12,7 @@ import { Op } from "sequelize";
 import { sendPaymentEmailForBooking } from "../../utils/booking/sendPaymentEmailForBooking";
 import { sendInstallationConfirmationEmail } from "../../utils/booking/sendInstallationConfirmationEmail";
 export const createBooking = async (req: Request, res: Response) => {
-    console.log(req.body , "this is data")
+  console.log(req.body, "this is data");
 
   try {
     const {
@@ -23,8 +23,9 @@ export const createBooking = async (req: Request, res: Response) => {
       mobileDetails,
       paymentDetails,
       totalAmount,
+      discountAmount,
     } = req.body;
-    console.log(totalAmount , "this is total amount")
+    console.log(totalAmount, "this is total amount");
     // if(  paymentDetails.type !== "Full" || totalAmount >= Number(paymentDetails.partialAmount)){
     //   console.log("its call")
     //   res.status(400).json({
@@ -36,7 +37,7 @@ export const createBooking = async (req: Request, res: Response) => {
     if (!userRecord) {
       userRecord = await User.create(userData);
     }
-    
+
     // Create vehicle
     const vehicleRecord = await Vehicle.create({
       make: vehicle.make,
@@ -89,9 +90,14 @@ export const createBooking = async (req: Request, res: Response) => {
       // Determine the initial status
       let status: "Pending" | "Completed" | "Cancelled" = "Pending";
       let paidAmount = 0; // initial
-
+      if (
+        paymentDetails.type === "Partial" ||
+        paymentDetails.type === "Already Paid"
+      ) {
+        paidAmount = paymentDetails.partialAmount;
+      }
       // If already fully paid
-      if (paidAmount === (totalAmount || 0)) {
+      if (Number(paidAmount) === (totalAmount || 0)) {
         status = "Completed";
       }
 
@@ -103,17 +109,15 @@ export const createBooking = async (req: Request, res: Response) => {
         paidAmount = totalAmount || 0;
         status = "Completed";
       }
-      if (paymentDetails.type === "Partial" ||paymentDetails.type === "Already Paid" ) {
-        paidAmount = paymentDetails.partialAmount;
-      }
-      console.log(paymentDetails.category , "check this ")
+
+      console.log(paymentDetails.category, "check this ");
       if (paymentDetails.category == "Later") {
-        console.log("this is working ")
+        console.log("this is working ");
         sendPaymentEmailForBooking({
           customerEmail: userData.email,
           customerName: userData.firstname,
           bookingId: bookingRecord.id,
-          amount:totalAmount ,
+          amount: totalAmount,
           paymentLink: `https://kayhanaudio.com.au/booking-checkout/${bookingRecord.id}`,
         });
       }
@@ -126,7 +130,7 @@ export const createBooking = async (req: Request, res: Response) => {
         totalAmount: totalAmount || 0,
         discountType: paymentDetails.discountType,
         discountValue: paymentDetails.discountValue,
-        discountAmount: paymentDetails.discountAmount,
+        discountAmount: discountAmount,
         paidAmount,
         status, // dynamically set status
       });
@@ -147,14 +151,14 @@ export const createBooking = async (req: Request, res: Response) => {
     let invoiceUrl = null;
     if (fullBooking) {
       invoiceUrl = await generatePremiumInvoicePdf({ booking: fullBooking });
-      console.log(userData , booking )
+      console.log(userData, booking);
     }
-    await  sendInstallationConfirmationEmail({
-      customerName : userData.firstname,
-  customerEmail : userData.email,
-  installationDate : booking.date,
-  installationTime :booking.time,
-    })
+    await sendInstallationConfirmationEmail({
+      customerName: userData.firstname,
+      customerEmail: userData.email,
+      installationDate: booking.date,
+      installationTime: booking.time,
+    });
     console.log(invoiceUrl, "this is invoice url");
     res.status(201).json({ success: true, booking: bookingRecord });
   } catch (error: any) {
@@ -167,73 +171,56 @@ export const createBooking = async (req: Request, res: Response) => {
 
 export const getAllBookings = async (req: Request, res: Response) => {
   try {
-    // pagination
+    // Pagination
     const page = parseInt((req.query.page as string) || "1", 10);
     const limit = parseInt((req.query.limit as string) || "10", 10);
     const offset = (page - 1) * limit;
 
-    // filters
+    // Filters
     const search = (req.query.search as string) || "";
     const status = (req.query.status as string) || "";
     const type = (req.query.type as string) || "";
     const paymentStatus = (req.query.paymentStatus as string) || "";
 
-    // date filters (DATEONLY)
-    const startDate = req.query.startDate as string; // YYYY-MM-DD
-    const endDate = req.query.endDate as string; // YYYY-MM-DD
+    // Date filters (YYYY-MM-DD)
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
 
-    // dynamic where clause
+    // Build where clause
     const where: any = {};
-
     if (status) where.status = status;
     if (type) where.type = type;
-    if (paymentStatus) where.paymentStatus = paymentStatus; // only if you have this column
+    if (paymentStatus) where.paymentStatus = paymentStatus;
 
-    // search invoiceNumber/notes
-    if (search) {
-      where[Op.or] = [
-        { invoiceNumber: { [Op.like]: `%${search}%` } },
-        { notes: { [Op.like]: `%${search}%` } },
-      ];
-    }
-
-    // ✅ date filter (use `date` column, not createdAt)
     if (startDate && endDate) {
-      where.date = {
-        [Op.between]: [startDate, endDate],
-      };
+      where.date = { [Op.between]: [startDate, endDate] };
     } else if (startDate) {
-      where.date = {
-        [Op.gte]: startDate,
-      };
+      where.date = { [Op.gte]: startDate };
     } else if (endDate) {
-      where.date = {
-        [Op.lte]: endDate,
-      };
+      where.date = { [Op.lte]: endDate };
     }
 
-    // include relations
+    // Include relations
     const include = [
-      {
-        model: User,
-        where: search
-          ? {
-              [Op.or]: [
-                { firstname: { [Op.like]: `%${search}%` } },
-                { lastname: { [Op.like]: `%${search}%` } },
-                { email: { [Op.like]: `%${search}%` } },
-              ],
-            }
-          : undefined,
-        required: false,
-      },
+      { model: User, required: false },
       { model: Vehicle },
       { model: BookingItem },
       { model: MobileInstallationDetail },
       { model: Payment, as: "payment" },
     ];
 
-    // query
+    // Search across Booking and User
+    if (search) {
+      where[Op.or] = [
+        { invoiceNumber: { [Op.like]: `%${search}%` } },
+        { notes: { [Op.like]: `%${search}%` } },
+        { "$User.firstname$": { [Op.like]: `%${search}%` } },
+        { "$User.lastname$": { [Op.like]: `%${search}%` } },
+        { "$User.email$": { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    // Query
     const { count, rows: bookings } = await Booking.findAndCountAll({
       where,
       include,
@@ -244,6 +231,7 @@ export const getAllBookings = async (req: Request, res: Response) => {
       limit,
       offset,
       distinct: true,
+      subQuery: false, // ✅ Needed for User field search
     });
 
     res.json({
@@ -295,6 +283,7 @@ export const updateBooking = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { userData, vehicle, booking, items, mobileDetails } = req.body;
     console.log(items, "this is items");
+    // console.log(req.body , "this is body")
     // Find booking
     const bookingRecord = await Booking.findByPk(id);
     if (!bookingRecord) {
@@ -420,27 +409,28 @@ export const deleteBooking = async (req: Request, res: Response) => {
 export const updatePayment = async (req: Request, res: Response) => {
   const { bookingId } = req.params;
   const { methods, paidAmount } = req.body;
-  console.log(req.body , req)
+
   try {
     // Find existing payment
     const payment = await Payment.findOne({ where: { bookingId } });
     if (!payment) {
       res.status(404).json({ error: "Payment not found" });
-      return;
+      return 
     }
 
-    // Convert amounts to numbers
-    const previousPaid = parseFloat(payment.paidAmount.toString()) || 0;
-    const newPaid = parseFloat(paidAmount) || 0;
-    const totalAmount = parseFloat(payment.totalAmount.toString());
+    // Convert amounts to numbers safely
+    const previousPaid = parseFloat(payment.paidAmount?.toString() || "0");
+    const newPaid = parseFloat(paidAmount || "0");
+    const totalAmount = parseFloat(payment.totalAmount?.toString() || "0");
 
-    // Prevent overpayment
+    // ✅ Prevent overpayment
     if (previousPaid + newPaid > totalAmount) {
-      res.status(400).json({
+       res.status(400).json({
         error: `Payment exceeds total amount. Remaining: ${(
           totalAmount - previousPaid
         ).toFixed(2)}`,
       });
+      return
     }
 
     const updatedPaidAmount = previousPaid + newPaid;
@@ -448,9 +438,9 @@ export const updatePayment = async (req: Request, res: Response) => {
     // Determine payment status
     const status = updatedPaidAmount >= totalAmount ? "Completed" : "Pending";
 
-    // Update payment
+    // ✅ Update payment record
     await payment.update({
-      methods, // update method(s)
+      methods, // payment method(s)
       paidAmount: updatedPaidAmount,
       status,
     });
@@ -464,3 +454,4 @@ export const updatePayment = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to update payment" });
   }
 };
+
