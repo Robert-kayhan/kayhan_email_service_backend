@@ -312,7 +312,7 @@ body {
         userId: booking.userId || booking.User?.id,
         bookingId: booking.id,
         invoiceUrl: fileUrl,
-        bookingStatus: booking.status,
+        bookingStatus: "Paid",
       });
     }
 
