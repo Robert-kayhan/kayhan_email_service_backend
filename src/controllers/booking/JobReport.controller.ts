@@ -30,6 +30,7 @@ const createJobReport = async (req: Request, res: Response): Promise<void> => {
         success: false,
         message: "A job report already exists for this booking",
       });
+      return
     }
     const report = await JobReport.create({
       bookingId,

@@ -1,6 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../../config/database";
 import Booking from "./Booking";
+import PaymentHistory from "./PaymentHistory";
 
 class Payment extends Model<any> {
   public id!: number;
@@ -9,7 +10,7 @@ class Payment extends Model<any> {
   public methods!: string[]; // store as JSON
   public type!: "Full" | "Partial";
   public partialAmount!: number | null;
-
+  public status! : string
   public totalAmount!: number; // final amount after discount
   public paidAmount!: number;
 
@@ -93,8 +94,35 @@ Payment.init(
   }
 );
 
+
+Payment.afterCreate(async (payment, options) => {
+  try {
+    await PaymentHistory.create({
+      paymentId: payment.id,
+      paidAmount: payment.paidAmount,
+      status: payment.status,
+    });
+  } catch (error) {
+    console.error("Error creating PaymentHistory after create:", error);
+  }
+});
+
+Payment.afterUpdate(async (payment, options) => {
+  try {
+    await PaymentHistory.create({
+      paymentId: payment.id,
+      paidAmount: payment.paidAmount,
+      status: payment.status,
+    });
+  } catch (error) {
+    console.error("Error creating PaymentHistory after update:", error);
+  }
+});
+
+
+
 // Associations
-Booking.hasOne(Payment, { foreignKey: "bookingId", as: "payment" });
-Payment.belongsTo(Booking, { foreignKey: "bookingId", as: "booking" });
+// Booking.hasOne(Payment, { foreignKey: "bookingId", as: "payment" });
+// Payment.belongsTo(Booking, { foreignKey: "bookingId", as: "booking" });
 
 export default Payment;
