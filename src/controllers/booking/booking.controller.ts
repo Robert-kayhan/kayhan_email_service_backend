@@ -8,7 +8,7 @@ import User from "../../models/user/User.model";
 import Payment from "../../models/bookingSystem/Payment";
 import JobReport from "../../models/bookingSystem/JobReport";
 import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import { sendPaymentEmailForBooking } from "../../utils/booking/sendPaymentEmailForBooking";
 import { sendInstallationConfirmationEmail } from "../../utils/booking/sendInstallationConfirmationEmail";
 import PaymentHistory from "../../models/bookingSystem/PaymentHistory";
@@ -255,25 +255,24 @@ export const getAllBookings = async (req: Request, res: Response) => {
 export const getBookingById = async (req: Request, res: Response) => {
   try {
     const booking = await Booking.findByPk(req.params.id, {
-  include: [
-    { model: User }, // add alias if used in association
-    { model: Vehicle },
-    { model: BookingItem },
-    { model: MobileInstallationDetail },
-    {
-      model: Payment,
-      as: "payment",
       include: [
+        { model: User }, // add alias if used in association
+        { model: Vehicle },
+        { model: BookingItem },
+        { model: MobileInstallationDetail },
         {
-          model: PaymentHistory,
-          as: "histories", // must match alias defined in associations
+          model: Payment,
+          as: "payment",
+          include: [
+            {
+              model: PaymentHistory,
+              as: "histories", // must match alias defined in associations
+            },
+          ],
         },
+        { model: JobReport, as: "reports" },
       ],
-    },
-    { model: JobReport, as: "reports" },
-  ],
-});
-
+    });
 
     if (!booking) {
       res.status(404).json({ success: false, message: "Booking not found" });
@@ -291,8 +290,16 @@ export const getBookingById = async (req: Request, res: Response) => {
 export const updateBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { userData, vehicle, booking, items, mobileDetails } = req.body;
-    console.log(items, "this is items");
+    const {
+      userData,
+      vehicle,
+      booking,
+      items,
+      mobileDetails,
+      totalAmount,
+      discount,
+    } = req.body;
+    console.log(req.body, "this is items");
     // console.log(req.body , "this is body")
     // Find booking
     const bookingRecord = await Booking.findByPk(id);
@@ -334,7 +341,10 @@ export const updateBooking = async (req: Request, res: Response) => {
     // ✅ Update booking
     await bookingRecord.update(bookingPayload);
 
-    // ✅ Update booking items
+
+
+    console.log(totalAmount, "this is new amount ");
+
     await BookingItem.destroy({ where: { bookingId: id } });
     if (items && items.length > 0) {
       await BookingItem.bulkCreate(
@@ -342,7 +352,6 @@ export const updateBooking = async (req: Request, res: Response) => {
           bookingId: id,
           itemType: item.itemType,
           charge: item.charge,
-          // otherItemText: item.otherItemText,
         }))
       );
     }
@@ -375,7 +384,7 @@ export const updateBooking = async (req: Request, res: Response) => {
         await MobileInstallationDetail.create(mobilePayload);
       }
     }
-    const fullBooking = await Booking.findOne({
+    const fullBooking: any = await Booking.findOne({
       where: { id: bookingRecord.id },
       include: [
         { model: User },
@@ -385,7 +394,34 @@ export const updateBooking = async (req: Request, res: Response) => {
         { model: Payment, as: "payment" },
       ],
     });
+    console.log(
+      fullBooking?.payment?.paidAmount === totalAmount ,
+      "this is contiond"
+    );
+   if (fullBooking?.payment && fullBooking.payment.paidAmount >= totalAmount) {
+    console.log("this is call")
+   res.status(400).json({
+    success: false,
+    error: "You have already paid more than the updated total amount",
+  });
+  return
+}
 
+    await Payment.update(
+      {
+        totalAmount: totalAmount,
+        status:
+          fullBooking?.payment?.paidAmount == totalAmount
+            ? "Completed"
+            : "Pending",
+        discountValue: discount,
+      },
+      {
+        where: {
+          bookingId: bookingRecord.id,
+        },
+      }
+    );
     // 8️⃣ Generate Invoice PDF
     let invoiceUrl = null;
     if (fullBooking) {
@@ -425,7 +461,7 @@ export const updatePayment = async (req: Request, res: Response) => {
     const payment = await Payment.findOne({ where: { bookingId } });
     if (!payment) {
       res.status(404).json({ error: "Payment not found" });
-      return 
+      return;
     }
 
     // Convert amounts to numbers safely
@@ -435,12 +471,12 @@ export const updatePayment = async (req: Request, res: Response) => {
 
     // ✅ Prevent overpayment
     if (previousPaid + newPaid > totalAmount) {
-       res.status(400).json({
+      res.status(400).json({
         error: `Payment exceeds total amount. Remaining: ${(
           totalAmount - previousPaid
         ).toFixed(2)}`,
       });
-      return
+      return;
     }
 
     const updatedPaidAmount = previousPaid + newPaid;
@@ -464,4 +500,3 @@ export const updatePayment = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to update payment" });
   }
 };
-

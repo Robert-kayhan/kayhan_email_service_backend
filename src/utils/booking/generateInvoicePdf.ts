@@ -300,12 +300,12 @@ body {
     const existingInvoice = await Invoice.findOne({
       where: { bookingId: booking.id },
     });
-
+    console.log(booking.status)
     if (existingInvoice) {
       await existingInvoice.update({
         userId: booking.userId || booking.User?.id,
         invoiceUrl: fileUrl,
-        bookingStatus: booking.status,
+        bookingStatus: "Paid",
       });
     } else {
       await Invoice.create({
