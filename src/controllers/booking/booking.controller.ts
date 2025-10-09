@@ -11,6 +11,7 @@ import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePd
 import { Op } from "sequelize";
 import { sendPaymentEmailForBooking } from "../../utils/booking/sendPaymentEmailForBooking";
 import { sendInstallationConfirmationEmail } from "../../utils/booking/sendInstallationConfirmationEmail";
+import PaymentHistory from "../../models/bookingSystem/PaymentHistory";
 export const createBooking = async (req: Request, res: Response) => {
   console.log(req.body, "this is data");
 
@@ -254,16 +255,25 @@ export const getAllBookings = async (req: Request, res: Response) => {
 export const getBookingById = async (req: Request, res: Response) => {
   try {
     const booking = await Booking.findByPk(req.params.id, {
+  include: [
+    { model: User }, // add alias if used in association
+    { model: Vehicle },
+    { model: BookingItem },
+    { model: MobileInstallationDetail },
+    {
+      model: Payment,
+      as: "payment",
       include: [
-        { model: User }, // add alias if used in association
-        { model: Vehicle },
-        { model: BookingItem },
-        // { model: JobReport },
-        { model: MobileInstallationDetail },
-        { model: Payment, as: "payment" },
-        { model: JobReport, as: "reports" },
+        {
+          model: PaymentHistory,
+          as: "histories", // must match alias defined in associations
+        },
       ],
-    });
+    },
+    { model: JobReport, as: "reports" },
+  ],
+});
+
 
     if (!booking) {
       res.status(404).json({ success: false, message: "Booking not found" });

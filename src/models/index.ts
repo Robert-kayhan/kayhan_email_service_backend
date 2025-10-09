@@ -13,6 +13,8 @@ import Campaign from "./compagin/Campaign";
 import EmailLog from "./compagin/EmailLog";
 import LeadFollowUp from "./crm/LeadFolowUp";
 import LeadNote from "./crm/Note";
+import Payment from "./bookingSystem/Payment";
+import PaymentHistory from "./bookingSystem/PaymentHistory";
 
 export const setupAssociations = () => {
   // LeadGroup → LeadGroupAssignment
@@ -97,3 +99,10 @@ JobReport.belongsTo(Booking, { foreignKey: "bookingId", as: "booking" });
 
 CarModel.hasMany(CarModel, { as: "children", foreignKey: "parent_id" });
 CarModel.belongsTo(CarModel, { as: "parent", foreignKey: "parent_id" });
+// Booking → Payment
+Booking.hasOne(Payment, { foreignKey: "bookingId", as: "payment" });
+Payment.belongsTo(Booking, { foreignKey: "bookingId", as: "booking" });
+
+// Payment → PaymentHistory
+Payment.hasMany(PaymentHistory, { foreignKey: "paymentId", as: "histories" }); // renamed alias
+PaymentHistory.belongsTo(Payment, { foreignKey: "paymentId", as: "payment" }); // this can stay as "payment"
