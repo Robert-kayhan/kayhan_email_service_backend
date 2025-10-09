@@ -95,11 +95,12 @@ Payment.init(
 );
 
 
+// After creating a payment (first payment)
 Payment.afterCreate(async (payment, options) => {
   try {
     await PaymentHistory.create({
       paymentId: payment.id,
-      paidAmount: payment.paidAmount,
+      paidAmount: payment.paidAmount, // first payment
       status: payment.status,
     });
   } catch (error) {
@@ -107,17 +108,24 @@ Payment.afterCreate(async (payment, options) => {
   }
 });
 
+// After updating a payment (subsequent payments)
 Payment.afterUpdate(async (payment, options) => {
   try {
-    await PaymentHistory.create({
-      paymentId: payment.id,
-      paidAmount: payment.paidAmount,
-      status: payment.status,
-    });
+    const previousPaid = payment.previous("paidAmount") || 0;
+    const newPaidAmount = payment.paidAmount - previousPaid; // only the increment
+
+    if (newPaidAmount > 0) {
+      await PaymentHistory.create({
+        paymentId: payment.id,
+        paidAmount: newPaidAmount, // record only the new payment
+        status: payment.status,
+      });
+    }
   } catch (error) {
     console.error("Error creating PaymentHistory after update:", error);
   }
 });
+
 
 
 
