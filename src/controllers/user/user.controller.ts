@@ -177,6 +177,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
         "phone",
         "role",
         "createdAt",
+        "isSubscribed"
       ],
       where: whereClause,
       order: [["id", "DESC"]],
@@ -191,6 +192,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
       phone: user.phone,
       role: user.role === 1 ? "Admin" : "User",
       status: "Active",
+      isSubscribed : user.isSubscribed  ? true : false
     }));
 
     res.status(200).json({
@@ -237,8 +239,9 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     const userId = req.params.id; // You may use `email` instead of `id` if that's how you identify users
     const { firstname, lastname, phone, address, role, email, isSubscribed } =
       req.body;
-
+    console.log(isSubscribed)
     const user = await User.findOne({ where: { email: email } }); // You can use `id` here if needed
+    // console.log(user.id)
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -247,7 +250,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     user.firstname = firstname ?? user.firstname;
     user.lastname = lastname ?? user.lastname;
     user.phone = phone ?? user.phone;
-    user.isSubscribed = isSubscribed ?? user.isSubscribed;
+    user.isSubscribed = isSubscribed ;
     user.role = role ?? user.role;
     user.email = email ?? user.email;
 
