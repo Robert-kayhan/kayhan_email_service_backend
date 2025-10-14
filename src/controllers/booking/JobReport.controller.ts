@@ -36,9 +36,10 @@ const createJobReport = async (req: Request, res: Response): Promise<void> => {
       bookingId,
       techName,
       beforePhotos,
-      status : "In Progress"
+      status : "In Progress",
+      arrivalTime: arrivalTime
     });
-    console.log(report, "this is working budy");
+    // console.log(report, "this is working budy");
     res.status(201).json({ success: true, message: "Job start successfully" });
   } catch (error) {
     console.error(error);
