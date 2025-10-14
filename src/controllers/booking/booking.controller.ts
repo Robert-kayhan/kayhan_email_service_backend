@@ -122,6 +122,11 @@ export const createBooking = async (req: Request, res: Response) => {
           paymentLink: `https://kayhanaudio.com.au/booking-checkout/${bookingRecord.id}`,
         });
       }
+       if (paymentDetails.category == "Later") {
+        status = "Pending";
+        paymentDetails.partialAmount = 0
+        paidAmount = 0
+      }
       await Payment.create({
         bookingId: bookingRecord.id,
         category: paymentDetails.category,
@@ -133,7 +138,7 @@ export const createBooking = async (req: Request, res: Response) => {
         discountValue: paymentDetails.discountValue,
         discountAmount: discountAmount,
         paidAmount,
-        status, // dynamically set status
+        status,
       });
     }
 

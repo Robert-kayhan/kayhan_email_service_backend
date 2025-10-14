@@ -123,12 +123,23 @@ export const addNote = async (req: Request, res: Response) => {
 
     const order = await OrderProduct.findOne({ where: { id: orderId } });
     if (!order) {
-      res.status(404).json({ success: false, message: "Order not found" });
-      return;
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    const newNote = { text, createdAt: new Date(), by };
-    const updatedNotes = [...(order.notes || []), newNote];
+    // Parse notes if it's stored as string (fallback)
+    let existingNotes: any[] = [];
+    if (typeof order.notes === "string") {
+      try {
+        existingNotes = JSON.parse(order.notes);
+      } catch {
+        existingNotes = [];
+      }
+    } else if (Array.isArray(order.notes)) {
+      existingNotes = order.notes;
+    }
+
+    const newNote = { text, by, createdAt: new Date() };
+    const updatedNotes = [...existingNotes, newNote];
 
     await order.update({ notes: updatedNotes });
 
@@ -138,6 +149,7 @@ export const addNote = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const deleteOrder = async (req: Request, res: Response) => {
   try {
