@@ -181,9 +181,9 @@ const updateJobReport = async (req: Request, res: Response) => {
     if (difficulty !== undefined) jobReport.difficulty = difficulty;
     if (customerRating !== undefined) jobReport.customerRating = customerRating;
     if (arrivalTime !== undefined) jobReport.arrivalTime = arrivalTime;
-    if (startTime !== undefined) jobReport.startTime = startTime;
-    if (completionTime !== undefined) jobReport.completionTime = completionTime;
-    if (totalDurationMins !== undefined)
+    // if (startTime !== undefined) jobReport.startTime = startTime;
+    // if (completionTime !== undefined) jobReport.completionTime = completionTime;
+    // if (totalDurationMins !== undefined)
       jobReport.totalDurationMins = totalDurationMins;
     if (status !== undefined) jobReport.status = status;
     if (cancelReason !== undefined) jobReport.cancelReason = cancelReason;
@@ -206,11 +206,52 @@ const updateJobReport = async (req: Request, res: Response) => {
     });
   }
 };
+const timeApi = async (req: Request, res: Response) => {
+  console.log("time api call")
+  try {
+    const jobId = req.params.id;
+    const { startTime, completionTime } = req.body;
 
+    const job = await JobReport.findOne({
+      where : {
+        bookingId : jobId
+      }
+    });
+    if (!job) {
+       res.status(404).json({ message: "Job not found" });
+       return
+    }
+
+    // Update times if provided
+    if (startTime) job.startTime = new Date(startTime);
+    if (completionTime) {
+      job.completionTime = new Date(completionTime);
+
+      // Calculate total duration in minutes
+      if (job.startTime) {
+        const durationMins = Math.round(
+          (job.completionTime.getTime() - job.startTime.getTime()) / 60000
+        );
+        job.totalDurationMins = durationMins;
+      }
+
+      // Update status automatically if completed
+      job.status = "Completed";
+    }
+
+    await job.save();
+
+    res.json({ success: true, job });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
 export {
   createJobReport,
   rescheduleJob,
   cancelJob,
   getJobReportById,
   updateJobReport,
+  timeApi
 };

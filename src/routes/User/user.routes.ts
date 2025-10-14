@@ -7,6 +7,7 @@ import {
   updateUser,
   getUsersWithLeadStatus,
   createAllWholesaleUsers
+  
 } from "../../controllers/user/user.controller";
 import { uploadExcel } from "../../middlewares/Upload";
 import protect from "../../middlewares/auth.middleware";
