@@ -123,7 +123,8 @@ export const addNote = async (req: Request, res: Response) => {
 
     const order = await OrderProduct.findOne({ where: { id: orderId } });
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+       res.status(404).json({ success: false, message: "Order not found" });
+       return
     }
 
     // Parse notes if it's stored as string (fallback)
