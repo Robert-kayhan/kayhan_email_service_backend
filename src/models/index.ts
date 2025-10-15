@@ -15,6 +15,7 @@ import LeadFollowUp from "./crm/LeadFolowUp";
 import LeadNote from "./crm/Note";
 import Payment from "./bookingSystem/Payment";
 import PaymentHistory from "./bookingSystem/PaymentHistory";
+import BookingCustmour from "./bookingSystem/BookingCustmour";
 
 export const setupAssociations = () => {
   // LeadGroup → LeadGroupAssignment
@@ -79,8 +80,8 @@ LeadNote.belongsTo(LeadFollowUp, {
 });
 
 // booking.model.ts
-Booking.belongsTo(User, { foreignKey: "customerId" });
-User.hasMany(Booking, { foreignKey: "customerId" });
+Booking.belongsTo(BookingCustmour, { foreignKey: "customerId" });
+BookingCustmour.hasMany(Booking, { foreignKey: "customerId" });
 
 Booking.belongsTo(Vehicle, { foreignKey: "vehicleId" });
 Vehicle.hasMany(Booking, { foreignKey: "vehicleId" });
@@ -91,8 +92,8 @@ BookingItem.belongsTo(Booking, { foreignKey: "bookingId" });
 Booking.hasOne(MobileInstallationDetail, { foreignKey: "bookingId" });
 MobileInstallationDetail.belongsTo(Booking, { foreignKey: "bookingId" });
 
-Invoice.belongsTo(User, { foreignKey: "userId", as: "User" });
-User.hasMany(Invoice, { foreignKey: "userId", as: "Invoices" });
+Invoice.belongsTo(BookingCustmour, { foreignKey: "userId", as: "User" });
+BookingCustmour.hasMany(Invoice, { foreignKey: "userId", as: "Invoices" });
 
 Booking.hasMany(JobReport, { foreignKey: "bookingId", as: "reports" });
 JobReport.belongsTo(Booking, { foreignKey: "bookingId", as: "booking" });

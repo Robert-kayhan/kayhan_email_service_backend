@@ -4,7 +4,8 @@ import Vehicle from "../../models/bookingSystem/Vehicle";
 import Booking from "../../models/bookingSystem/Booking";
 import BookingItem from "../../models/bookingSystem/BookingItem";
 import MobileInstallationDetail from "../../models/bookingSystem/MobileInstallationDetail";
-import User from "../../models/user/User.model";
+// import User from "../../models/user/User.model";
+import BookingCustmour from "../../models/bookingSystem/BookingCustmour";
 import Payment from "../../models/bookingSystem/Payment";
 import JobReport from "../../models/bookingSystem/JobReport";
 import { generatePremiumInvoicePdf } from "../../utils/booking/generateInvoicePdf";
@@ -34,9 +35,9 @@ export const createBooking = async (req: Request, res: Response) => {
     //   })
     // }
 
-    let userRecord = await User.findOne({ where: { phone: userData.phone } });
+    let userRecord = await BookingCustmour.findOne({ where: { phone: userData.phone } });
     if (!userRecord) {
-      userRecord = await User.create(userData);
+      userRecord = await BookingCustmour.create(userData);
     }
 
     // Create vehicle
@@ -145,7 +146,7 @@ export const createBooking = async (req: Request, res: Response) => {
     const fullBooking = await Booking.findOne({
       where: { id: bookingRecord.id },
       include: [
-        { model: User },
+        { model: BookingCustmour },
         { model: Vehicle },
         { model: BookingItem },
         { model: MobileInstallationDetail },
@@ -208,7 +209,7 @@ export const getAllBookings = async (req: Request, res: Response) => {
 
     // Include relations
     const include = [
-      { model: User, required: false },
+      { model: BookingCustmour, required: false },
       { model: Vehicle },
       { model: BookingItem },
       { model: MobileInstallationDetail },
@@ -261,7 +262,7 @@ export const getBookingById = async (req: Request, res: Response) => {
   try {
     const booking = await Booking.findByPk(req.params.id, {
       include: [
-        { model: User }, // add alias if used in association
+        { model: BookingCustmour }, // add alias if used in association
         { model: Vehicle },
         { model: BookingItem },
         { model: MobileInstallationDetail },
@@ -314,9 +315,9 @@ export const updateBooking = async (req: Request, res: Response) => {
     }
 
     // ✅ Update / create user
-    let userRecord = await User.findOne({ where: { phone: userData.phone } });
+    let userRecord = await BookingCustmour.findOne({ where: { phone: userData.phone } });
     if (!userRecord) {
-      userRecord = await User.create(userData);
+      userRecord = await BookingCustmour.create(userData);
     } else {
       await userRecord.update(userData);
     }
@@ -392,7 +393,7 @@ export const updateBooking = async (req: Request, res: Response) => {
     const fullBooking: any = await Booking.findOne({
       where: { id: bookingRecord.id },
       include: [
-        { model: User },
+        { model: BookingCustmour },
         { model: Vehicle },
         { model: BookingItem },
         { model: MobileInstallationDetail },
@@ -403,7 +404,7 @@ export const updateBooking = async (req: Request, res: Response) => {
       fullBooking?.payment?.paidAmount === totalAmount ,
       "this is contiond"
     );
-   if (fullBooking?.payment && fullBooking.payment.paidAmount >= totalAmount) {
+   if (fullBooking?.payment && fullBooking.payment.paidAmount > totalAmount) {
     console.log("this is call")
    res.status(400).json({
     success: false,

@@ -10,7 +10,7 @@ export const generatePremiumInvoicePdf = async ({
   booking: any;
 }) => {
   console.log("🚀 Generating premium invoice PDF");
-
+  console.log(booking , "this is booking")
   if (!process.env.S3_BUCKET) throw new Error("❌ Missing S3_BUCKET env var");
 
   const browser = await puppeteer.launch({
@@ -191,9 +191,9 @@ body {
       <div class="info-cards">
         <div class="card">
           <h4>Customer</h4>
-          <p>${booking.User.firstname} ${booking.User.lastname}</p>
-          <p>${booking.User.email}</p>
-          <p>${booking.User.phone}</p>
+          <p>${booking.BookingCustmour.firstname} ${booking.BookingCustmour.lastname}</p>
+          <p>${booking.BookingCustmour.email}</p>
+          <p>${booking.BookingCustmour.phone}</p>
           <p>${
             booking.MobileInstallationDetail?.dropoffAddress || "Store Pickup"
           }</p>
@@ -303,13 +303,13 @@ body {
     console.log(booking.status)
     if (existingInvoice) {
       await existingInvoice.update({
-        userId: booking.userId || booking.User?.id,
+        userId: booking.userId || booking.BookingCustmour?.id,
         invoiceUrl: fileUrl,
         bookingStatus: "Paid",
       });
     } else {
       await Invoice.create({
-        userId: booking.userId || booking.User?.id,
+        userId: booking.userId || booking.BookingCustmour?.id,
         bookingId: booking.id,
         invoiceUrl: fileUrl,
         bookingStatus: "Paid",
