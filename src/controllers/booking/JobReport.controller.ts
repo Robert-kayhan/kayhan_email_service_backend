@@ -2,7 +2,6 @@
 import { Request, Response } from "express";
 import JobReport from "../../models/bookingSystem/JobReport";
 import Booking from "../../models/bookingSystem/Booking";
-import { where } from "sequelize";
 
 // 🔹 Create / Save Job Report
 const createJobReport = async (req: Request, res: Response): Promise<void> => {
