@@ -14,6 +14,7 @@ interface OrderAttributes {
   channel_id: number;
   products: OrderProduct[]; // store product + quantity together
   total_amount: number;
+  paid_amount : number;
   status: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -30,6 +31,7 @@ class Order
   public channel_id!: number;
   public products!: OrderProduct[];
   public total_amount!: number;
+  public paid_amount!: number;
   public status!: string;
 
   public readonly createdAt!: Date;
@@ -50,6 +52,11 @@ Order.init(
     products: {
       type: DataTypes.JSON, 
       allowNull: false,
+    },
+     paid_amount: {  // ✅ new column
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
     },
     total_amount: {
       type: DataTypes.FLOAT,

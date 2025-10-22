@@ -24,7 +24,7 @@ export const sendEmail = async ({
   bodyText?: string;
   from?: string;
 }) => {
-  console.log(process.env.AWS_ACCESS_KEY_ID)
+  // console.log(process.env.AWS_ACCESS_KEY_ID)
   const params = {
     Destination: {
       ToAddresses: [to],

@@ -170,7 +170,7 @@ const updateJobReport = async (req: Request, res: Response) => {
       res.status(404).json({ message: "Job report not found" });
       return 
     }
-
+    console.log(afterPhotos)
     // Update fields if provided
     // if (techId !== undefined) jobReport.techId = techId;
     if (techName !== undefined) jobReport.techName = techName;

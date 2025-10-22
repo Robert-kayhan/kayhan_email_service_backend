@@ -118,6 +118,7 @@ const getProductById = async (req: Request, res: Response) => {
 
 // ✅ Update Product
 const updateProduct = async (req: Request, res: Response) => {
+  console.log(req.params.id , "this is id")
   try {
     const product = await Product.findByPk(req.params.id);
 
