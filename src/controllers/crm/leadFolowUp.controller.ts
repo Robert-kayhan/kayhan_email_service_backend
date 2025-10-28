@@ -411,8 +411,8 @@ const checkEmail = async (req: Request, res: Response) => {
   try {
     const { email } = req.params;
     const lead = await LeadFollowUp.findOne({ where: { email } });
-
-    if (lead) {
+    const user = await User.findOne({ where: { email } })
+    if (lead || user) {
       res.json({ exists: true });
       return;
     }
