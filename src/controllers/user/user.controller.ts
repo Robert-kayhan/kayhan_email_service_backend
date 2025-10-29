@@ -192,7 +192,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
       phone: user.phone,
       role: user.role === 1 ? "Admin" : "User",
       status: "Active",
-      isSubscribed : user.isSubscribed  ? true : false
+      isSubscribed: user.isSubscribed ? true : false
     }));
 
     res.status(200).json({
@@ -250,7 +250,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     user.firstname = firstname ?? user.firstname;
     user.lastname = lastname ?? user.lastname;
     user.phone = phone ?? user.phone;
-    user.isSubscribed = isSubscribed ;
+    user.isSubscribed = isSubscribed;
     user.role = role ?? user.role;
     user.email = email ?? user.email;
 
@@ -271,18 +271,18 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     const search = String(req.query.search || "").toLowerCase();
     const hasLeadOnly = req.query.hasLeadOnly === "true";
 
-    // 1. Get external users
+    // 1️⃣ Fetch external users
     const externalResponse = await axios.get(
       "https://api.kayhanaudio.com.au/v1/users/all"
     );
     const externalUsers = externalResponse.data;
-    console.log(Array.isArray(externalUsers), "this is lenght");
+
     if (!Array.isArray(externalUsers)) {
       res.status(400).json({ message: "Invalid external users format" });
-      return;
+      return 
     }
 
-    // 2. Filter by search term (optional)
+    // 2️⃣ Optional: search filter
     let filteredUsers = externalUsers;
     if (search) {
       filteredUsers = filteredUsers.filter((user: any) => {
@@ -294,33 +294,57 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Get matching lead emails only for filtered users
+    // 3️⃣ Find existing leads by email
     const emails = filteredUsers.map((u: any) => u.email).filter(Boolean);
-    const leads = await User.findAll({
+    const existingLeads = await User.findAll({
+      where: { email: { [Op.in]: emails } },
+      attributes: ["id", "email"],
+    });
+
+    const existingLeadEmailSet = new Set(existingLeads.map((l) => l.email));
+
+    // 4️⃣ Create missing users (new leads)
+    const newUsersToCreate = filteredUsers.filter(
+      (user: any) => user.email && !existingLeadEmailSet.has(user.email)
+    );
+
+    if (newUsersToCreate.length > 0) {
+      await User.bulkCreate(
+        newUsersToCreate.map((u: any) => ({
+          name: u.name || "",
+          last_name: u.last_name || "",
+          email: u.email,
+          phone: u.phone || null,
+          source: "external_api", // optional: mark where they came from
+        })),
+        { ignoreDuplicates: true } // avoids race-condition duplicates
+      );
+    }
+
+    // 5️⃣ Re-fetch leads (now includes newly created)
+    const allLeads = await User.findAll({
       where: { email: { [Op.in]: emails } },
       attributes: ["email"],
     });
-    console.log(leads.length, "this is leadth");
-    const leadEmailSet = new Set(leads.map((l) => l.email));
 
-    // 4. Attach hasLead
+    const allLeadEmailSet = new Set(allLeads.map((l) => l.email));
+
+    // 6️⃣ Attach hasLead flag
     const combinedUsers = filteredUsers.map((user: any) => ({
       ...user,
-      hasLead: leadEmailSet.has(user.email),
+      hasLead: allLeadEmailSet.has(user.email),
     }));
 
-    // 5. Apply hasLeadOnly filter if requested
+    // 7️⃣ Filter hasLeadOnly if requested
     let finalUsers = combinedUsers;
-    console.log(finalUsers.length);
     if (hasLeadOnly) {
       finalUsers = combinedUsers.filter((u: any) => u.hasLead);
     }
 
-    // 6. Paginate final list
+    // 8️⃣ Paginate
     const total = finalUsers.length;
     const paginatedUsers = finalUsers.slice(offset, offset + limit);
 
-    // 7. Send response
     res.json({
       success: true,
       page,
