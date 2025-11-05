@@ -270,13 +270,17 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     const offset = (page - 1) * limit;
     const search = String(req.query.search || "").toLowerCase();
     const hasLeadOnly = req.query.hasLeadOnly === "true";
-
+    await User.destroy({
+      where: {
+        firstname: 'UNKNOWN USER'
+      }
+    });
     // 1️⃣ Fetch external users
     const externalResponse = await axios.get(
       "https://api.kayhanaudio.com.au/v1/users/all"
     );
     const externalUsers = externalResponse.data;
-
+    // console.log(externalResponse , "this is expternal response")
     if (!Array.isArray(externalUsers)) {
       res.status(400).json({ message: "Invalid external users format" });
       return 
@@ -309,12 +313,13 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     );
 
     if (newUsersToCreate.length > 0) {
+    
       await User.bulkCreate(
-        newUsersToCreate.map((u: any) => ({
-          name: u.name || "",
-          last_name: u.last_name || "",
-          email: u.email,
-          phone: u.phone || null,
+        newUsersToCreate.map(({name ,last_name , email , phone }) => ({
+          firstname: name || "",
+          lastname: last_name || "",
+          email: email,
+          phone: phone || null,
           source: "external_api", // optional: mark where they came from
         })),
         { ignoreDuplicates: true } // avoids race-condition duplicates
