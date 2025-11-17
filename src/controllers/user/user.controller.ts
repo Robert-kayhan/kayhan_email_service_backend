@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as XLSX from "xlsx";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import axios from "axios";
 import User from "../../models/user/User.model";
 const createOneUser = async (req: Request, res: Response): Promise<void> => {
@@ -272,7 +272,8 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     const hasLeadOnly = req.query.hasLeadOnly === "true";
     await User.destroy({
       where: {
-        firstname: 'UNKNOWN USER'
+        firstname: 'UNKNOWN USER',
+        lastname: 'UNKNOWN USER'
       }
     });
     // 1️⃣ Fetch external users
@@ -283,7 +284,7 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     // console.log(externalResponse , "this is expternal response")
     if (!Array.isArray(externalUsers)) {
       res.status(400).json({ message: "Invalid external users format" });
-      return 
+      return
     }
 
     // 2️⃣ Optional: search filter
@@ -313,9 +314,9 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     );
 
     if (newUsersToCreate.length > 0) {
-    
+
       await User.bulkCreate(
-        newUsersToCreate.map(({name ,last_name , email , phone }) => ({
+        newUsersToCreate.map(({ name, last_name, email, phone }) => ({
           firstname: name || "",
           lastname: last_name || "",
           email: email,
@@ -349,6 +350,36 @@ const getUsersWithLeadStatus = async (req: Request, res: Response) => {
     // 8️⃣ Paginate
     const total = finalUsers.length;
     const paginatedUsers = finalUsers.slice(offset, offset + limit);
+
+    // 🧹 Delete duplicate users (keep the newest one)
+    const duplicates = await User.findAll({
+      attributes: ["email"],
+      where: {
+        email: { [Op.ne]: null }
+      },
+      group: ["email"],
+      having: Sequelize.literal("COUNT(email) > 1"),
+    });
+
+    // Convert duplicates to array of emails
+    const duplicateEmails = duplicates.map((d) => d.email);
+
+    if (duplicateEmails.length > 0) {
+      for (const email of duplicateEmails) {
+        const usersWithSameEmail = await User.findAll({
+          where: { email },
+          order: [["createdAt", "ASC"]], // oldest first
+        });
+
+        // Keep last one (newest)
+        const usersToDelete = usersWithSameEmail.slice(0, -1);
+
+        // Delete all older duplicates
+        for (const u of usersToDelete) {
+          await User.destroy({ where: { id: u.id } });
+        }
+      }
+    }
 
     res.json({
       success: true,
