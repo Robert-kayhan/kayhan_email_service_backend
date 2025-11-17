@@ -436,7 +436,12 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
     // 1️⃣ Fetch all wholesale users from external API
     const apiUrl = "https://api.kayhanaudio.com.au/v1/users?role=3&limit=1000000";
     const response = await axios.get(apiUrl);
-
+      await User.destroy({
+      where: {
+        firstname: 'UNKNOWN USER',
+        lastname: 'UNKNOWN USER'
+      }
+    });
     const externalUsers = response.data?.data?.result;
     if (!externalUsers || externalUsers.length === 0) {
       res
@@ -464,7 +469,7 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
       )
       .map((u: any) => ({
         firstname: normalizeStringField(u.name) || "UNKNOWN",
-        lastname: normalizeStringField(u.last_name) || "UNKNOWN",
+        lastname: normalizeStringField(u.last_name) || "",
         email: normalizeStringField(u.email),
         phone: normalizeStringField(u.phone),
         country: normalizeStringField(u.country),
