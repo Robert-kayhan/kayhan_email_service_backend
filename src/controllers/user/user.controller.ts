@@ -437,7 +437,7 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
      await User.destroy({
       where: {
         // firstname: 'UNKNOWN USER',
-        lastname: 'UNKNOWN USER'
+        lastname: 'UNKNOWN'
       }
     });
     // 1️⃣ Fetch all wholesale users from external API
