@@ -438,7 +438,7 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
     const response = await axios.get(apiUrl);
       await User.destroy({
       where: {
-        firstname: 'UNKNOWN USER',
+        // firstname: 'UNKNOWN USER',
         lastname: 'UNKNOWN USER'
       }
     });
