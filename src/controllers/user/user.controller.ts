@@ -432,16 +432,18 @@ const normalizeStringField = (val: any): string | null => {
 
 const createAllWholesaleUsers = async (req: Request, res: Response) => {
   console.log("api call")
+  
   try {
-    // 1️⃣ Fetch all wholesale users from external API
-    const apiUrl = "https://api.kayhanaudio.com.au/v1/users?role=3&limit=1000000";
-    const response = await axios.get(apiUrl);
-      await User.destroy({
+     await User.destroy({
       where: {
         // firstname: 'UNKNOWN USER',
         lastname: 'UNKNOWN USER'
       }
     });
+    // 1️⃣ Fetch all wholesale users from external API
+    const apiUrl = "https://api.kayhanaudio.com.au/v1/users?role=3&limit=1000000";
+    const response = await axios.get(apiUrl);
+     
     const externalUsers = response.data?.data?.result;
     if (!externalUsers || externalUsers.length === 0) {
       res
