@@ -93,7 +93,7 @@ OrderProduct.init(
     status: {
       type: DataTypes.ENUM(
         "Not Reviewed",
-        "Reviewed",
+        "Reviewed", 
         "Not Received",
         "Received"
       ),

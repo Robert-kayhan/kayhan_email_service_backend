@@ -38,12 +38,14 @@ import Departmentroutes from "./routes/Inventory/department.route";
 import ComapnyRoutes from "./routes/Inventory/Company.route";
 import CarModelRoutes from "./routes/Inventory/carModel.route";
 import ProductRoutes from "./routes/Inventory/product.route";
+//repair
+import RepairRoutes from "./routes/repair-return/repair.route";
+import TechReportRequestRoutes from "./routes/repair-return/tech-report-request.route";
 //automate
 import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
 import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
 import cron from "node-cron";
-//repaid
-import RepairRoutes from "./routes/repair-return/repair.route";
+
 import { companyFromCarAudioandKayhanAudio } from "./controllers/Inventory/Company.controller";
 import { syncCarModelsWithLocalCompanies } from "./controllers/Inventory/CarModel.controller";
 
@@ -55,7 +57,11 @@ app.set("trust proxy", 1);
 // ✅ Middleware order matters!
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://mailer.kayhanaudio.com.au" , "https://kayhanaudio.com.au"],
+    origin: [
+      "http://localhost:3000",
+      "https://mailer.kayhanaudio.com.au",
+      "https://kayhanaudio.com.au",
+    ],
     credentials: true,
   })
 );
@@ -100,6 +106,7 @@ app.use("/api/product", ProductRoutes);
 //repair and return
 
 app.use("/api/repair-return", RepairRoutes);
+app.use("/api/tech-support-request", TechReportRequestRoutes);
 
 connectDb();
 
