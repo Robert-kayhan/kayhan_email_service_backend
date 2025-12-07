@@ -233,57 +233,7 @@ const getProductFromCarAudioandKayhanAudio = async () => {
     console.error("❌ Product sync failed:", error.message);
   }
 };
- const receiveOrder = async (req: Request, res: Response) => {
-  try {
-    const { channel_id, products } = req.body;
 
-    if (!channel_id || !products || !Array.isArray(products)) {
-      return res.status(400).json({ message: "Invalid request body" });
-    }
-
-    // To keep track of updated products
-    const updatedProducts: any[] = [];
-
-    for (const item of products) {
-      const { sku, quantity } = item;
-
-      // Find the product by channel and SKU
-      const product = await Product.findOne({
-        where: {
-          channel_id,
-          sku_number: sku,
-        },
-      });
-
-      if (!product) {
-        console.warn(`Product not found: ${sku}`);
-        continue;
-      }
-
-      // Calculate new stock
-      const newStock = Math.max(0, product.stock - quantity);
-
-      // Update stock
-      await product.update({ stock: newStock });
-
-      updatedProducts.push({
-        sku,
-        oldStock: product.stock,
-        newStock,
-      });
-    }
-
-    return res.status(200).json({
-      message: "Stock updated successfully",
-      updatedProducts,
-    });
-  } catch (error: any) {
-    console.error("Error processing order:", error);
-    return res.status(500).json({
-      message: error.message || "Internal server error",
-    });
-  }
-};
 
 export {
   createProduct,
@@ -292,5 +242,4 @@ export {
   updateProduct,
   deleteProduct,
   getProductFromCarAudioandKayhanAudio,
-  receiveOrder
 };

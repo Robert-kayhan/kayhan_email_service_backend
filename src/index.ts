@@ -38,6 +38,7 @@ import Departmentroutes from "./routes/Inventory/department.route";
 import ComapnyRoutes from "./routes/Inventory/Company.route";
 import CarModelRoutes from "./routes/Inventory/carModel.route";
 import ProductRoutes from "./routes/Inventory/product.route";
+import OrderRoutes from "./routes/Inventory/order.route";
 //repair
 import RepairRoutes from "./routes/repair-return/repair.route";
 import TechReportRequestRoutes from "./routes/repair-return/tech-report-request.route";
@@ -102,6 +103,7 @@ app.use("/api/department", Departmentroutes);
 app.use("/api/comapany", ComapnyRoutes);
 app.use("/api/car-model", CarModelRoutes);
 app.use("/api/product", ProductRoutes);
+app.use("/api/order", OrderRoutes);
 
 //repair and return
 
@@ -119,8 +121,6 @@ cron.schedule("0 */12 * * *", async () => {
   await companyFromCarAudioandKayhanAudio();
   await syncCarModelsWithLocalCompanies();
 });
-
-
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);
