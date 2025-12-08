@@ -63,7 +63,7 @@ const getProducts = async (req: Request, res: Response) => {
     const limit = Number(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const search = req.query.search ? String(req.query.search).trim() : "";
+    const search = req.query.search ;
 
     // Dynamic WHERE conditions
     const whereCondition: any = {};
@@ -87,7 +87,8 @@ const getProducts = async (req: Request, res: Response) => {
       ],
       order: [["id", "DESC"]],
     });
-
+    const findALl  = await Product.findAll()
+    // console.log(findALl , "this is test")
     res.json({
       success: true,
       data: products,
@@ -223,7 +224,7 @@ const getProductFromCarAudioandKayhanAudio = async () => {
     // Fetch KayhanAudio (and optionally CarAudio)
     const kayhanAudioRes = await axios.get(`${KAYHAN_AUDIO_API}/v1/product/fast-list`);
     const kayhanAudioProducts = kayhanAudioRes.data?.data || [];
-    console.log(kayhanAudioProducts , "all")
+
     // Log how many fetched
     console.log(`✅ Fetched ${kayhanAudioProducts.length} products from KayhanAudio`);
 

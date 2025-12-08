@@ -112,7 +112,6 @@ app.use("/api/tech-support-request", TechReportRequestRoutes);
 
 connectDb();
 
-
 // ⏰ Run every 5 seconds
 // cron.schedule("0 */12 * * *", async () => {
 //   console.log("⏰ Running product sync every 12 hours...");
