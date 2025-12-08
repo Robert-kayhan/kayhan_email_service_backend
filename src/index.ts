@@ -112,15 +112,16 @@ app.use("/api/tech-support-request", TechReportRequestRoutes);
 
 connectDb();
 
-// ⏰ Run every 5 seconds
-cron.schedule("0 */12 * * *", async () => {
-  console.log("⏰ Running product sync every 12 hours...");
 
-  await getProductFromCarAudioandKayhanAudio();
-  await getDepartmentFromCarAudioandKayhanAudio();
-  await companyFromCarAudioandKayhanAudio();
-  await syncCarModelsWithLocalCompanies();
-});
+// ⏰ Run every 5 seconds
+// cron.schedule("0 */12 * * *", async () => {
+//   console.log("⏰ Running product sync every 12 hours...");
+
+//   await getProductFromCarAudioandKayhanAudio();
+//   await getDepartmentFromCarAudioandKayhanAudio();
+//   await companyFromCarAudioandKayhanAudio();
+//   await syncCarModelsWithLocalCompanies();
+// });
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT} 🚀`);

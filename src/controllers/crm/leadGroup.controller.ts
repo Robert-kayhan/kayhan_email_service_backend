@@ -5,6 +5,7 @@ import User from "../../models/user/User.model";
 const createLeadGroupWithUsers = async (req: Request, res: Response) => {
   try {
     const { groupName, userIds } = req.body;
+    console.log(req.body)
     console.log("there are got ")
     if (!groupName || !Array.isArray(userIds)) {
       res.status(400).json({ message: "groupName and userIds are required." });
@@ -98,7 +99,7 @@ const getAllLeadGroupsWithUsers = async (req: Request, res: Response) => {
 const getAllLeadGroupsWithID = async (req: Request, res: Response) => {
   try {
     const groupId = parseInt(req.params.id);
-
+    console.log(groupId , "this is group id")
     if (isNaN(groupId)) {
       res.status(400).json({ message: "Invalid group ID." });
     }
@@ -136,7 +137,8 @@ const getAllLeadGroupsWithID = async (req: Request, res: Response) => {
 };
 const updateLeadGroupWithUsers = async (req: Request, res: Response) => {
   try {
-    const { groupName, userIds } = req.body || {};
+    const { groupName, userIds } = req.body ;
+
       console.log(req.body)
     const groupId = parseInt(req.params.id);  
 
