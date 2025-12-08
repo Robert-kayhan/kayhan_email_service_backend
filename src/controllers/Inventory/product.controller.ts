@@ -5,6 +5,7 @@ import Company from "../../models/Inventory/Company";
 import Channel from "../../models/Inventory/Channel";
 import Department from "../../models/Inventory/Department";
 import axios from "axios";
+import { Op } from "sequelize";
 
 // ✅ Create Product
 const createProduct = async (req: Request, res: Response) => {
@@ -58,13 +59,24 @@ const createProduct = async (req: Request, res: Response) => {
 // ✅ Get All Products (with relations)
 const getProducts = async (req: Request, res: Response) => {
   try {
-    // Get page and limit from query params, default to page 1 and limit 10
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // Fetch products with pagination
+    const search = req.query.search ;
+
+    // Dynamic WHERE conditions
+    const whereCondition: any = {};
+
+    if (search) {
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { sku_number: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
     const { rows: products, count: total } = await Product.findAndCountAll({
+      where: whereCondition,
       limit,
       offset,
       include: [
@@ -75,7 +87,8 @@ const getProducts = async (req: Request, res: Response) => {
       ],
       order: [["id", "DESC"]],
     });
-
+    const findALl  = await Product.findAll()
+    // console.log(findALl , "this is test")
     res.json({
       success: true,
       data: products,
@@ -86,6 +99,7 @@ const getProducts = async (req: Request, res: Response) => {
         totalPages: Math.ceil(total / limit),
       },
     });
+
   } catch (error: any) {
     console.error("Get Products Error:", error);
     res.status(500).json({ success: false, message: error.message });
