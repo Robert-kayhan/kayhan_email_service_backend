@@ -6,7 +6,7 @@ import { sendEmail } from "../../utils/sendEmail";
 
 const receiveOrder = async (req: Request, res: Response) => {
   try {
-    const { channel_id, products } = req.body;
+    const { channel_id, products, total_amount } = req.body;
     const jsonPayload = {
       channel_id,
       products,
@@ -46,7 +46,9 @@ const receiveOrder = async (req: Request, res: Response) => {
       }
 
       // Calculate new stock
-      const newStock = Math.max(0, product.stock - quantity);
+      // const newStock = Math.max(0, product.stock - quantity);
+      const newStock = product.stock - Number(quantity);
+
 
       // Update stock
       await product.update({ stock: newStock });
@@ -57,10 +59,11 @@ const receiveOrder = async (req: Request, res: Response) => {
         newStock,
       });
     }
-    // await Order.create({
-    //     channel_id : channel_id,
-    //     products,
-    // })
+    await Order.create({
+      channel_id: channel_id,
+      products,
+      total_amount: total_amount
+    })
     res.status(200).json({
       message: "Stock updated successfully",
       updatedProducts,

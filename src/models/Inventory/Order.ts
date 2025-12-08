@@ -53,7 +53,7 @@ Order.init(
     },
     total_amount: {
       type: DataTypes.FLOAT,
-      allowNull: false,
+      allowNull: true,
       defaultValue: 0,
     },
     status: {
