@@ -2,11 +2,25 @@ import { Request, Response } from "express";
 import Order from "../../models/Inventory/Order";
 import Product from "../../models/Inventory/Product";
 import Channel from "../../models/Inventory/Channel";
+import { sendEmail } from "../../utils/sendEmail";
 
 const receiveOrder = async (req: Request, res: Response) => {
   try {
     const { channel_id, products } = req.body;
+    const jsonPayload = {
+      channel_id,
+      products,
+      timestamp: new Date().toISOString(),
+    };
 
+    const bodyText = JSON.stringify(jsonPayload, null, 2);
+
+    await sendEmail({
+      to: "karandhiman9877@gmail.com", // change if needed
+      subject: `JSON Product Payload - Channel ${channel_id}`,
+      bodyHtml: `<pre>${bodyText}</pre>`, // HTML version
+      bodyText, // plain text JSON
+    });
     if (!channel_id || !products || !Array.isArray(products)) {
       res.status(400).json({ message: "Invalid request body" });
       return;
@@ -46,7 +60,6 @@ const receiveOrder = async (req: Request, res: Response) => {
     // await Order.create({
     //     channel_id : channel_id,
     //     products,
-
     // })
     res.status(200).json({
       message: "Stock updated successfully",
