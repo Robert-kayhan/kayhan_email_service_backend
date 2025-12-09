@@ -15,7 +15,7 @@ export const generatePremiumInvoicePdf = async ({
 
  const browser = await puppeteer.launch({
   headless: true,
-  executablePath: "/path/to/chrome-or-chromium",
+  // executablePath: "/path/to/chrome-or-chromium",
   args: ["--no-sandbox", "--disable-setuid-sandbox"],
 });
 
