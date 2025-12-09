@@ -4,6 +4,7 @@ import path from "path";
 import QRCode from "qrcode";
 import { uploadToS3 } from "../../config/S3BuketConfig";
 import { Invoice } from "../../models/bookingSystem/Invoice";
+import { executablePath } from "puppeteer";
 export const generatePremiumInvoicePdf = async ({
   booking,
 }: {
@@ -16,6 +17,7 @@ export const generatePremiumInvoicePdf = async ({
  const browser = await puppeteer.launch({
   headless: true,
   // executablePath: "/path/to/chrome-or-chromium",
+    executablePath: executablePath(),
   args: ["--no-sandbox", "--disable-setuid-sandbox"],
 });
 
@@ -262,7 +264,10 @@ body {
 </html>
 `;
 
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, {
+  waitUntil: "domcontentloaded",
+  timeout: 0,  // disable timeout
+});
 
     await page.evaluate(() =>
       Promise.all(
