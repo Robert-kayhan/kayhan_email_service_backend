@@ -13,11 +13,12 @@ export const generatePremiumInvoicePdf = async ({
   console.log(booking, "this is booking")
   if (!process.env.S3_BUCKET) throw new Error("❌ Missing S3_BUCKET env var");
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: "/usr/bin/chromium", // or chromium-browser
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+ const browser = await puppeteer.launch({
+  headless: true,
+  executablePath: "/path/to/chrome-or-chromium",
+  args: ["--no-sandbox", "--disable-setuid-sandbox"],
+});
+
 
 
   try {
