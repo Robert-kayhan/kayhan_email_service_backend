@@ -1,5 +1,5 @@
 // emailPaymentForBooking.ts
-import { sendEmail } from "../sendEmail"; 
+import { sendEmail } from "../sendEmail";
 export const sendPaymentEmailForBooking = async ({
   customerEmail,
   customerName,
@@ -15,7 +15,7 @@ export const sendPaymentEmailForBooking = async ({
 }) => {
   // Subject
   const subject = `Payment Required for Booking #${bookingId}`;
-    console.log(customerEmail  , customerName , paymentLink)
+  console.log(customerEmail, customerName, paymentLink)
   // Plain text version
   const bodyText = `
 Hello ${customerName},
@@ -58,6 +58,6 @@ Thank you!
     subject,
     bodyHtml,
     bodyText,
-    from : "sales@mailer.kayhanaudio.com.au"
+    // from: "sales@mailer.kayhanaudio.com.au"
   });
 };

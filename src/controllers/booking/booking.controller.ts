@@ -115,7 +115,7 @@ export const createBooking = async (req: Request, res: Response) => {
       console.log(paymentDetails.category, "check this ");
       if (paymentDetails.category == "Later") {
         console.log("this is working ");
-        sendPaymentEmailForBooking({
+       await sendPaymentEmailForBooking({
           customerEmail: userData.email,
           customerName: userData.firstname,
           bookingId: bookingRecord.id,

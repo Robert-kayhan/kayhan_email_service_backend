@@ -10,13 +10,15 @@ export const generatePremiumInvoicePdf = async ({
   booking: any;
 }) => {
   console.log("🚀 Generating premium invoice PDF");
-  console.log(booking , "this is booking")
+  console.log(booking, "this is booking")
   if (!process.env.S3_BUCKET) throw new Error("❌ Missing S3_BUCKET env var");
 
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: "/usr/bin/chromium", // or chromium-browser
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
+
 
   try {
     const page = await browser.newPage();
@@ -178,9 +180,8 @@ body {
       </div>
       <div class="header-right">
         <div class="invoice-title">Invoice</div>
-        <div class="status-badge status-${booking.status}">${
-      booking.status
-    }</div>
+        <div class="status-badge status-${booking.status}">${booking.status
+      }</div>
         <p><strong>#${booking.invoiceNumber}</strong></p>
         <p>${booking.date} ${booking.time}</p>
       </div>
@@ -194,15 +195,13 @@ body {
           <p>${booking.BookingCustmour.firstname} ${booking.BookingCustmour.lastname}</p>
           <p>${booking.BookingCustmour.email}</p>
           <p>${booking.BookingCustmour.phone}</p>
-          <p>${
-            booking.MobileInstallationDetail?.dropoffAddress || "Store Pickup"
-          }</p>
+          <p>${booking.MobileInstallationDetail?.dropoffAddress || "Store Pickup"
+      }</p>
         </div>
         <div class="card">
           <h4>Vehicle</h4>
-          <p>${booking.Vehicle.make} ${booking.Vehicle.model} (${
-      booking.Vehicle.year
-    })</p>
+          <p>${booking.Vehicle.make} ${booking.Vehicle.model} (${booking.Vehicle.year
+      })</p>
           <p>Registration Plate: ${booking.Vehicle.vinNumber}</p>
         </div>
       </div>
@@ -217,12 +216,12 @@ body {
         </thead>
         <tbody>
           ${booking.BookingItems.map(
-            (item: any) => `
+        (item: any) => `
             <tr>
               <td>${item.itemType}</td>
               <td>$${item.charge}</td>
             </tr>`
-          ).join("")}
+      ).join("")}
           <tr class="total-row">
             <td>Total</td>
             <td>$${total}</td>
@@ -236,11 +235,10 @@ body {
       <h3>Payment</h3>
       <p><strong>Category:</strong> ${booking.payment.category}</p>
       <p>
-  <strong>Method:</strong> ${
-    Array.isArray(booking.payment.methods)
-      ? booking.payment.methods.join(", ")
-      : booking.payment.methods || "N/A"
-  }
+  <strong>Method:</strong> ${Array.isArray(booking.payment.methods)
+        ? booking.payment.methods.join(", ")
+        : booking.payment.methods || "N/A"
+      }
 </p>
 
       <p><strong>Discount:</strong> $${booking.payment.discountAmount}</p>
@@ -271,9 +269,9 @@ body {
           img.complete
             ? Promise.resolve()
             : new Promise((res) => {
-                img.onload = res;
-                img.onerror = res;
-              })
+              img.onload = res;
+              img.onerror = res;
+            })
         )
       )
     );
