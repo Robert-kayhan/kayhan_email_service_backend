@@ -62,7 +62,8 @@ app.use(
       "http://localhost:3000",
       "https://mailer.kayhanaudio.com.au",
       "https://kayhanaudio.com.au",
-      "https://api.kayhanaudio.com.au"
+      "https://api.kayhanaudio.com.au",
+      "http://72.60.211.111:3000"
     ],
     credentials: true,
   })
