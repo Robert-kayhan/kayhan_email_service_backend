@@ -56,18 +56,18 @@ const PORT = process.env.PORT;
 app.set("trust proxy", 1);
 
 // ✅ Middleware order matters!
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://mailer.kayhanaudio.com.au",
-      "https://kayhanaudio.com.au",
-      "https://api.kayhanaudio.com.au",
-      "http://72.60.211.111:3000"
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://mailer.kayhanaudio.com.au",
+    "https://kayhanaudio.com.au",
+    "https://api.kayhanaudio.com.au",
+    "http://72.60.211.111:3000"
+  ],
+  credentials: true,
+}));
+
+app.options("*", cors());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
