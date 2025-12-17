@@ -124,37 +124,10 @@ connectDb();
 //   await syncCarModelsWithLocalCompanies();
 // });
 
-app.listen(PORT,  () => {
-  console.log(`🚀 Server running on localhost:${PORT}`);
+// app.listen(PORT,  () => {
+//   console.log(`🚀 Server running on localhost:${PORT}`);
+// });
+
+app.listen(5005, '127.0.0.1', () => {
+  console.log('Mailer API running on 127.0.0.1:5005');
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
