@@ -60,8 +60,8 @@ const sendEmails = async (req: Request, res: Response) => {
         });
         // console.log(user)
         // 3. Prepare email content
-        const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
-        const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
+        const unsubscribeLink = `https://api.mailer.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
+        const pixelUrl = `https://api.mailer.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
         console.log(unsubscribeLink)
         console.log(pixelUrl)
         const subject: string = `Hi ${user.firstname}, ${campaign.campaignName}`;
