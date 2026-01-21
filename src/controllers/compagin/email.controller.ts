@@ -163,7 +163,73 @@ const handleUnsubscribe = async (req: Request, res: Response) => {
   user.isSubscribed = false;
   await user.save();
 
-  res.json({ message: "Successfully unsubscribed." });
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Unsubscribed</title>
+      <style>
+        body {
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+          background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .card {
+          background: #fff;
+          padding: 40px;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          text-align: center;
+          max-width: 420px;
+        }
+        .icon {
+          font-size: 60px;
+          color: #28a745;
+        }
+        h1 {
+          margin: 20px 0 10px;
+          font-size: 26px;
+          color: #333;
+        }
+        p {
+          color: #666;
+          font-size: 16px;
+          line-height: 1.5;
+        }
+        .btn {
+          display: inline-block;
+          margin-top: 25px;
+          padding: 12px 24px;
+          background: #007bff;
+          color: #fff;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 500;
+        }
+        .btn:hover {
+          background: #0056b3;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="icon">✅</div>
+        <h1>Successfully Unsubscribed</h1>
+        <p>
+          Your subscription has been cancelled successfully.<br />
+          You will no longer receive emails from us.
+        </p>
+        <a class="btn" href="https://kayhanaudio.com.au/">Go to Homepage</a>
+      </div>
+    </body>
+    </html>
+  `);
 };
 
 export { sendEmails, checkUserOpenEmail, handleUnsubscribe };
