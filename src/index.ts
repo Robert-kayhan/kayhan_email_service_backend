@@ -4,8 +4,8 @@ import connectDb from "./db/connectDb";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import cors from "cors";
-import dns from "dns";
-dns.setDefaultResultOrder("ipv4first");
+// import dns from "dns";
+// dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 
