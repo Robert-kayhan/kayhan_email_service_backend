@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { Op, Sequelize } from "sequelize";
 import axios from "axios";
 import User from "../../models/user/User.model";
+
 const createOneUser = async (req: Request, res: Response): Promise<void> => {
   const {
     firstname,
@@ -430,87 +431,92 @@ const normalizeStringField = (val: any): string | null => {
   return val.toString();
 };
 
+import https from "https";
+
+
+const httpsAgent = new https.Agent({
+  family: 4, // force IPv4
+  keepAlive: true,
+});
+
+const axiosInstance = axios.create({
+  baseURL: "https://api.kayhanaudio.com.au/v1",
+  timeout: 30000,
+  httpsAgent,
+  headers: {
+    Accept: "application/json",
+    "User-Agent": "Kayhan-Backend/1.0",
+  },
+});
+
 const createAllWholesaleUsers = async (req: Request, res: Response) => {
-  console.log("api call")
-  
+  console.log("🚀 Sync wholesale users started");
+
   try {
-     await User.destroy({
-      where: {
-        // firstname: 'UNKNOWN USER',
-        lastname: 'UNKNOWN'
-      }
+    // 1️⃣ Fetch wholesale users (pagination recommended)
+    const response = await axiosInstance.get("/users", {
+      params: { role: 3, limit: 500, page: 1 },
     });
-    // 1️⃣ Fetch all wholesale users from external API
-    const apiUrl = "https://api.kayhanaudio.com.au/v1/users?role=3&limit=1000000";
-    const response = await axios.get(apiUrl);
-     
-    const externalUsers = response.data?.data?.result;
-    if (!externalUsers || externalUsers.length === 0) {
-      res
-        .status(404)
-        .json({ message: "No wholesale users found in external system" });
+
+    const externalUsers = response.data?.data?.result ?? [];
+
+    if (externalUsers.length === 0) {
+      res.status(404).json({ message: "No wholesale users found" });
       return;
     }
 
-    // 2️⃣ Extract emails to check which already exist locally
-    const emails = externalUsers.map((u: any) => u.email.toLowerCase());
+    // 2️⃣ Normalize users
+    const usersToUpsert = externalUsers.map((u: any) => ({
+      firstname: normalizeStringField(u.name) || "UNKNOWN",
+      lastname: normalizeStringField(u.last_name) || "",
+      email: normalizeStringField(u.email),
+      phone: normalizeStringField(u.phone),
+      country: normalizeStringField(u.country),
+      state: normalizeStringField(u.state),
+      city: normalizeStringField(u.city),
+      street: normalizeStringField(u.street),
+      postcode: normalizeStringField(u.postcode),
+      role: u.role ?? 3,
+      isSubscribed: u.isSubscribed ?? true,
+    }));
+
+    // 3️⃣ Get all emails that already exist
+    const emails = usersToUpsert.map((u : any) => u.email).filter(Boolean);
 
     const existingUsers = await User.findAll({
-      where: { email: { [Op.in]: emails } },
+      where: { email: emails },
       attributes: ["email"],
     });
 
-    const existingEmailSet = new Set(
-      existingUsers.map((u) => u.email.toLowerCase())
-    );
+    const existingEmails = new Set(existingUsers.map(u => u.email));
 
-    // 3️⃣ Filter only new users that don't exist locally and normalize fields
-    const newUsers = externalUsers
-      .filter(
-        (u: any) => u.email && !existingEmailSet.has(u.email.toLowerCase())
-      )
-      .map((u: any) => ({
-        firstname: normalizeStringField(u.name) || "UNKNOWN",
-        lastname: normalizeStringField(u.last_name) || "",
-        email: normalizeStringField(u.email),
-        phone: normalizeStringField(u.phone),
-        country: normalizeStringField(u.country),
-        state: normalizeStringField(u.state),
-        city: normalizeStringField(u.city),
-        street: normalizeStringField(u.street),
-        postcode: normalizeStringField(u.postcode),
-        role: u.role ?? 3,
-        isSubscribed: u.isSubscribed ?? true,
-      }));
+    // 4️⃣ Filter out users whose email already exists
+    const newUsers = usersToUpsert.filter((u : any) => !existingEmails.has(u.email));
 
     if (newUsers.length === 0) {
-      res
-        .status(200)
-        .json({ message: "All wholesale users already exist locally" });
+      res.status(200).json({ message: "No new users to create" });
       return;
     }
-    console.log("its working ")
-    // 4️⃣ Bulk create all new users in batches (optional for large data)
-    const BATCH_SIZE = 500;
-    let createdUsers: any[] = [];
 
+    // 5️⃣ Bulk create in batches
+    const BATCH_SIZE = 500;
     for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
       const batch = newUsers.slice(i, i + BATCH_SIZE);
-      const batchCreated = await User.bulkCreate(batch, { validate: true });
-      createdUsers = createdUsers.concat(batchCreated);
+      await User.bulkCreate(batch);
     }
 
-    res.status(201).json({
-      message: `Created ${createdUsers.length} new wholesale users successfully`,
-      data: createdUsers,
+    res.status(200).json({
+      message: `Created ${newUsers.length} new wholesale users successfully`,
     });
   } catch (error: any) {
-    console.error("Error creating wholesale users:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    console.error("❌ Sync error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
+
 
 export {
   createOneUser,
