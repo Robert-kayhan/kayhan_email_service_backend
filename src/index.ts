@@ -45,12 +45,12 @@ import OrderRoutes from "./routes/Inventory/order.route";
 import RepairRoutes from "./routes/repair-return/repair.route";
 import TechReportRequestRoutes from "./routes/repair-return/tech-report-request.route";
 //automate
-import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
-import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
-import cron from "node-cron";
+// import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
+// import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
+// import cron from "node-cron";
 
-import { companyFromCarAudioandKayhanAudio } from "./controllers/Inventory/Company.controller";
-import { syncCarModelsWithLocalCompanies } from "./controllers/Inventory/CarModel.controller";
+// import { companyFromCarAudioandKayhanAudio } from "./controllers/Inventory/Company.controller";
+// import { syncCarModelsWithLocalCompanies } from "./controllers/Inventory/CarModel.controller";
 
 const app = express();
 const PORT = process.env.PORT;
