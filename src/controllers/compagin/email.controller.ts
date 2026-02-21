@@ -232,4 +232,92 @@ const handleUnsubscribe = async (req: Request, res: Response) => {
   `);
 };
 
-export { sendEmails, checkUserOpenEmail, handleUnsubscribe };
+ const processCampaignEmails = async (campaignId: number) => {
+  const campaign: any = await Campaign.findByPk(campaignId, {
+    include: [
+      { model: Template, as: "Template" },
+      { model: EmailLog, as: "EmailLogs" },
+    ],
+  });
+
+  if (!campaign) throw new Error("Campaign not found");
+
+  const leadAssignments = await LeadGroupAssignment.findAll({
+    where: { groupId: campaign.leadGroupId },
+    include: [{ model: User, as: "User" }],
+  });
+
+  const usersToEmail = leadAssignments
+    .map((assign: any) => assign.User)
+    .filter((user) => user && user.email && user.isSubscribed);
+
+  if (!usersToEmail.length) {
+    return {
+      sent: 0,
+      failed: 0,
+      total: 0,
+      message: "No users with emails found in lead group",
+    };
+  }
+
+  const logs: any[] = [];
+
+  for (const user of usersToEmail) {
+    try {
+      if (!user.unsubscribeToken) {
+        user.unsubscribeToken = uuidv4();
+        await user.save();
+      }
+
+      const log = await EmailLog.create({
+        campaign_id: campaign.id,
+        email: user.email,
+        status: "pending",
+      });
+
+      const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
+      const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
+
+      const subject: string = `Hi ${user.firstname}, ${campaign.campaignName}`;
+
+      const html: string = `
+        <p>Hi ${user.firstname},</p>
+        <p>${campaign.Template?.html || "You have a new update from Kayhan Audio."}</p>
+        <hr />
+        <p style="font-size:12px;color:#888;">
+          Don’t want these emails? <a href="${unsubscribeLink}">Unsubscribe here</a>.
+        </p>
+        <img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="tracking-pixel"/>
+      `;
+
+      const text: string = `Hi ${user.firstname},\nYou have a new update from Kayhan Audio.\nUnsubscribe: ${unsubscribeLink}`;
+
+      await sendEmail({
+        to: user.email,
+        subject,
+        bodyHtml: html,
+        bodyText: text,
+        from: campaign.fromEmail,
+      });
+
+      await log.update({ status: "sent" });
+      logs.push({ ...log.toJSON(), status: "sent" });
+    } catch (err: any) {
+      const log = await EmailLog.create({
+        campaign_id: campaign.id,
+        email: user.email,
+        status: "failed",
+        errorMessage: err.message || "Unknown error",
+      });
+      logs.push({ ...log.toJSON(), status: "failed" });
+    }
+  }
+
+  return {
+    sent: logs.filter((l) => l.status === "sent").length,
+    failed: logs.filter((l) => l.status === "failed").length,
+    total: logs.length,
+    message: "Emails processed",
+  };
+};
+export { sendEmails, checkUserOpenEmail, handleUnsubscribe , processCampaignEmails};

@@ -15,6 +15,7 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
     city,
     street,
     postcode,
+    role
   } = req.body;
   console.log("api call", req.body);
   try {
@@ -42,9 +43,9 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
       city,
       state,
       postcode,
+      role
       // country,
     });
-    console.log("its working");
     res.status(201).json({ message: "User created successfully." });
   } catch (error) {
     console.error("Error creating user:", error);
@@ -54,15 +55,16 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-const createMultipleUser = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+const createMultipleUser = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ message: "Please upload a file" });
       return;
     }
+
+    // ✅ read type from FormData field
+    const type = (req.body?.type || "").toString().trim().toLowerCase();
+    const userType = type === "wholesale" ? 3 : 0; // set your default
 
     const workBook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheetName = workBook.SheetNames[0];
@@ -81,13 +83,14 @@ const createMultipleUser = async (
         return {
           firstname: safeTrim(row["First Name"]),
           lastname: safeTrim(row["Last Name"]),
-          email: safeTrim(row["Email"]).toLowerCase(), // Normalize here
+          email: safeTrim(row["Email"]).toLowerCase(),
           phone: phone || null,
           country: safeTrim(row["Mailing Country"]),
           state: safeTrim(row["Mailing State"]),
           city: safeTrim(row["Mailing City"]),
           street: safeTrim(row["Mailing Street"]),
           postcode: safeTrim(row["Mailing Zip"]),
+          role: userType, // ✅ ADD THIS
           isDeleted: false,
           isActive: true,
         };
@@ -105,7 +108,6 @@ const createMultipleUser = async (
       where: { email: { [Op.in]: emails } },
     });
 
-    // Normalize email case for comparison
     const existingEmailSet = new Set(
       existingUsers.map((u) => u.email.toLowerCase())
     );
@@ -129,13 +131,10 @@ const createMultipleUser = async (
 
     res.status(200).json({
       message: `Upload complete. ${newUsers.length} new users created.`,
+      type: userType, // optional: return what type was used
     });
   } catch (error: any) {
     console.error("Bulk upload error:", error);
-
-    if (error?.errors) {
-      console.error("Validation Errors:", error.errors);
-    }
 
     res.status(500).json({
       message: "Failed to upload users.",
@@ -144,18 +143,16 @@ const createMultipleUser = async (
     });
   }
 };
-
 const getALLUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string)?.trim() || "";
-    const role = req.query.role ? Number(req.query.role) : null; // role filter
+    const role = req.query.role ? Number(req.query.role) : 0; // role filter
     const offset = (page - 1) * limit;
 
     // Build where clause
     const whereClause: any = {};
-
     if (search) {
       whereClause[Op.or] = [
         { firstname: { [Op.like]: `%${search}%` } },
@@ -191,7 +188,7 @@ const getALLUser = async (req: Request, res: Response): Promise<void> => {
       name: `${user.firstname} ${user.lastname}`,
       email: user.email,
       phone: user.phone,
-      role: user.role === 1 ? "Admin" : "User",
+      role: user.role == 0 ? "User" : "Wholesale",
       status: "Active",
       isSubscribed: user.isSubscribed ? true : false
     }));
@@ -481,7 +478,7 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
     }));
 
     // 3️⃣ Get all emails that already exist
-    const emails = usersToUpsert.map((u : any) => u.email).filter(Boolean);
+    const emails = usersToUpsert.map((u: any) => u.email).filter(Boolean);
 
     const existingUsers = await User.findAll({
       where: { email: emails },
@@ -491,7 +488,7 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
     const existingEmails = new Set(existingUsers.map(u => u.email));
 
     // 4️⃣ Filter out users whose email already exists
-    const newUsers = usersToUpsert.filter((u : any) => !existingEmails.has(u.email));
+    const newUsers = usersToUpsert.filter((u: any) => !existingEmails.has(u.email));
 
     if (newUsers.length === 0) {
       res.status(200).json({ message: "No new users to create" });

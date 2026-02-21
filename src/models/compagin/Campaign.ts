@@ -56,7 +56,8 @@ Campaign.init(
     },
     leadGroupId: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      allowNull: true,
+      defaultValue : null
     },
   },
   {

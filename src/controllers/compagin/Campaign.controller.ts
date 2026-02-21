@@ -3,7 +3,9 @@ import Template from "../../models/compagin/Template";
 import LeadGroup from "../../models/compagin/LeadGroup";
 import Campaign from "../../models/compagin/Campaign";
 import EmailLog from "../../models/compagin/EmailLog";
-
+import * as XLSX from "xlsx";
+import { sendEmail } from "../../utils/sendEmail";
+import { v4 as uuidv4 } from "uuid";
 
 // CREATE Campaign
 const createCampaign = async (req: Request, res: Response) => {
@@ -210,11 +212,160 @@ const getCampaignStats = async (req: Request, res: Response) => {
      res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+ const sendComaginUsingExel = async (req: Request, res: Response) => {
+  try {
+    const { campaignName, campaignSubject, fromEmail, senderName, templateId } =
+      req.body;
+
+    const file = req.file;
+
+    // ✅ Validate
+    if (
+      !campaignName ||
+      !campaignSubject ||
+      !fromEmail ||
+      !senderName ||
+      !templateId ||
+      !file
+    ) {
+       res.status(400).json({
+        message: "All fields and excel file are required.",
+      });
+      return
+    }
+
+    // ✅ Get template
+    const template = await Template.findByPk(templateId);
+    if (!template) {
+       res.status(404).json({ message: "Template not found." });
+       return
+    }
+
+    // ✅ Read Excel
+    const workbook = XLSX.read(file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames?.[0];
+    if (!sheetName) {
+       res.status(400).json({ message: "Excel sheet not found." });
+       return
+    }
+
+    const sheet = workbook.Sheets[sheetName];
+    const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    if (!rows.length) {
+       res.status(400).json({ message: "Excel file is empty." });
+       return
+    }
+
+    // ✅ Build recipients (support different column names)
+    const recipientsRaw = rows
+      .map((r) => {
+        const email =
+          (r.email || r.Email || r.EMAIL || r["Email Address"] || "")
+            .toString()
+            .trim()
+            .toLowerCase();
+
+        const name =
+          (r.name || r.Name || r.firstname || r.Firstname || "")
+            .toString()
+            .trim();
+
+        return { email, name };
+      })
+      .filter((r) => r.email);
+
+    // ✅ unique emails
+    const seen = new Set<string>();
+    const recipients = recipientsRaw.filter((r) => {
+      if (seen.has(r.email)) return false;
+      seen.add(r.email);
+      return true;
+    });
+
+    if (!recipients.length) {
+       res.status(400).json({ message: "No emails found in Excel." });
+       return
+    }
+
+    // ✅ Create Campaign
+    const campaign = await Campaign.create({
+      campaignName,
+      campaignSubject,
+      fromEmail,
+      senderName,
+      templateId,
+    });
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const r of recipients) {
+      // ✅ create log first
+      const log = await EmailLog.create({
+        campaign_id: campaign.id,
+        email: r.email,
+        status: "pending",
+      });
+
+      try {
+        const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
+
+        const displayName = r.name || "there";
+
+        const html = `
+          <p>Hi ${displayName},</p>
+          ${template.html || "<p>You have a new update from Kayhan Audio.</p>"}
+          <img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="pixel"/>
+        `;
+
+        const text = `Hi ${displayName},\n\n${
+          campaignName || "You have a new update from Kayhan Audio."
+        }`;
+
+        await sendEmail({
+          to: r.email,
+          subject: campaignSubject,
+          bodyHtml: html,
+          bodyText: text,
+          from: `${senderName} <${fromEmail}>`,
+        });
+
+        await log.update({ status: "sent" });
+        sent++;
+      } catch (err: any) {
+        await log.update({
+          status: "failed",
+          errorMessage: err?.message || "Unknown error",
+        });
+        failed++;
+        console.error("❌ Failed:", r.email, err);
+      }
+    }
+
+     res.status(201).json({
+      message: "Campaign created & sent successfully.",
+      data: {
+        campaignId: campaign.id,
+        totalRecipients: recipients.length,
+        sent,
+        failed,
+      },
+    });
+  } catch (error) {
+    console.error("sendComaginUsingExel error:", error);
+     res.status(500).json({ message: "Internal server error." });
+  }
+};
 export {
   createCampaign,
   deleteCampaign,
   updateCampaign,
   getAllCampaigns,
   getCampaignById,
-  getCampaignStats
+  getCampaignStats,
+  sendComaginUsingExel
 };
