@@ -2,16 +2,16 @@ import { Request, Response } from "express";
 import CarModel from "../../models/Inventory/CarModel";
 import axios from "axios";
 import Company from "../../models/Inventory/Company";
+import { Op } from "sequelize";
 
 // Make sure you add the self-association somewhere after CarModel.init
 
 /**
  * Get all car models (optionally filter top-level or by category)
  */
+
 const getAllCarModels = async (req: Request, res: Response) => {
-  console.log("api call");
   try {
-    // extract query params
     const {
       parent_id,
       company_id,
@@ -20,45 +20,65 @@ const getAllCarModels = async (req: Request, res: Response) => {
       search = "",
     } = req.query;
 
-    // pagination
-    const pageNum = parseInt(page as string, 10) || 1;
-    const limitNum = parseInt(limit as string, 10) || 10;
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 10;
     const offset = (pageNum - 1) * limitNum;
 
-    // filters
     const where: any = {};
-    if (parent_id !== undefined) where.parent_id = parent_id;
-    if (company_id !== undefined) where.company_id = company_id;
 
-    // search (by name, slug, title, etc.)
-    if (search && (search as string).trim() !== "") {
-      const { Op } = require("sequelize");
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { slug: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
-      ];
+    // ✅ company filter
+    if (company_id !== undefined && company_id !== "") {
+      where.company_id = Number(company_id);
     }
 
-    // query with pagination
+    // ✅ parent filter (THIS FIXES YOUR ISSUE)
+    // parent_id can be:
+    // - not sent => no filter
+    // - "null" => parent_id IS NULL (top level models)
+    // - number => parent_id = number (submodels)
+    if (parent_id !== undefined) {
+      const p = String(parent_id).trim();
+
+      if (p === "" || p === "undefined") {
+        // ignore
+      } else if (p === "null") {
+        where.parent_id = null;
+      } else {
+        where.parent_id = Number(p);
+      }
+    }
+
+    // ✅ search only by name (you don't have slug/title in CarModel)
+    const s = String(search || "").trim();
+    if (s) {
+      where[Op.or] = [{ name: { [Op.like]: `%${s}%` } }];
+    }
+
     const { count, rows } = await CarModel.findAndCountAll({
       where,
-      include: { model: CarModel, as: "children" },
+      include: { model: CarModel, as: "children", required: false },
       order: [["id", "ASC"]],
       limit: limitNum,
       offset,
     });
 
-    res.json({
+    const lastPage = Math.max(1, Math.ceil(count / limitNum));
+
+    // ✅ RETURN SAME SHAPE as your other pages
+     res.json({
       data: rows,
-      total: count,
-      page: pageNum,
-      totalPages: Math.ceil(count / limitNum),
+      meta: {
+        total: count,
+        page: pageNum,
+        lastPage,
+      },
     });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: error.message || "Server error" });
   }
 };
+
 
 /**
  * Get a single car model by ID with its children

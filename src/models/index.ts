@@ -16,6 +16,9 @@ import LeadNote from "./crm/Note";
 import Payment from "./bookingSystem/Payment";
 import PaymentHistory from "./bookingSystem/PaymentHistory";
 import BookingCustmour from "./bookingSystem/BookingCustmour";
+import Version from "./Inventory/Virson";
+import UserManual from "./Inventory/UserManual";
+import ManualType from "./Inventory/ManualType";
 
 export const setupAssociations = () => {
   // LeadGroup → LeadGroupAssignment
@@ -77,6 +80,26 @@ LeadNote.belongsTo(LeadFollowUp, {
   foreignKey: "leadFollowUpId",
   as: "LeadFollowUp",
   constraints: false,
+});
+Version.hasMany(UserManual, {
+  foreignKey: "version_id",
+  as: "manuals",
+});
+
+UserManual.belongsTo(Version, {
+  foreignKey: "version_id",
+  as: "version",
+});
+
+// ✅ ManualType -> Manuals
+ManualType.hasMany(UserManual, {
+  foreignKey: "manual_type_id",
+  as: "manuals",
+});
+
+UserManual.belongsTo(ManualType, {
+  foreignKey: "manual_type_id",
+  as: "manualType",
 });
 
 // booking.model.ts
