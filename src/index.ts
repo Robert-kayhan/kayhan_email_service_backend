@@ -44,6 +44,9 @@ import OrderRoutes from "./routes/Inventory/order.route";
 //repair
 import RepairRoutes from "./routes/repair-return/repair.route";
 import TechReportRequestRoutes from "./routes/repair-return/tech-report-request.route";
+import versionRoutes from "./routes/Inventory/virson.route";
+import userManualRoutes from './routes/Inventory/userMannul.route'
+import userManualTypesRoutes from './routes/Inventory/manualType.route'
 //automate
 // import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
 // import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
@@ -109,7 +112,9 @@ app.use("/api/comapany", ComapnyRoutes);
 app.use("/api/car-model", CarModelRoutes);
 app.use("/api/product", ProductRoutes);
 app.use("/api/order", OrderRoutes);
-
+app.use("/api/versions", versionRoutes);
+app.use("/api/user-manuals", userManualRoutes);
+app.use("/api/user-manualtypes", userManualTypesRoutes);
 //repair and return
 
 app.use("/api/repair-return", RepairRoutes);
@@ -118,8 +123,8 @@ app.use("/api/tech-support-request", TechReportRequestRoutes);
 connectDb();
 
 // ⏰ Run every 5 seconds
-// cron.schedule("0 */12 * * *", async () => {
-//   console.log("⏰ Running product sync every 12 hours...");
+// cron.schedule("*/5 * * * * *", async () => {
+//   console.log("⏰ Running product sync every 5 seconds...");
 
 //   await getProductFromCarAudioandKayhanAudio();
 //   await getDepartmentFromCarAudioandKayhanAudio();
