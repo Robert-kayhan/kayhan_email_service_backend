@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Op } from "sequelize";
+import { col, fn, Op } from "sequelize";
 import UserManual from "../../models/Inventory/UserManual";
 
 const slugify = (text: string) =>
@@ -334,5 +334,77 @@ export const deleteUserManual = async (
       message: "Failed to delete manual.",
       error: error?.message || error,
     });
+  }
+};
+
+
+export const getYearByMannul = async (req: Request, res: Response): Promise<void> => {
+  console.log("this is api")
+  try {
+    const company_id = req.query.company_id ? Number(req.query.company_id) : undefined;
+    const model_id = req.query.model_id ? Number(req.query.model_id) : undefined;
+    const sub_model_id = req.query.sub_model_id ? Number(req.query.sub_model_id) : undefined;
+    const manual_type_id = req.query.manual_type_id ? Number(req.query.manual_type_id) : undefined;
+    const version_id = req.query.version_id ? Number(req.query.version_id) : undefined;
+
+    if (!model_id || Number.isNaN(model_id)) {
+      res.status(400).json({ message: "model_id is required" });
+      return;
+    }
+
+    const where: any = {
+      status: 1,
+      model_id,
+    };
+
+    // optional filters
+    if (company_id && !Number.isNaN(company_id)) where.company_id = company_id;
+    if (manual_type_id && !Number.isNaN(manual_type_id)) where.manual_type_id = manual_type_id;
+    if (version_id && !Number.isNaN(version_id)) where.version_id = version_id;
+
+    // if sub_model_id is passed => filter by it
+    // else => return years for all manuals under this model (including null sub_model_id ones)
+    if (sub_model_id && !Number.isNaN(sub_model_id)) {
+      where.sub_model_id = sub_model_id;
+    }
+
+    // get min(from_year) and max(to_year)
+    const row:any = await UserManual.findOne({
+      where,
+      attributes: [
+        [fn("MIN", col("from_year")), "minFromYear"],
+        [fn("MAX", col("to_year")), "maxToYear"],
+      ],
+      raw: true,
+    });
+
+    const minFromYear = row?.minFromYear ? Number(row.minFromYear) : null;
+    const maxToYear = row?.maxToYear ? Number(row.maxToYear) : null;
+
+    if (!minFromYear || !maxToYear || Number.isNaN(minFromYear) || Number.isNaN(maxToYear)) {
+      res.json({
+        minYear: null,
+        maxYear: null,
+        years: [],
+        message: "No manuals found for given filters",
+      });
+      return;
+    }
+
+    // clamp just in case bad data comes
+    const minYear = Math.max(1950, minFromYear);
+    const maxYear = Math.min(2100, maxToYear);
+
+    const years: number[] = [];
+    for (let y = minYear; y <= maxYear; y++) years.push(y);
+
+    res.json({
+      minYear,
+      maxYear,
+      years,
+    });
+  } catch (error: any) {
+    console.error("getYearByMannul error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

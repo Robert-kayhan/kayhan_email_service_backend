@@ -6,6 +6,7 @@ import {
   getUserManualBySlug,
   updateUserManual,
   deleteUserManual,
+  getYearByMannul,
 } from "../../controllers/Inventory/userMannual.controller";
 
 const router = Router();
@@ -24,5 +25,6 @@ router.put("/:id", updateUserManual);
 
 // ✅ Delete manual (soft delete if paranoid: true)
 router.delete("/:id", deleteUserManual);
+router.get("/years", getYearByMannul);
 
 export default router;
