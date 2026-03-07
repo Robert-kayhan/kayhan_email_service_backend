@@ -26,15 +26,22 @@ Template.init(
       type: DataTypes.ENUM("Retail", "wholeSale"),
       defaultValue: "Retail",
     },
-    design: {
-      type: DataTypes.JSON,
-      allowNull: false,
-    },
+    // design: {
+    //   type: DataTypes.JSON,
+    //   allowNull: false,
+    // },
+    // html: {
+    //   type: DataTypes.TEXT,
+    //   allowNull: false,
+    // },
     html: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       allowNull: false,
     },
-
+    design: {
+      type: DataTypes.TEXT("long"),
+      allowNull: false,
+    },
   },
   {
     sequelize,
