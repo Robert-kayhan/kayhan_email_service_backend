@@ -33,12 +33,12 @@ User.init(
     firstname: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      defaultValue : "UNKNOWN USER"
+      defaultValue: "UNKNOWN USER"
     },
     lastname: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      defaultValue : "UNKNOWN USER"
+      defaultValue: "UNKNOWN USER"
     },
     email: {
       type: DataTypes.STRING(100),
@@ -81,9 +81,10 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-     interest: {
-      type: DataTypes.STRING,
+    interest: {
+      type: DataTypes.JSON,
       allowNull: true,
+      defaultValue: [],
     },
   },
   {
