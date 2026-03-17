@@ -6,7 +6,8 @@ import {
   deleteUser,
   updateUser,
   getUsersWithLeadStatus,
-  createAllWholesaleUsers
+  createAllWholesaleUsers,
+  getUserById
   
 } from "../../controllers/user/user.controller";
 import { uploadExcel } from "../../middlewares/Upload";
@@ -15,7 +16,7 @@ const router = express.Router();
 
 router.route("/").post( createOneUser).get(getALLUser);
 router.route("/upload-excel").post(uploadExcel.single("file"), createMultipleUser);
-router.route("/user/:id").delete(deleteUser).put(updateUser);
+router.route("/user/:id").delete(deleteUser).put(updateUser).get(getUserById);
 router.route("/lead-user").get(getUsersWithLeadStatus)
-router.route("/create-user").get(createAllWholesaleUsers)
+router.route("/create-user").get(createAllWholesaleUsers);
 export default router;

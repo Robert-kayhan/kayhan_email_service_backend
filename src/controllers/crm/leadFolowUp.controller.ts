@@ -379,7 +379,6 @@ const addNote = async (req: any, res: Response) => {
   const { id } = req.params;
   console.log(req.body);
   const { note } = req.body;
-  console.log("api call", id, note);
   try {
     const newNote = await LeadNote.create({
       leadFollowUpId: id,

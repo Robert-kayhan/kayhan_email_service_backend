@@ -17,6 +17,7 @@ class User extends Model<any> {
   public role!: number;
   public isSubscribed!: boolean;
   public unsubscribeToken!: string;
+  public interest!: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -77,6 +78,10 @@ User.init(
       defaultValue: true,
     },
     unsubscribeToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+     interest: {
       type: DataTypes.STRING,
       allowNull: true,
     },
