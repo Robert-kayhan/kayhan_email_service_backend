@@ -15,7 +15,8 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
     city,
     street,
     postcode,
-    role
+    role,
+    interest
   } = req.body;
   console.log("api call", req.body);
   try {
@@ -43,7 +44,8 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
       city,
       state,
       postcode,
-      role
+      role,
+      interest
       // country,
     });
     res.status(201).json({ message: "User created successfully." });
@@ -235,7 +237,7 @@ const deleteUser = async (req: Request, res: Response): Promise<void> => {
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id; // You may use `email` instead of `id` if that's how you identify users
-    const { firstname, lastname, phone, address, role, email, isSubscribed } =
+    const { firstname, lastname, phone, address, role, email, isSubscribed ,interest } =
       req.body;
     console.log(isSubscribed)
     const user = await User.findOne({ where: { email: email } }); // You can use `id` here if needed
@@ -251,6 +253,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     user.isSubscribed = isSubscribed;
     user.role = role ?? user.role;
     user.email = email ?? user.email;
+     user.interest = email ?? user.interest;
 
     await user.save();
 
@@ -515,6 +518,50 @@ const createAllWholesaleUsers = async (req: Request, res: Response) => {
 };
 
 
+ const getUserById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id || isNaN(Number(id))) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+      return;
+    }
+
+    // Find user
+    const user = await User.findByPk(id , {
+      attributes : {exclude : ["password"]}
+    });
+
+    // If not found
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    // Success response
+    res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      data: user,
+    });
+  } catch (error: any) {
+    console.error("Error fetching user:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 export {
   createOneUser,
   createMultipleUser,
@@ -524,4 +571,5 @@ export {
   getUsersWithLeadStatus,
   unsubscribeUser,
   createAllWholesaleUsers,
+  getUserById
 };
