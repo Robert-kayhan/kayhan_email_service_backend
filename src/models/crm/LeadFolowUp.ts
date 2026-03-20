@@ -11,6 +11,7 @@ LeadFollowUp.init(
     phone: { type: DataTypes.STRING  ,allowNull : false},
     email: { type: DataTypes.STRING  ,allowNull : false},
     address: { type: DataTypes.STRING ,allowNull : false },
+    type : { type: DataTypes.STRING ,  defaultValue: "retail" ,allowNull : true },
 
     // Lead Details
     leadSource: { type: DataTypes.STRING ,allowNull : false },
@@ -22,12 +23,14 @@ LeadFollowUp.init(
     quoteGiven: { type: DataTypes.STRING  ,allowNull : false},
     expectedValue: { type: DataTypes.DECIMAL(10, 2)  ,allowNull : false},
     // expectedCloseDate: { type: DataTypes.STRING  ,allowNull : false},
-    saleStatus: { type: DataTypes.STRING  ,allowNull : false},
+    saleStatus: { type: DataTypes.STRING  ,   allowNull : false},
+    wholesaleUserstatus: { type: DataTypes.STRING  ,   allowNull : true},
 
     // Customer Status
     isActiveCustomer: { type: DataTypes.STRING ,allowNull : false },
     purchaseHistory: { type: DataTypes.TEXT  ,allowNull : false},
     supportNotes: { type: DataTypes.TEXT  ,allowNull : false},
+    shopName : { type: DataTypes.STRING ,allowNull : true },
 
     // Communication
     communicationType: { type: DataTypes.STRING ,allowNull : true },

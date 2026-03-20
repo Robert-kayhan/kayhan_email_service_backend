@@ -186,33 +186,7 @@ UserManual.init(
     updatedAt: "updated_at",
     deletedAt: "deleted_at",
 
-    indexes: [
-      { name: "um_slug_uq", unique: true, fields: ["slug"] },
 
-      { name: "um_company", fields: ["company_id"] },
-      { name: "um_model", fields: ["model_id"] },
-      { name: "um_sub", fields: ["sub_model_id"] },
-      { name: "um_manual_type", fields: ["manual_type_id"] },
-
-      { name: "um_from", fields: ["from_year"] },
-      { name: "um_to", fields: ["to_year"] },
-      { name: "um_ver", fields: ["version_id"] },
-
-      {
-        name: "um_filter",
-        fields: [
-          "company_id",
-          "model_id",
-          "sub_model_id",
-          "manual_type_id",
-          "from_year",
-          "to_year",
-          "version_id",
-        ],
-      },
-
-      { name: "um_title", fields: ["title"] },
-    ],
   }
 );
 
