@@ -25,6 +25,9 @@ const createLead = async (req: any, res: Response) => {
     purchaseHistory,
     supportNotes,
     followUpDate,
+    wholesaleUserstatus,
+    shopName,
+    type
   } = req.body;
 
   // ✅ Validate required fields
@@ -84,6 +87,9 @@ const createLead = async (req: any, res: Response) => {
       supportNotes,
       followUpDate,
       createdBy: req.user?.email || "system",
+      wholesaleUserstatus,
+      shopName,
+      type
     });
     await User.create({
       firstname: firstName,
@@ -111,52 +117,49 @@ const getAllLeads = async (req: Request, res: Response) => {
 
     const leadStatus = req.query.leadStatus as string | undefined;
     const search = req.query.search as string | undefined;
+    const type = req.query.type as string | undefined;
+    console.log(req.query)
+    const andConditions: any[] = [];
 
-    const where: any = {};
+    if (type) {
+      andConditions.push({ type });
+    }
 
-    // Build filtering logic
     if (leadStatus && leadStatus !== "all") {
       const todayStr = new Date().toISOString().slice(0, 10);
 
       if (leadStatus === "Today's  Follow up") {
-        where[Op.or] = [
-          { followUpDate: todayStr },
-          { firstNextFollowUpDate: todayStr },
-          { secondNextFollowUpDate: todayStr },
-          { thirdNextFollowUpDate: todayStr },
-          { finalNextFollowUpDate: todayStr },
-        ];
-      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done") {
-        where.saleStatus = leadStatus;
+        andConditions.push({
+          [Op.or]: [
+            { followUpDate: todayStr },
+            { firstNextFollowUpDate: todayStr },
+            { secondNextFollowUpDate: todayStr },
+            { thirdNextFollowUpDate: todayStr },
+            { finalNextFollowUpDate: todayStr },
+          ],
+        });
+      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done" ||leadStatus === "Wholesaler approved" || leadStatus === "Wholesaler not approved") {
+        andConditions.push({ saleStatus: leadStatus });
       } else {
-        where.status = leadStatus;
+        andConditions.push({ status: leadStatus });
       }
     }
 
-    // Add search functionality
     if (search) {
-      const searchQuery = {
+      andConditions.push({
         [Op.or]: [
           { firstName: { [Op.like]: `%${search}%` } },
           { lastName: { [Op.like]: `%${search}%` } },
           { email: { [Op.like]: `%${search}%` } },
           { phone: { [Op.like]: `%${search}%` } },
         ],
-      };
-
-      // Merge with existing where clause
-      if (where[Op.or]) {
-        where[Op.and] = [where, searchQuery];
-        delete where[Op.or]; // remove the old top-level OR to prevent conflict
-      } else {
-        Object.assign(where, searchQuery);
-      }
+      });
     }
 
-    // Count total matching records
+    const where = andConditions.length ? { [Op.and]: andConditions } : {};
+
     const totalItems = await LeadFollowUp.count({ where });
 
-    // Fetch paginated records
     const leads = await LeadFollowUp.findAll({
       where,
       offset,
@@ -193,8 +196,8 @@ const getLeadById = async (req: Request, res: Response) => {
     });
 
     if (!lead) {
-       res.status(404).json({ message: "Lead not found" });
-       return
+      res.status(404).json({ message: "Lead not found" });
+      return
     }
 
     // Convert Sequelize instances to plain objects
@@ -245,6 +248,7 @@ const updateLead = async (req: Request, res: Response) => {
 
 // DELETE a lead by ID
 const deleteLead = async (req: Request, res: Response) => {
+  console.log("api call`")
   try {
     const lead = await LeadFollowUp.findByPk(req.params.id);
     if (!lead) {
@@ -315,7 +319,7 @@ const updateFollowUpStage = async (req: any, res: Response) => {
 const updateSaleStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const {
+    let {
       saleStatus,
       invoiceNumber,
       invoiceSentDate,
@@ -323,13 +327,16 @@ const updateSaleStatus = async (req: Request, res: Response) => {
       quotationSentDate,
       is_quotation,
       is_invoice,
+      wholesaleUserstatus
     } = req.body;
-    console.log(req.body);
-    if (!saleStatus) {
+    console.log(req.body , "thisiasidasdo");
+    if (!saleStatus ) {
       {
-        res
-          .status(400)
-          .json({ message: "Missing 'saleStatus' in request body." });
+        saleStatus = wholesaleUserstatus
+        // res
+        //   .status(400)
+        //   .json({ message: "Missing 'saleStatus' in request body." });
+        //   return
       }
     }
 
@@ -338,9 +345,12 @@ const updateSaleStatus = async (req: Request, res: Response) => {
       res.status(404).json({ message: "Lead not found." });
     }
     // Update lead status
+    // console.log(saleStatus)
     lead.saleStatus = saleStatus;
-    if (saleStatus === "Sale done") lead.status = "Sale done";
-    await lead.save();
+    if (saleStatus === "Sale done") {
+      lead.status = "Sale done"
+    };
+    await lead.save()
 
     // Track in LeadSalesTracking
     const existingTracking: any = await LeadSalesTracking.findOne({
@@ -362,8 +372,9 @@ const updateSaleStatus = async (req: Request, res: Response) => {
 
     if (existingTracking) {
       await existingTracking.update(trackingData);
-    } else {
+    } else if (trackingData && saleStatus !== "Wholesaler not approved" &&saleStatus !== "Wholesaler approved"  ) {
       await LeadSalesTracking.create({ lead_id: id, ...trackingData });
+      console.log("this is call")
     }
 
     res

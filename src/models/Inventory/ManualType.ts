@@ -58,10 +58,7 @@ ManualType.init(
     updatedAt: "updated_at",
     deletedAt: "deleted_at",
 
-    indexes: [
-      { name: "mt_slug_uq", unique: true, fields: ["slug"] },
-      { name: "mt_name", fields: ["name"] },
-    ],
+  
   }
 );
 
