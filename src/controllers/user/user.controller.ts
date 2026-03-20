@@ -44,7 +44,7 @@ const createOneUser = async (req: Request, res: Response): Promise<void> => {
       city,
       state,
       postcode,
-      role,
+      role : role || 0,
       interest
       // country,
     });

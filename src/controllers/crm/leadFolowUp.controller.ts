@@ -91,12 +91,30 @@ const createLead = async (req: any, res: Response) => {
       shopName,
       type
     });
-    await User.create({
-      firstname: firstName,
-      lastname: lastName,
-      phone,
-      email,
-    });
+    console.log(type)
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (!existingUser) {
+      // Create only if not exists
+      if (type === "wholesale") {
+        await User.create({
+          firstname: firstName,
+          lastname: lastName,
+          phone,
+          email,
+          role: 3,
+        });
+      } else {
+        await User.create({
+          firstname: firstName,
+          lastname: lastName,
+          phone,
+          email,
+        });
+      }
+    } else {
+      console.log("User already exists, skipping creation");
+    }
     res.status(201).json(lead);
   } catch (error: any) {
     console.error("Error creating lead:", error);
@@ -138,7 +156,7 @@ const getAllLeads = async (req: Request, res: Response) => {
             { finalNextFollowUpDate: todayStr },
           ],
         });
-      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done" ||leadStatus === "Wholesaler approved" || leadStatus === "Wholesaler not approved") {
+      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done" || leadStatus === "Wholesaler approved" || leadStatus === "Wholesaler not approved") {
         andConditions.push({ saleStatus: leadStatus });
       } else {
         andConditions.push({ status: leadStatus });
@@ -329,8 +347,8 @@ const updateSaleStatus = async (req: Request, res: Response) => {
       is_invoice,
       wholesaleUserstatus
     } = req.body;
-    console.log(req.body , "thisiasidasdo");
-    if (!saleStatus ) {
+    console.log(req.body, "thisiasidasdo");
+    if (!saleStatus) {
       {
         saleStatus = wholesaleUserstatus
         // res
@@ -372,7 +390,7 @@ const updateSaleStatus = async (req: Request, res: Response) => {
 
     if (existingTracking) {
       await existingTracking.update(trackingData);
-    } else if (trackingData && saleStatus !== "Wholesaler not approved" &&saleStatus !== "Wholesaler approved"  ) {
+    } else if (trackingData && saleStatus !== "Wholesaler not approved" && saleStatus !== "Wholesaler approved") {
       await LeadSalesTracking.create({ lead_id: id, ...trackingData });
       console.log("this is call")
     }
@@ -416,24 +434,44 @@ const getNotesByLeadId = async (req: Request, res: Response) => {
   }
 };
 // GET /api/leads/check-email/:email
-const checkEmail = async (req: Request, res: Response) => {
-  // console.log("api call")
+const checkEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.params;
-    const lead = await LeadFollowUp.findOne({ where: { email } });
-    const user = await User.findOne({ where: { email } })
-    if (lead || user) {
-      res.json({ exists: true });
+
+    const [lead, user] = await Promise.all([
+      LeadFollowUp.findOne({ where: { email } }),
+      User.findOne({ where: { email } }),
+    ]);
+
+    if (lead) {
+      res.json({
+        exists: true,
+        type: "lead",
+        message: "Lead already exists with this email",
+      });
       return;
     }
-    res.json({ exists: false });
+
+    if (user) {
+      res.json({
+        exists: true,
+        type: "customer",
+        message: "Customer already exists with this email",
+      });
+      return;
+    }
+
+    res.json({
+      exists: false,
+      message: "Email is available",
+    });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ message: "Error checking email", error: err.message });
+    res.status(500).json({
+      message: "Error checking email",
+      error: err.message,
+    });
   }
 };
-
 export {
   createLead,
   getAllLeads,
