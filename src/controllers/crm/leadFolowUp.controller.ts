@@ -436,37 +436,41 @@ const getNotesByLeadId = async (req: Request, res: Response) => {
 // GET /api/leads/check-email/:email
 const checkEmail = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email } = req.params;
+    const email = decodeURIComponent(req.params.email).trim().toLowerCase();
 
     const [lead, user] = await Promise.all([
       LeadFollowUp.findOne({ where: { email } }),
       User.findOne({ where: { email } }),
     ]);
 
+    console.log("searched email:", email);
+    console.log("lead:", lead);
+    console.log("user:", user);
+
     if (lead) {
-      res.json({
+       res.json({
         exists: true,
         type: "lead",
         message: "Lead already exists with this email",
       });
-      return;
+      return
     }
 
     if (user) {
-      res.json({
+       res.json({
         exists: true,
         type: "customer",
         message: "Customer already exists with this email",
       });
-      return;
+      return
     }
 
-    res.json({
+     res.json({
       exists: false,
       message: "Email is available",
     });
   } catch (err: any) {
-    res.status(500).json({
+     res.status(500).json({
       message: "Error checking email",
       error: err.message,
     });
