@@ -276,10 +276,7 @@ export const generateStyledFlyerPdf = async ({
     <div class="container">
       <div class="header">
         <div class="header-left">
-          <img
-            src=""https://kayhanaudio.com.au/_next/image?url=%2Flogo.webp&w=256&q=75"
-            alt="Kayhan Logo"
-          />
+          <img src="${"https://kayhanaudio.com.au/_next/image?url=%2Flogo.webp&w=128&q=75"}" alt="Kayhan Logo" />
         </div>
 
         <div class="customer-info">
