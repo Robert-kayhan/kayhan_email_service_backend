@@ -127,6 +127,7 @@ const createLead = async (req: any, res: Response) => {
 
 // GET all leads
 
+
 const getAllLeads = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -136,11 +137,18 @@ const getAllLeads = async (req: Request, res: Response) => {
     const leadStatus = req.query.leadStatus as string | undefined;
     const search = req.query.search as string | undefined;
     const type = req.query.type as string | undefined;
-    console.log(req.query)
+    const team = req.query.team as string | undefined;
+
+    console.log(req.query);
+
     const andConditions: any[] = [];
 
     if (type) {
       andConditions.push({ type });
+    }
+
+    if (team && team !== "all") {
+      andConditions.push({ assignTeam: team });
     }
 
     if (leadStatus && leadStatus !== "all") {
@@ -156,8 +164,13 @@ const getAllLeads = async (req: Request, res: Response) => {
             { finalNextFollowUpDate: todayStr },
           ],
         });
-      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done" || leadStatus === "Wholesaler approved" || leadStatus === "Wholesaler not approved") {
+      } else if (leadStatus === "Sale done" || leadStatus === "Sale not done") {
         andConditions.push({ saleStatus: leadStatus });
+      } else if (
+        leadStatus === "Wholesaler approved" ||
+        leadStatus === "Wholesaler not approved"
+      ) {
+        andConditions.push({ wholesaleUserstatus: leadStatus });
       } else {
         andConditions.push({ status: leadStatus });
       }
@@ -174,7 +187,7 @@ const getAllLeads = async (req: Request, res: Response) => {
       });
     }
 
-    const where = andConditions.length ? { [Op.and]: andConditions } : {};
+    const where = andConditions.length > 0 ? { [Op.and]: andConditions } : {};
 
     const totalItems = await LeadFollowUp.count({ where });
 
@@ -199,6 +212,7 @@ const getAllLeads = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 // GET a single lead by ID
 const getLeadById = async (req: Request, res: Response) => {
@@ -345,6 +359,7 @@ const updateSaleStatus = async (req: Request, res: Response) => {
       quotationSentDate,
       is_quotation,
       is_invoice,
+      assignToAustralia,
       wholesaleUserstatus
     } = req.body;
     console.log(req.body, "thisiasidasdo");
@@ -368,6 +383,9 @@ const updateSaleStatus = async (req: Request, res: Response) => {
     if (saleStatus === "Sale done") {
       lead.status = "Sale done"
     };
+    if(assignToAustralia){
+      lead.assignTeam = "Australia"
+    }
     await lead.save()
 
     // Track in LeadSalesTracking
