@@ -384,7 +384,7 @@ const updateSaleStatus = async (req: Request, res: Response) => {
       lead.status = "Sale done"
     };
     if(assignToAustralia){
-      lead.assignTeam = "Australia"
+      lead.assignTeam = assignToAustralia
     }
     await lead.save()
 
