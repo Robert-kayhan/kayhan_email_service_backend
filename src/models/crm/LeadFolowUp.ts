@@ -32,9 +32,9 @@ LeadFollowUp.init(
     supportNotes: { type: DataTypes.TEXT, allowNull: false },
     shopName: { type: DataTypes.STRING, allowNull: true },
     assignTeam: {
-  type: DataTypes.ENUM("India", "Australia"),
-  defaultValue: "India",
-},
+      type: DataTypes.ENUM("India", "Australia"),
+      defaultValue: "India",
+    },
 
     // Communication
     communicationType: { type: DataTypes.STRING, allowNull: true },
