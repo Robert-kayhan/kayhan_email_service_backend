@@ -265,10 +265,9 @@ const generateSingleStyledFlyerPdf = async ({
       <div class="header">
         <div class="header-left">
           <img
-            src="${
-              flyerData.logoUrl ||
+            src="
               "https://kayhanaudio.com.au/_next/image?url=%2Flogo.webp&w=128&q=75"
-            }"
+       
             alt="Kayhan Logo"
           />
         </div>
