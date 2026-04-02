@@ -20,7 +20,7 @@ const createTemplate = async (req: Request, res: Response) => {
     }
 
     // ✅ Create new template
-    const template = await Template.create({ name, design, html , type });
+    const template = await Template.create({ name, design : JSON.stringify(req.body.design), html , type });
 
      res.status(201).json({
       message: "Template created successfully",
