@@ -117,7 +117,7 @@ const updateTemplate = async (req: Request, res: Response) => {
       return;
     }
 
-    await template.update({ name, design, html ,type });
+    await template.update({ name,  design : JSON.stringify(req.body.design), html ,type });
 
     res.status(200).json({
       message: "Template updated successfully",
