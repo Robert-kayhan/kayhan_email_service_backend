@@ -3,9 +3,10 @@ import {
   sendEmails,
   checkUserOpenEmail,
   handleUnsubscribe,
+  sendEmailForTesting
 } from "../../controllers/compagin/email.controller";
 const router = express.Router();
-
+router.route("/send-test").post(sendEmailForTesting);
 router.route("/:campaignId").post(sendEmails);
 router.route("/unsubscribe").get(handleUnsubscribe);
 router.route("/open").get(checkUserOpenEmail);

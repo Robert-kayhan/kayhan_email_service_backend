@@ -251,8 +251,8 @@ const getLeadById = async (req: Request, res: Response) => {
 const updateLead = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, email, phone, address } = req.body;
-
+    const { firstName, lastName, email, phone, address,leadSource , interest ,shopName } = req.body;
+    console.log(req.body)
     const lead = await LeadFollowUp.findByPk(id);
 
     if (!lead) {
@@ -266,6 +266,9 @@ const updateLead = async (req: Request, res: Response) => {
       email,
       phone,
       address,
+      leadSource,
+      interest,
+      shopName
     });
 
     res.status(200).json(lead);

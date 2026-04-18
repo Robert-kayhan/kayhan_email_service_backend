@@ -21,8 +21,8 @@ const sendEmails = async (req: Request, res: Response) => {
     });
     // console.log(campaign)
     if (!campaign) {
-       res.status(404).json({ message: "Campaign not found" });
-       return
+      res.status(404).json({ message: "Campaign not found" });
+      return
     }
 
     // 2. Get users from lead group
@@ -36,10 +36,10 @@ const sendEmails = async (req: Request, res: Response) => {
       .filter((user) => user && user.email && user.isSubscribed);
 
     if (!usersToEmail.length) {
-       res
+      res
         .status(400)
         .json({ message: "No users with emails found in lead group" });
-        return
+      return
     }
 
     const logs: EmailLog[] = [];
@@ -87,7 +87,7 @@ const sendEmails = async (req: Request, res: Response) => {
           subject,
           bodyHtml: html,
           bodyText: text,
-          from: campaign.fromEmail, 
+          from: campaign.fromEmail,
         });
 
         console.log("✅ Email sent:", result);
@@ -129,23 +129,23 @@ const checkUserOpenEmail = async (req: Request, res: Response) => {
     const { email, emailId } = req.query;
 
     if (!emailId) {
-       res.status(400).json({ success: false, message: "emailId is required" });
-       return
+      res.status(400).json({ success: false, message: "emailId is required" });
+      return
     }
 
     await EmailLog.update(
-      { 
+      {
         // status: "opened",
         opened: true,
         openedAt: new Date(),
       },
-      { where: { id: Number(emailId)} } // 👈 ensures matching email too
+      { where: { id: Number(emailId) } } // 👈 ensures matching email too
     );
 
     res.json({ success: true });
   } catch (error) {
     console.error("Error updating email log:", error);
-     res.status(500).json({ success: false, error: "Internal server error" });
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
 
@@ -163,7 +163,7 @@ const handleUnsubscribe = async (req: Request, res: Response) => {
   user.isSubscribed = false;
   await user.save();
 
-    res.send(`
+  res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -232,7 +232,7 @@ const handleUnsubscribe = async (req: Request, res: Response) => {
   `);
 };
 
- const processCampaignEmails = async (campaignId: number) => {
+const processCampaignEmails = async (campaignId: number) => {
   const campaign: any = await Campaign.findByPk(campaignId, {
     include: [
       { model: Template, as: "Template" },
@@ -320,4 +320,53 @@ const handleUnsubscribe = async (req: Request, res: Response) => {
     message: "Emails processed",
   };
 };
-export { sendEmails, checkUserOpenEmail, handleUnsubscribe , processCampaignEmails};
+
+const sendEmailForTesting = async (req: Request, res: Response) => {
+  const { id, email, subject } = req.body;
+  console.log(req.body)
+  try {
+    // 1. Validate input
+    if (!id || !email) {
+       res.status(400).json({
+        message: "Template ID and email are required",
+      });
+    }
+
+    // 2. Fetch template
+    const template = await Template.findByPk(id);
+
+    if (!template) {
+      res.status(404).json({
+        message: "Template not found",
+      });
+      return
+    }
+
+    // 3. Prepare email content
+    const html = template.html;
+    const text = "This is a test email"; // fallback
+
+    // 4. Send email
+    const result = await sendEmail({
+      to: email,
+      subject: subject || "Test Email",
+      bodyHtml: html,
+      bodyText: text,
+      from: "your-default@email.com", // replace if needed
+    });
+
+    // 5. Response
+     res.status(200).json({
+      message: "Test email sent successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("Error sending test email:", error);
+
+    res.status(500).json({
+      message: "Failed to send test email",
+      error,
+    });
+  }
+};
+export { sendEmails, checkUserOpenEmail, handleUnsubscribe, processCampaignEmails, sendEmailForTesting };
