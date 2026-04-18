@@ -352,7 +352,7 @@ const sendEmailForTesting = async (req: Request, res: Response) => {
       subject: subject || "Test Email",
       bodyHtml: html,
       bodyText: text,
-      from: "your-default@email.com", // replace if needed
+      // from: "your-default@email.com", // replace if needed
     });
 
     // 5. Response
