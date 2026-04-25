@@ -5,7 +5,7 @@ interface CampaignScheduleAttributes {
   id: number;
   campaignId: number;
   scheduledAt: Date;
-  status: "pending" | "processing" | "sent" | "failed";
+  status: "pending" | "processing" | "sent" | "failed" | "cancelled";
   isRecurring: boolean;
   recurrenceRule?: string | null;
   lastRunAt?: Date | null;
@@ -28,7 +28,7 @@ class CampaignSchedule
   public id!: number;
   public campaignId!: number;
   public scheduledAt!: Date;
-  public status!: "pending" | "processing" | "sent" | "failed";
+  public status!: "pending" | "processing" | "sent" | "failed" | "cancelled";
   public isRecurring!: boolean;
   public recurrenceRule!: string | null;
   public lastRunAt!: Date | null;
@@ -55,8 +55,15 @@ CampaignSchedule.init(
       allowNull: false,
     },
 
+    // ✅ FIXED: single status field
     status: {
-      type: DataTypes.ENUM("pending", "processing", "sent", "failed"),
+      type: DataTypes.ENUM(
+        "pending",
+        "processing",
+        "sent",
+        "failed",
+        "cancelled"
+      ),
       defaultValue: "pending",
     },
 
@@ -79,6 +86,19 @@ CampaignSchedule.init(
     sequelize,
     tableName: "campaign_schedules",
     modelName: "CampaignSchedule",
+
+    // ✅ Recommended indexes (important for cron performance)
+    indexes: [
+      {
+        fields: ["status"],
+      },
+      {
+        fields: ["scheduledAt"],
+      },
+      {
+        fields: ["campaignId"],
+      },
+    ],
   }
 );
 
