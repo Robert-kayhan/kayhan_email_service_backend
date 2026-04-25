@@ -1,49 +1,126 @@
-// models/EmailLog.ts
-import { DataTypes, Model } from "sequelize";
-import sequelize from "../../config/database"; // Adjust based on your setup
+import { DataTypes, Model, Optional } from "sequelize";
+import sequelize from "../../config/database";
 
-class EmailLog extends Model {
+interface EmailLogAttributes {
+  id: number;
+  campaign_id: number;
+  userId?: number | null;
+  email: string;
+
+  status: "pending" | "sent" | "failed";
+
+  opened: boolean;
+  openedAt?: Date | null;
+
+  clicked: boolean;
+  clickedAt?: Date | null;
+  clickCount: number;
+
+  errorMessage?: string | null;
+
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+type EmailLogCreationAttributes = Optional<
+  EmailLogAttributes,
+  | "id"
+  | "status"
+  | "opened"
+  | "openedAt"
+  | "clicked"
+  | "clickedAt"
+  | "clickCount"
+  | "errorMessage"
+  | "userId"
+>;
+
+class EmailLog
+  extends Model<EmailLogAttributes, EmailLogCreationAttributes>
+  implements EmailLogAttributes
+{
   public id!: number;
+  public campaign_id!: number;
+  public userId!: number | null;
   public email!: string;
-  public status!: "sent" | "failed";
-  public errorMessage?: string;
-  public createdAt!: Date;
-  public updatedAt!: Date;
+
+  public status!: "pending" | "sent" | "failed";
+
+  public opened!: boolean;
+  public openedAt!: Date | null;
+
+  public clicked!: boolean;
+  public clickedAt!: Date | null;
+  public clickCount!: number;
+
+  public errorMessage!: string | null;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 EmailLog.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
-   campaign_id: {
+
+    campaign_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
       references: {
-        model: "campaigns", // match actual table name
+        model: "campaigns",
         key: "id",
       },
-      onDelete: "CASCADE", // optional, but useful
+      onDelete: "CASCADE",
     },
- opened: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false, // 👈 safe default
+
+    userId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true, // optional but recommended
     },
-    openedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,     // null until opened
-    },
+
     email: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
     status: {
-      type: DataTypes.ENUM("sent", "failed" , "pending",),
+      type: DataTypes.ENUM("pending", "sent", "failed"),
       allowNull: false,
+      defaultValue: "pending",
     },
+
+    opened: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+
+    openedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    clicked: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+
+    clickedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    clickCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
     errorMessage: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -53,6 +130,18 @@ EmailLog.init(
     sequelize,
     tableName: "email_logs",
     modelName: "EmailLog",
+
+    indexes: [
+      {
+        fields: ["campaign_id"],
+      },
+      {
+        fields: ["status"],
+      },
+      {
+        fields: ["email"],
+      },
+    ],
   }
 );
 
