@@ -35,8 +35,9 @@ const sendEmails = async (req: Request, res: Response) => {
        return
     }
 
+    // ✅ SINGLE BASE URL (IMPORTANT)
     const BASE_URL =
-      "https://mailerapi.kayhanaudio.com.au/api/send-email";
+      "https://api.mailer.kayhanaudio.com.au/api/send-email";
 
     const logs: any[] = [];
 
@@ -55,15 +56,27 @@ const sendEmails = async (req: Request, res: Response) => {
           userId: user.id,
           status: "pending",
         });
-        // console.log(user)
-        // 3. Prepare email content
-        const unsubscribeLink = `https://api.mailer.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
-        const pixelUrl = `https://api.mailer.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
-        console.log(unsubscribeLink)
-        console.log(pixelUrl)
-        const subject: string = `Hi ${user.firstname}, ${campaign.campaignName}`;
 
-        const html: string = `
+        const unsubscribeLink = `${BASE_URL}/unsubscribe?token=${user.unsubscribeToken}`;
+        const pixelUrl = `${BASE_URL}/open?emailId=${log.id}`;
+
+        // 🔥 FIX: TRACK ALL LINKS
+        const originalHtml = campaign.Template?.html || "";
+
+        const trackedHtml = originalHtml.replace(
+          /href="(.*?)"/g,
+          (match:any, url:any) => {
+            return `href="${BASE_URL}/click?emailId=${log.id}&url=${encodeURIComponent(
+              url
+            )}"`;
+          }
+        );
+
+        // ✅ Better subject handling
+        const subject =
+          campaign.campaignSubject || campaign.campaignName;
+
+        const html = `
           <p>Hi ${user.firstname},</p>
           ${trackedHtml}
           <hr />
@@ -97,8 +110,9 @@ Unsubscribe: ${unsubscribeLink}`;
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
+          userId: user.id,
           status: "failed",
-          errorMessage: err.message,
+          errorMessage: err.message || "Unknown error",
         });
 
         logs.push({ ...log.toJSON(), status: "failed" });
