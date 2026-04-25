@@ -19,6 +19,7 @@ import BookingCustmour from "./bookingSystem/BookingCustmour";
 import Version from "./Inventory/Virson";
 import UserManual from "./Inventory/UserManual";
 import ManualType from "./Inventory/ManualType";
+import CampaignSchedule from "./compagin/CampaignSchedule";
 
 export const setupAssociations = () => {
   // LeadGroup → LeadGroupAssignment
@@ -68,7 +69,13 @@ export const setupAssociations = () => {
     constraints: false,
   });
 };
+Campaign.hasMany(CampaignSchedule, {
+  foreignKey: "campaignId",
+});
 
+CampaignSchedule.belongsTo(Campaign, {
+  foreignKey: "campaignId",
+});
 LeadFollowUp.hasMany(LeadNote, {
   foreignKey: "leadFollowUpId",
   as: "Notes",

@@ -12,77 +12,84 @@ const sendEmails = async (req: Request, res: Response) => {
   const { campaignId } = req.params;
 
   try {
-    // 1. Get Campaign
     const campaign: any = await Campaign.findByPk(campaignId, {
-      include: [
-        { model: Template, as: "Template" },
-        { model: EmailLog, as: "EmailLogs" },
-      ],
+      include: [{ model: Template, as: "Template" }],
     });
-    // console.log(campaign)
+
     if (!campaign) {
-      res.status(404).json({ message: "Campaign not found" });
-      return
+       res.status(404).json({ message: "Campaign not found" });
+       return
     }
 
-    // 2. Get users from lead group
     const leadAssignments = await LeadGroupAssignment.findAll({
       where: { groupId: campaign.leadGroupId },
       include: [{ model: User, as: "User" }],
     });
 
     const usersToEmail = leadAssignments
-      .map((assign: any) => assign.User)
-      .filter((user) => user && user.email && user.isSubscribed);
+      .map((a: any) => a.User)
+      .filter((u) => u?.email && u?.isSubscribed);
 
     if (!usersToEmail.length) {
-      res
-        .status(400)
-        .json({ message: "No users with emails found in lead group" });
-      return
+       res.status(400).json({ message: "No users found" });
+       return
     }
 
-    const logs: EmailLog[] = [];
+    const BASE_URL =
+      "https://mailerapi.kayhanaudio.com.au/api/send-email";
+
+    const logs: any[] = [];
 
     for (const user of usersToEmail) {
       try {
-        // 1. Generate unsubscribe token if not present
+        // 🔑 Ensure unsubscribe token
         if (!user.unsubscribeToken) {
           user.unsubscribeToken = uuidv4();
           await user.save();
         }
 
-        // 2. Create log first
+        // 🧾 Create log first
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
+          userId: user.id,
           status: "pending",
         });
-        // console.log(user)
-        // 3. Prepare email content
-        const unsubscribeLink = `https://mailerapi.kayhanaudio.com.au/api/send-email/unsubscribe/?token=${user.unsubscribeToken}`;
-        const pixelUrl = `https://mailerapi.kayhanaudio.com.au/api/send-email/open/?emailId=${log.id}`;
-        console.log(unsubscribeLink)
-        console.log(pixelUrl)
-        const subject: string = `Hi ${user.firstname}, ${campaign.campaignName}`;
 
-        const html: string = `
+        const unsubscribeLink = `${BASE_URL}/unsubscribe?token=${user.unsubscribeToken}`;
+        const pixelUrl = `${BASE_URL}/open?emailId=${log.id}`;
+
+        // 🔥 Wrap ALL links for click tracking
+        const originalHtml = campaign.Template?.html || "";
+
+        const trackedHtml = originalHtml.replace(
+          /href="(.*?)"/g,
+          (match:any, url:any) => {
+            return `href="${BASE_URL}/click?emailId=${log.id}&url=${encodeURIComponent(
+              url
+            )}"`;
+          }
+        );
+
+        const subject = `Hi ${user.firstname}, ${campaign.campaignName}`;
+
+        const html = `
           <p>Hi ${user.firstname},</p>
-          <p>${campaign.Template?.html || "You have a new update from Kayhan Audio."}</p>
+          ${trackedHtml}
           <hr />
           <p style="font-size:12px;color:#888;">
-            Don’t want these emails? <a href="${unsubscribeLink}">Unsubscribe here</a>.
+            Don’t want these emails?
+            <a href="${unsubscribeLink}">Unsubscribe</a>
           </p>
-          <img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="tracking-pixel"/>
+          <img src="${pixelUrl}" width="1" height="1" style="display:none;" />
         `;
 
-        const text: string = `Hi ${user.name},\nYou have a new update from Kayhan Audio.\nUnsubscribe: ${unsubscribeLink}`;
+        const text = `Hi ${user.firstname},
+Visit our website.
+Unsubscribe: ${unsubscribeLink}`;
 
-        console.log("📧 Sending to:", user.email);
-
-        // 4. Send the email
-        // console.log(campaign.fromEmail , "check this")
-        const result = await sendEmail({
+        // 📧 Send email
+        await sendEmail({
           to: user.email,
           subject,
           bodyHtml: html,
@@ -90,39 +97,35 @@ const sendEmails = async (req: Request, res: Response) => {
           from: campaign.fromEmail,
         });
 
-        console.log("✅ Email sent:", result);
-
-        // 5. Update log to sent
+        // ✅ Mark sent
         await log.update({ status: "sent" });
-        logs.push(log);
+
+        logs.push({ ...log.toJSON(), status: "sent" });
       } catch (err: any) {
-        console.error("❌ Failed to send to", user.email, err);
+        console.error("❌ Failed:", user.email, err.message);
 
         const log = await EmailLog.create({
           campaign_id: campaign.id,
           email: user.email,
           status: "failed",
-          errorMessage: err.message || "Unknown error",
+          errorMessage: err.message,
         });
 
-        logs.push(log);
+        logs.push({ ...log.toJSON(), status: "failed" });
       }
     }
 
-    res.json({
+     res.json({
       message: "Emails processed",
-      results: {
-        sent: logs.filter((l) => l.status === "sent").length,
-        failed: logs.filter((l) => l.status === "failed").length,
-        total: logs.length,
-      },
+      sent: logs.filter((l) => l.status === "sent").length,
+      failed: logs.filter((l) => l.status === "failed").length,
+      total: logs.length,
     });
   } catch (error) {
     console.error("Send campaign error:", error);
-    res.status(500).json({ message: "Internal server error" });
+     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 const checkUserOpenEmail = async (req: Request, res: Response) => {
   try {
@@ -327,7 +330,7 @@ const sendEmailForTesting = async (req: Request, res: Response) => {
   try {
     // 1. Validate input
     if (!id || !email) {
-       res.status(400).json({
+      res.status(400).json({
         message: "Template ID and email are required",
       });
     }
@@ -356,7 +359,7 @@ const sendEmailForTesting = async (req: Request, res: Response) => {
     });
 
     // 5. Response
-     res.status(200).json({
+    res.status(200).json({
       message: "Test email sent successfully",
       result,
     });
@@ -369,4 +372,29 @@ const sendEmailForTesting = async (req: Request, res: Response) => {
     });
   }
 };
-export { sendEmails, checkUserOpenEmail, handleUnsubscribe, processCampaignEmails, sendEmailForTesting };
+const trackClick = async (req: Request, res: Response) => {
+  try {
+    const { emailId, url } = req.query;
+
+    if (!emailId || !url) {
+      res.status(400).send("Invalid request");
+      return
+    }
+
+    const log = await EmailLog.findByPk(Number(emailId));
+
+    if (log) {
+      await log.update({
+        clicked: true,
+        clickedAt: new Date(),
+        clickCount: (log.clickCount || 0) + 1,
+      });
+    }
+
+    res.redirect(url as string);
+  } catch (error) {
+    console.error("Click tracking error:", error);
+    res.status(500).send("Error tracking click");
+  }
+};
+export { sendEmails, checkUserOpenEmail, handleUnsubscribe, processCampaignEmails, sendEmailForTesting, trackClick };
