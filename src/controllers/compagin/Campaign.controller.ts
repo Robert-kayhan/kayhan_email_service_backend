@@ -6,34 +6,57 @@ import EmailLog from "../../models/compagin/EmailLog";
 import * as XLSX from "xlsx";
 import { sendEmail } from "../../utils/sendEmail";
 import { v4 as uuidv4 } from "uuid";
+import CampaignSchedule from "../../models/compagin/CampaignSchedule";
 
 // CREATE Campaign
-const createCampaign = async (req: Request, res: Response) => {
+const createCampaign = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { campaignName,campaignSubject, fromEmail, senderName, templateId, leadGroupId } =
-      req.body;
+    const {
+      campaignName,
+      campaignSubject,
+      fromEmail,
+      senderName,
+      templateId,
+      leadGroupId,
+      scheduledAt,
+    } = req.body;
 
+    // ✅ Validation
     if (
       !campaignName ||
       !fromEmail ||
       !senderName ||
       !templateId ||
-      !leadGroupId||
+      !leadGroupId ||
       !campaignSubject
     ) {
       res.status(400).json({ message: "All fields are required." });
+      return;
     }
 
+    // ✅ Prevent past scheduling
+    if (scheduledAt && new Date(scheduledAt) < new Date()) {
+      res.status(400).json({
+        message: "Scheduled time must be in the future.",
+      });
+      return;
+    }
+
+    // ✅ Check template
     const template = await Template.findByPk(templateId);
     if (!template) {
       res.status(404).json({ message: "Template not found." });
+      return;
     }
 
+    // ✅ Check lead group
     const leadGroup = await LeadGroup.findByPk(leadGroupId);
     if (!leadGroup) {
       res.status(404).json({ message: "Lead group not found." });
+      return;
     }
 
+    // ✅ Create campaign
     const campaign = await Campaign.create({
       campaignName,
       campaignSubject,
@@ -43,14 +66,30 @@ const createCampaign = async (req: Request, res: Response) => {
       leadGroupId,
     });
 
+    let schedule = null;
+
+    // ✅ Create schedule if needed
+    if (scheduledAt) {
+      schedule = await CampaignSchedule.create({
+        campaignId: campaign.id,
+        scheduledAt: new Date(scheduledAt),
+        status: "pending",
+      });
+    }
+
+    // ✅ Response
     res.status(201).json({
-      message: "Campaign created successfully.",
+      message: scheduledAt
+        ? "Campaign scheduled successfully."
+        : "Campaign created successfully.",
       data: campaign,
+      schedule,
     });
-    return
+    return;
   } catch (error) {
     console.error("Error creating campaign:", error);
     res.status(500).json({ message: "Internal server error." });
+    return;
   }
 };
 
@@ -360,6 +399,35 @@ const getCampaignStats = async (req: Request, res: Response) => {
      res.status(500).json({ message: "Internal server error." });
   }
 };
+const updateSchedule = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { campaignId, scheduledAt } = req.body;
+
+    if (!campaignId || !scheduledAt) {
+      res.status(400).json({ message: "Missing fields" });
+      return;
+    }
+
+    const schedule = await CampaignSchedule.findOne({
+      where: { campaignId },
+    });
+
+    if (!schedule) {
+      res.status(404).json({ message: "Schedule not found" });
+      return;
+    }
+
+    await schedule.update({
+      scheduledAt: new Date(scheduledAt),
+      status: "pending", // reset
+    });
+
+    res.json({ message: "Rescheduled successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 export {
   createCampaign,
   deleteCampaign,
@@ -367,5 +435,6 @@ export {
   getAllCampaigns,
   getCampaignById,
   getCampaignStats,
-  sendComaginUsingExel
+  sendComaginUsingExel,
+  updateSchedule
 };

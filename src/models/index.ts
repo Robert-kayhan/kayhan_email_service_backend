@@ -71,10 +71,12 @@ export const setupAssociations = () => {
 };
 Campaign.hasMany(CampaignSchedule, {
   foreignKey: "campaignId",
+  as: "schedules",
 });
 
 CampaignSchedule.belongsTo(Campaign, {
   foreignKey: "campaignId",
+  as: "campaign", // ✅ clean & predictable
 });
 LeadFollowUp.hasMany(LeadNote, {
   foreignKey: "leadFollowUpId",

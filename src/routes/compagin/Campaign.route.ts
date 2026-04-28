@@ -6,6 +6,7 @@ import {
   getAllCampaigns,
   getCampaignById,
   sendComaginUsingExel,
+  updateSchedule
 } from "../../controllers/compagin/Campaign.controller";
 import { uploadExcel } from "../../middlewares/Upload";
 
@@ -18,4 +19,5 @@ router
   .get(getCampaignById)
   .put(updateCampaign)
   .delete(deleteCampaign);
+  router.route("/reschedule").post(updateCampaign)
 export default router;
