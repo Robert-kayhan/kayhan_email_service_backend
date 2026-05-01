@@ -142,7 +142,7 @@ const getCampaignById = async (req: Request, res: Response) => {
     console.log("api call ")
     if (isNaN(campaignId)) {
       res.status(400).json({ message: "Invalid campaign ID." });
-      return 
+      return
     }
 
     // Fetch campaign with related template and lead group
@@ -154,8 +154,8 @@ const getCampaignById = async (req: Request, res: Response) => {
     });
 
     if (!campaign) {
-       res.status(404).json({ message: "Campaign not found." });
-       return
+      res.status(404).json({ message: "Campaign not found." });
+      return
     }
 
     // Fetch email stats for this campaign
@@ -163,7 +163,7 @@ const getCampaignById = async (req: Request, res: Response) => {
     const sent = await EmailLog.count({ where: { campaign_id: campaignId, status: "sent" } });
     const pending = await EmailLog.count({ where: { campaign_id: campaignId, status: "pending" } });
     const failed = await EmailLog.count({ where: { campaign_id: campaignId, status: "failed" } });
- const opened = await EmailLog.count({ where: { campaign_id: campaignId, opened : true } });
+    const opened = await EmailLog.count({ where: { campaign_id: campaignId, opened: true } });
     // Optionally, calculate opened if you track it
     // const opened = await EmailLog.count({ where: { campaign_id: campaignId, status: "sent", isOpened: true } });
 
@@ -178,7 +178,7 @@ const getCampaignById = async (req: Request, res: Response) => {
     res.json({ data: campaign, stats });
   } catch (error) {
     console.error("Error fetching campaign:", error);
-     res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 
@@ -243,18 +243,18 @@ const getCampaignStats = async (req: Request, res: Response) => {
     const pending = await EmailLog.count({ where: { campaign_id: id, status: "pending" } });
     const failed = await EmailLog.count({ where: { campaign_id: id, status: "failed" } });
 
-    const opened = await EmailLog.count({ where: { campaign_id: id, status: "opened",  } });
+    const opened = await EmailLog.count({ where: { campaign_id: id, status: "opened", } });
     console.log(opened)
-     res.json({ total, sent, pending, failed, opened });
+    res.json({ total, sent, pending, failed, opened });
   } catch (err) {
     console.error(err);
-     res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
 
- const sendComaginUsingExel = async (req: Request, res: Response) => {
+const sendComaginUsingExel = async (req: Request, res: Response) => {
   try {
     const { campaignName, campaignSubject, fromEmail, senderName, templateId } =
       req.body;
@@ -270,7 +270,7 @@ const getCampaignStats = async (req: Request, res: Response) => {
       !templateId ||
       !file
     ) {
-       res.status(400).json({
+      res.status(400).json({
         message: "All fields and excel file are required.",
       });
       return
@@ -279,24 +279,24 @@ const getCampaignStats = async (req: Request, res: Response) => {
     // ✅ Get template
     const template = await Template.findByPk(templateId);
     if (!template) {
-       res.status(404).json({ message: "Template not found." });
-       return
+      res.status(404).json({ message: "Template not found." });
+      return
     }
 
     // ✅ Read Excel
     const workbook = XLSX.read(file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames?.[0];
     if (!sheetName) {
-       res.status(400).json({ message: "Excel sheet not found." });
-       return
+      res.status(400).json({ message: "Excel sheet not found." });
+      return
     }
 
     const sheet = workbook.Sheets[sheetName];
     const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
     if (!rows.length) {
-       res.status(400).json({ message: "Excel file is empty." });
-       return
+      res.status(400).json({ message: "Excel file is empty." });
+      return
     }
 
     // ✅ Build recipients (support different column names)
@@ -326,8 +326,8 @@ const getCampaignStats = async (req: Request, res: Response) => {
     });
 
     if (!recipients.length) {
-       res.status(400).json({ message: "No emails found in Excel." });
-       return
+      res.status(400).json({ message: "No emails found in Excel." });
+      return
     }
 
     // ✅ Create Campaign
@@ -361,9 +361,8 @@ const getCampaignStats = async (req: Request, res: Response) => {
           <img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="pixel"/>
         `;
 
-        const text = `Hi ${displayName},\n\n${
-          campaignName || "You have a new update from Kayhan Audio."
-        }`;
+        const text = `Hi ${displayName},\n\n${campaignName || "You have a new update from Kayhan Audio."
+          }`;
 
         await sendEmail({
           to: r.email,
@@ -385,7 +384,7 @@ const getCampaignStats = async (req: Request, res: Response) => {
       }
     }
 
-     res.status(201).json({
+    res.status(201).json({
       message: "Campaign created & sent successfully.",
       data: {
         campaignId: campaign.id,
@@ -396,7 +395,7 @@ const getCampaignStats = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("sendComaginUsingExel error:", error);
-     res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 const updateSchedule = async (req: Request, res: Response): Promise<void> => {
@@ -408,21 +407,29 @@ const updateSchedule = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const schedule = await CampaignSchedule.findOne({
+    // check existing schedule
+    let schedule = await CampaignSchedule.findOne({
       where: { campaignId },
     });
 
-    if (!schedule) {
-      res.status(404).json({ message: "Schedule not found" });
-      return;
+    if (schedule) {
+      // ✅ UPDATE
+      await schedule.update({
+        scheduledAt: new Date(scheduledAt),
+        status: "pending",
+      });
+
+      res.json({ message: "Rescheduled successfully" });
+    } else {
+      // ✅ CREATE NEW
+      schedule = await CampaignSchedule.create({
+        campaignId,
+        scheduledAt: new Date(scheduledAt),
+        status: "pending",
+      });
+
+      res.json({ message: "Schedule created successfully", schedule });
     }
-
-    await schedule.update({
-      scheduledAt: new Date(scheduledAt),
-      status: "pending", // reset
-    });
-
-    res.json({ message: "Rescheduled successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

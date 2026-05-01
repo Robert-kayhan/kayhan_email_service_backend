@@ -19,5 +19,5 @@ router
   .get(getCampaignById)
   .put(updateCampaign)
   .delete(deleteCampaign);
-  router.route("/reschedule").post(updateCampaign)
+  router.route("/reschedule").post(updateSchedule)
 export default router;
