@@ -20,6 +20,7 @@ import LeadGroupRoutes from "./routes/compagin/leadGroup.route";
 import LeadFolowUp from "./routes/crm/leadFollowUp.route";
 import campaignRoutes from "./routes/compagin/Campaign.route";
 import sendEmailroutes from "./routes/compagin/sendEmail.routes";
+import trafficRoutes from "./routes/crm/Traffic.route"
 //flyer
 import Specificationroutes from "./routes/flyer/Specification.routes";
 import Flyerroutes from "./routes/flyer/flyer.routes";
@@ -91,6 +92,7 @@ app.use("/api/lead-group/", LeadGroupRoutes);
 app.use("/api/lead-follow-up/", LeadFolowUp);
 app.use("/api/campaign/", campaignRoutes);
 app.use("/api/send-email/", sendEmailroutes);
+app.use("/api/traffic", trafficRoutes);
 //flyer
 app.use("/api/product-specifications", Specificationroutes);
 app.use("/api/flyer", Flyerroutes);
