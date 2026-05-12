@@ -128,26 +128,26 @@ connectDb();
 
 // ⏰ Run every 5 seconds
 // Run every 12 hours
-cron.schedule("0 */12 * * *", async () => {
-  console.log("⏰ Running product sync every 12 hours...");
-  // await getDepartmentFromCarAudioandKayhanAudio();
-  // await companyFromCarAudioandKayhanAudio();
-  // await syncCarModelsWithLocalCompanies();
-  // await getProductFromCarAudioandKayhanAudio();
-   await companyFromCarAudioandKayhanAudio();
-  await syncCarModelsWithLocalCompanies();
-  await getProductFromCarAudioandKayhanAudio();
-
-});
-// Run every minute
-// cron.schedule("* * * * *", async () => {
-//   console.log("⏰ Running product sync every minute...");
-
+// cron.schedule("0 */12 * * *", async () => {
+//   console.log("⏰ Running product sync every 12 hours...");
 //   // await getDepartmentFromCarAudioandKayhanAudio();
-//   await companyFromCarAudioandKayhanAudio();
+//   // await companyFromCarAudioandKayhanAudio();
+//   // await syncCarModelsWithLocalCompanies();
+//   // await getProductFromCarAudioandKayhanAudio();
+//    await companyFromCarAudioandKayhanAudio();
 //   await syncCarModelsWithLocalCompanies();
 //   await getProductFromCarAudioandKayhanAudio();
+
 // });
+// Run every minute
+cron.schedule("* * * * *", async () => {
+  console.log("⏰ Running product sync every minute...");
+
+  // await getDepartmentFromCarAudioandKayhanAudio();
+  await companyFromCarAudioandKayhanAudio();
+  await syncCarModelsWithLocalCompanies();
+  await getProductFromCarAudioandKayhanAudio();
+});
 
 // app.listen(PORT,  () => {
 //   console.log(`🚀 Server running on localhost:${PORT}`);
