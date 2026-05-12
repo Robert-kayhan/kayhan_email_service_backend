@@ -21,6 +21,7 @@ import LeadFolowUp from "./routes/crm/leadFollowUp.route";
 import campaignRoutes from "./routes/compagin/Campaign.route";
 import sendEmailroutes from "./routes/compagin/sendEmail.routes";
 import trafficRoutes from "./routes/crm/Traffic.route"
+import trafficDashbordRoutes from "./routes/crm/trafficeDashbord.rotue"
 //flyer
 import Specificationroutes from "./routes/flyer/Specification.routes";
 import Flyerroutes from "./routes/flyer/flyer.routes";
@@ -49,13 +50,12 @@ import TechReportRequestRoutes from "./routes/repair-return/tech-report-request.
 import versionRoutes from "./routes/Inventory/virson.route";
 import userManualRoutes from './routes/Inventory/userMannul.route'
 import userManualTypesRoutes from './routes/Inventory/manualType.route'
-//automate
-// import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
-// import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
-// import cron from "node-cron";
+import { getProductFromCarAudioandKayhanAudio } from "./controllers/Inventory/product.controller";
+import { getDepartmentFromCarAudioandKayhanAudio } from "./controllers/Inventory/Department.controller";
+import { companyFromCarAudioandKayhanAudio } from "./controllers/Inventory/Company.controller";
+import { syncCarModelsWithLocalCompanies } from "./controllers/Inventory/CarModel.controller";
+import cron from "node-cron";
 
-// import { companyFromCarAudioandKayhanAudio } from "./controllers/Inventory/Company.controller";
-// import { syncCarModelsWithLocalCompanies } from "./controllers/Inventory/CarModel.controller";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -93,6 +93,7 @@ app.use("/api/lead-follow-up/", LeadFolowUp);
 app.use("/api/campaign/", campaignRoutes);
 app.use("/api/send-email/", sendEmailroutes);
 app.use("/api/traffic", trafficRoutes);
+app.use("/api/traffic-dashbord", trafficDashbordRoutes);
 //flyer
 app.use("/api/product-specifications", Specificationroutes);
 app.use("/api/flyer", Flyerroutes);
@@ -126,13 +127,26 @@ app.use("/api/tech-support-request", TechReportRequestRoutes);
 connectDb();
 
 // ⏰ Run every 5 seconds
-// cron.schedule("*/5 * * * * *", async () => {
-//   console.log("⏰ Running product sync every 5 seconds...");
+// Run every 12 hours
+cron.schedule("0 */12 * * *", async () => {
+  console.log("⏰ Running product sync every 12 hours...");
+  // await getDepartmentFromCarAudioandKayhanAudio();
+  // await companyFromCarAudioandKayhanAudio();
+  // await syncCarModelsWithLocalCompanies();
+  // await getProductFromCarAudioandKayhanAudio();
+   await companyFromCarAudioandKayhanAudio();
+  await syncCarModelsWithLocalCompanies();
+  await getProductFromCarAudioandKayhanAudio();
 
-//   await getProductFromCarAudioandKayhanAudio();
-//   await getDepartmentFromCarAudioandKayhanAudio();
+});
+// Run every minute
+// cron.schedule("* * * * *", async () => {
+//   console.log("⏰ Running product sync every minute...");
+
+//   // await getDepartmentFromCarAudioandKayhanAudio();
 //   await companyFromCarAudioandKayhanAudio();
 //   await syncCarModelsWithLocalCompanies();
+//   await getProductFromCarAudioandKayhanAudio();
 // });
 
 // app.listen(PORT,  () => {

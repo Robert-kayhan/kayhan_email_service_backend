@@ -27,7 +27,7 @@ class Order
   implements OrderAttributes
 {
   public id!: number;
-  public channel_id!: number;
+  public channel_id!: number ;
   public products!: OrderProduct[];
   public total_amount!: number;
   public status!: string;
@@ -45,7 +45,7 @@ Order.init(
     },
     channel_id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      allowNull: true,
     },
     products: {
       type: DataTypes.JSON, 

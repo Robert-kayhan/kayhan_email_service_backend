@@ -124,28 +124,67 @@ const sendEmails = async (req: Request, res: Response) => {
 };
 
 
-const checkUserOpenEmail = async (req: Request, res: Response) => {
+
+ const checkUserOpenEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const { email, emailId } = req.query;
+    const { emailId } = req.query;
 
     if (!emailId) {
-      res.status(400).json({ success: false, message: "emailId is required" });
-      return
+      res.status(400).json({
+        success: false,
+        message: "emailId is required",
+      });
+      return;
     }
 
+    // Update only if not already opened
     await EmailLog.update(
       {
-        // status: "opened",
         opened: true,
         openedAt: new Date(),
       },
-      { where: { id: Number(emailId) } } // 👈 ensures matching email too
+      {
+        where: {
+          id: Number(emailId),
+          opened: false,
+        },
+      }
     );
 
-    res.json({ success: true });
+    // 1x1 transparent GIF pixel
+    const pixel = Buffer.from(
+      "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "base64"
+    );
+
+    // Return image instead of JSON
+    res.set({
+      "Content-Type": "image/gif",
+      "Content-Length": pixel.length.toString(),
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
+
+    res.status(200).end(pixel);
   } catch (error) {
     console.error("Error updating email log:", error);
-    res.status(500).json({ success: false, error: "Internal server error" });
+
+    // Always return a valid pixel even if DB update fails
+    const pixel = Buffer.from(
+      "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "base64"
+    );
+
+    res.set({
+      "Content-Type": "image/gif",
+      "Content-Length": pixel.length.toString(),
+    });
+
+    res.status(200).end(pixel);
   }
 };
 
