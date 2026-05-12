@@ -220,8 +220,9 @@ const updateProduct = async (req: Request, res: Response) => {
 // ✅ Delete Product
 const deleteProduct = async (req: Request, res: Response) => {
   try {
+    console.log(req.params)
     const deleted = await Product.destroy({
-      where: { id: req.params.id },
+      where: { sku_number: req.params.id },
     });
 
     if (!deleted) {
