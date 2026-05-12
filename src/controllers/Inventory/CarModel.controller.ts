@@ -65,7 +65,7 @@ const getAllCarModels = async (req: Request, res: Response) => {
     const lastPage = Math.max(1, Math.ceil(count / limitNum));
 
     // ✅ RETURN SAME SHAPE as your other pages
-     res.json({
+    res.json({
       data: rows,
       meta: {
         total: count,
@@ -196,8 +196,8 @@ const deleteCarModel = async (req: Request, res: Response) => {
     res.status(500).json({ message: error.message });
   }
 };
-const CAR_MODEL_API = "http://localhost:5003/v1/car_model/list?limit=1000";
-const CATEGORY_API = "http://localhost:5003/v1/category/list"; // API for categories
+const CAR_MODEL_API = `https://api.kayhanaudio.com.au/v1/car_model/list?limit=1000`;
+const CATEGORY_API = `${process.env.KAYHAN_AUDIO_API}/v1/category/list`; // API for categories
 
 export const syncCarModelsWithLocalCompanies = async () => {
   try {
@@ -223,6 +223,7 @@ export const syncCarModelsWithLocalCompanies = async () => {
 
     console.log("📦 Fetching car models from API...");
     const resModels = await axios.get(CAR_MODEL_API);
+    console.log(resModels , "this is orr")
     const carModels = resModels.data?.data?.result || [];
     console.log(`✅ Fetched ${carModels.length} car models`);
 
@@ -284,7 +285,7 @@ export const syncCarModelsWithLocalCompanies = async () => {
       data: { result },
     };
   } catch (error: any) {
-    console.error("❌ Car model sync failed:", error.message);
+    console.error("❌ Car model sync failed:", error);
     return {
       success: false,
       message: "Car model sync failed",

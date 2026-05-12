@@ -7,6 +7,7 @@ import { sendEmail } from "../../utils/sendEmail";
 const receiveOrder = async (req: Request, res: Response) => {
   try {
     const { channel_id, products, total_amount } = req.body;
+    console.log(req.body , "this is body")
     const jsonPayload = {
       channel_id,
       products,
@@ -35,7 +36,7 @@ const receiveOrder = async (req: Request, res: Response) => {
       // Find the product by channel and SKU
       const product = await Product.findOne({
         where: {
-          channel_id,
+          // channel_id,
           sku_number: sku,
         },
       });

@@ -1,31 +1,63 @@
 import express, { Router } from "express";
 import {
   trackVisitor,
+  trackPageVisit,
   getAllTraffic,
- 
   getTrafficStats,
   getCampaignStats,
+  getUserJourney,
+  getIPStats,
+  getDashboardStats, // 🔥 NEW
 } from "../../controllers/crm/TrafficSource.controller";
 
 const router: Router = express.Router();
 
-// 🔹 CREATE (track visitor)
+
+// =============================
+// 🔹 TRACKING ROUTES
+// =============================
+
+// Track UTM (first visit)
 router.post("/track", trackVisitor);
 
-// 🔹 GET ALL (pagination)
+// Track every page visit
+router.post("/page-visit", trackPageVisit);
+
+
+// =============================
+// 🔹 DATA ROUTES
+// =============================
+
+// Get all traffic (pagination + filters)
 router.get("/", getAllTraffic);
 
-// 🔹 SEARCH / FILTER
-// router.get("/search", searchTraffic);
 
-// 🔹 ANALYTICS
+// =============================
+// 🔹 ANALYTICS ROUTES
+// =============================
+
+// Source stats
 router.get("/stats/source", getTrafficStats);
+
+// Campaign stats
 router.get("/stats/campaign", getCampaignStats);
 
-// 🔹 GET SINGLE
-// router.get("/:id", getTrafficById);
+// 🔥 Dashboard stats (today users + visits)
+router.get("/stats/dashboard", getDashboardStats);
 
-// 🔹 DELETE
+// IP stats (visits per IP)
+router.get("/ip-stats", getIPStats);
+
+// User journey (by IP)
+router.get("/journey", getUserJourney);
+
+
+// =============================
+// 🔹 OPTIONAL (FUTURE)
+// =============================
+
+// router.get("/search", searchTraffic);
+// router.get("/:id", getTrafficById);
 // router.delete("/:id", deleteTraffic);
 
 export default router;
