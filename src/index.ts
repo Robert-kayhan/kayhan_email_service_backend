@@ -140,14 +140,14 @@ connectDb();
 
 // });
 // Run every minute
-cron.schedule("* * * * *", async () => {
-  console.log("⏰ Running product sync every minute...");
+// cron.schedule("* * * * *", async () => {
+//   console.log("⏰ Running product sync every minute...");
 
-  // await getDepartmentFromCarAudioandKayhanAudio();
-  await companyFromCarAudioandKayhanAudio();
-  await syncCarModelsWithLocalCompanies();
-  await getProductFromCarAudioandKayhanAudio();
-});
+//   // await getDepartmentFromCarAudioandKayhanAudio();
+//   await companyFromCarAudioandKayhanAudio();
+//   await syncCarModelsWithLocalCompanies();
+//   await getProductFromCarAudioandKayhanAudio();
+// });
 
 // app.listen(PORT,  () => {
 //   console.log(`🚀 Server running on localhost:${PORT}`);
